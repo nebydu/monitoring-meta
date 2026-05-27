@@ -72,7 +72,8 @@ done <<EOF
 $CHANGED
 EOF
 
-TRIG_CSV="$(printf '%s' "$TRIGGERED" | grep -v '^$' | tr '\n' ',' | sed 's/,$//')"
+# pipefail+set -e 환경: TRIGGERED가 비면 grep이 exit 1을 내므로 || true로 방어
+TRIG_CSV="$(printf '%s' "$TRIGGERED" | grep -v '^$' | tr '\n' ',' | sed 's/,$//' || true)"
 
 if [ -z "$TRIG_CSV" ]; then
   # handoff/, e2e/, .claude/ 등 작업 산출물만 변경 → 매번 검토 비용 크므로 스킵
@@ -144,7 +145,8 @@ if [ "$PARSE_RC" -ne 0 ] || [ -z "$PARSE_OUT" ]; then
   log_line "parse_error" 0 0 "$TRIG_CSV"
   {
     echo "[codex-gate] Codex 응답 파싱 실패. 원본 출력 앞 200자:"
-    { head -c 200 "$LAST_MSG" 2>/dev/null; head -c 200 "$CODEX_ERR" 2>/dev/null; } | head -c 200
+    head -c 200 "$LAST_MSG" 2>/dev/null || true
+    head -c 200 "$CODEX_ERR" 2>/dev/null || true
     echo ""
   } >&2
   exit 2

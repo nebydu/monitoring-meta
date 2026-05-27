@@ -17,6 +17,6 @@
       "type": "string"
     }
   },
-  "required": ["verdict", "critical_issues", "spec_violations"],
+  "required": ["verdict", "critical_issues", "spec_violations", "summary"],
   "additionalProperties": false
 }
