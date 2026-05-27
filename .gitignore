@@ -1,0 +1,10 @@
+# IDE
+.idea/
+
+# codex-gate hook 런타임 산출물 (정적 셋업 파일이 아님)
+.claude/.codex-gate-state
+.claude/codex-gate.log
+.claude/codex-gate-escalation.log
+.claude/.codex-last-message.json
+.claude/.codex-gate-issues.txt
+.claude/.codex-gate-stderr.txt
