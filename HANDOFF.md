@@ -4,17 +4,17 @@
 >
 > 위치 규약: monitoring-meta repo의 **루트**에 둔다. `handoff/` 디렉터리는 작업 산출물 교환소이고 이 문서와는 별도다.
 >
-> 갱신 기준일: 2026-05-28 (envelope spec 작성 완료 시점)
+> 갱신 기준일: 2026-05-28 (hub `.claude/` 셋업 검토 완료 시점)
 
 ## 1. 한 줄 요약
 
-monitoring 솔루션의 polyrepo(hub / script-agent / infra / monitoring-meta) 구조에서 Phase 1 본개발을 sub-agent 파이프라인 + Codex read-only 검증 hook으로 자동화하는 중. **envelope spec 작성은 완료**(monitoring-meta/docs/envelope.md 박힘). 다만 이건 spec 정의만의 완료이고, **hub과 script-agent 코드는 여전히 Phase 0 동작을 따른다**. 다음 단계는 hub `.claude/` 셋업(4단계).
+monitoring 솔루션의 polyrepo(hub / script-agent / infra / monitoring-meta) 구조에서 Phase 1 본개발을 sub-agent 파이프라인 + Codex read-only 검증 hook으로 자동화하는 중. **envelope spec 작성은 완료**(monitoring-meta/docs/envelope.md 박힘). 다만 이건 spec 정의만의 완료이고, **hub과 script-agent 코드는 여전히 Phase 0 동작을 따른다**. monitoring-meta와 hub의 `.claude/` 셋업은 완료됐고, 다음 단계는 script-agent `.claude/` 셋업(5단계).
 
 ## 2. 결정된 기반 사실
 
 - **레포 구조**: polyrepo. `C:\workspace\monitoring\` 아래 `hub/`, `script-agent/`, `infra/`, `monitoring-meta/` 4개. 각각 독립 GitHub repo. 상위 폴더는 git 아님.
 - **monitoring-meta**: 신규 repo. 공통 spec + 통합 검증 + repo 간 작업 핸드오프를 책임.
-- **셸 환경**: Git Bash. hook 스크립트는 `.sh`, JSON 파싱은 `jq`.
+- **셸 환경**: Git Bash. hook 스크립트는 `.sh`. JSON 파싱은 원칙적으로 `jq`를 쓰되, 현재 hub hook은 로컬 Git Bash에 `jq`가 없어 Python 파싱을 운영상 예외로 기록했다.
 - **Codex 역할**: read-only 검토 전담. Stop hook으로 호출됨. 수동 호출 Codex(사람이 직접)는 종전대로 수정 가능.
 - **언어 규칙**: 한국어 답변/주석/문서. 영어 식별자.
 
@@ -36,7 +36,7 @@ ground truth 우선순위: 코드 → 데모 spec v0.2.1 (Phase 0 회귀 방지)
 
 ```
 C:\workspace\monitoring\
-├── hub\                              # 기존 repo, .claude\ 미셋업
+├── hub\                              # 기존 repo, .claude\ 셋업 완료
 ├── script-agent\                     # 기존 repo, .claude\ 미셋업
 ├── infra\                            # 기존 repo, .claude\ 안 만듦
 └── monitoring-meta\                  # 신규 repo, .claude\ 셋업 완료
@@ -78,7 +78,7 @@ C:\workspace\monitoring\
   - [x] 1번 외부 surface 분리 작업 — LOG job → result-topic-log 라우팅 규칙 명시
   - [x] 2번 외부 surface 보완 — heartbeats otlp_json↔protobuf 경계 + OTLP 예외 의미
   - [x] 2라운드 — `docs/envelope.md` 확정 + Stop hook 검증
-- [ ] 4단계: hub `.claude/` 셋업 (sub-agent 6개)
+- [x] 4단계: hub `.claude/` 셋업 (sub-agent 6개)
 - [ ] 5단계: script-agent `.claude/` 셋업 (sub-agent 6개)
 - [ ] 6단계: 첫 코드 ADR — ADR #2 heartbeat protobuf 전환 (envelope을 코드에 반영하는 첫 작업)
 - [ ] 7단계 이후: 나머지 토픽의 envelope 적용 ADR (envelope spec ↔ 코드 gap 해소)
@@ -100,12 +100,11 @@ C:\workspace\monitoring\
 ## 7. 미결정 사안 (작업 중 결정 필요)
 
 - **envelope spec ↔ 현재 코드 gap**: envelope이 monitoring-meta에 박혔지만 hub과 script-agent 코드는 미반영 상태. 첫 코드 ADR(#2)이 일부만 해소(heartbeats 부분). 나머지 7개 토픽의 envelope 적용은 후속 ADR로. **ADR 카탈로그에 "envelope 반영 작업"을 명시적으로 추가할지** 결정 필요.
-- **spec-sync drift 검사 결과 활용**: `handoff/spec-drift-envelope-20260527-143000.md` 등 spec-sync가 남긴 보고서가 hub `.claude/` 셋업의 spec-guardian 룰에 어떻게 반영될지 사람 확인 필요. 4단계 시작 전 한 번 검토 권장.
 - **데모 spec v0.2.1 정본 위치**: envelope 작업 결과를 따라 hub/docs에 머무는지 monitoring-meta로 끌어올려질지 사람 확인 필요. envelope 2라운드 작업 중에 같이 다뤄졌을 가능성 있음 — `docs/envelope.md`와 `handoff/envelope-draft-analysis.md` 호환성 매트릭스 확인.
 - **hub의 모듈러 모놀리스 → 9개 deployment 분리 시점**: 통합본 v0.9 §7.2 β 구조 기준. Phase 1 중반에 일부 분리 예정. hub `.claude/`의 sub-agent들이 "분리 좋은 패키지 구조"를 강제하도록 셋업.
 - **hub/AGENTS.md 갱신**: "자동화 hook에서 호출되는 Codex는 read-only 검토만, 사람이 수동 호출하는 Codex는 종전대로" 한 단락 추가. 4단계 셋업 완료 후 사람이 수동 처리.
 
-## 8. hub `.claude/` 셋업 시 박혀야 할 핵심 룰 (4단계용 사전 메모)
+## 8. hub `.claude/` 셋업 완료 요약 (4단계)
 
 - **sub-agent 6종**: `analyzer`, `implementer`, `tester`, `reviewer`, `spec-guardian`, `refactorer`.
 - **권한 분리**: `tester`/`reviewer`/`spec-guardian` Edit 금지. `refactorer`는 기능 추가·동작 변경·인터페이스 변경 금지.
@@ -118,8 +117,10 @@ C:\workspace\monitoring\
   - `docs/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준
 - **작업 입력**: `../monitoring-meta/handoff/<work-id>-hub.md` 형식의 작업 spec을 입력으로 받음.
 - **spec-guardian의 역할**: Phase 0 데모 spec과 Phase 1 목표 spec(envelope + kafka-payloads)의 위상 차이를 인지하면서, 현재 코드가 어느 위상에 있는지 판단하고 정합성 검토. envelope.md가 박혔다고 해서 코드가 자동으로 envelope을 따르는 게 아님을 모든 검토에 반영.
+- **drift 보고서 반영**: `handoff/spec-drift-envelope-20260527-143000.md`의 결론은 hub `.claude/agents/spec-guardian.md`에 강제 룰로 반영됨. 결론은 drift 없음이며, envelope 헤더 4종 키/값/생략 로직 회귀 방지를 critical로 둔다. 향후 drift 보고서가 갱신되면 사람 수동으로 재반영한다.
 - **reviewer의 강제 룰**: 통합본 v0.9 §7.2 β 구조 모듈 경계를 가로지르는 의존이 생기면 critical로 잡음. 메인 BE(Auth/Job/Approval/Knox/Validation/Agent State)와 분리 대상(rule-engine, Script Result, Alert/Incident, Notification, Metric Ingest)의 경계 의식.
-- **셸**: Git Bash. Codex hook은 monitoring-meta의 codex-gate.sh와 동일 구조이되, 발화 대상 파일은 hub 코드 경로(예: `src/main/**`, `src/test/**`, `pom.xml`).
+- **셸 / Stop hook**: Git Bash. `settings.json`은 Windows PATH의 WSL bash 오인식을 피하기 위해 Git Bash 절대경로(`C:\Program Files\Git\bin\bash.exe`)를 exec form으로 호출한다. Codex hook 발화 대상은 hub 코드 경로(`src/main/**`, `src/test/**`, `pom.xml`)이고, `.claude/**`, `docs/**`, `analysis/**`만 변경된 경우 스킵한다.
+- **검증 메모**: `stop_hook_active` 무한루프 가드와 스킵 경로는 Git Bash 직접 실행 dry-run으로 통과 확인. 현재 환경에 `jq`가 없어 hook JSON 파싱은 Python으로 구현되어 있으며, `codex review --uncommitted` 대신 `codex exec --sandbox read-only` fallback 경로를 직접 사용한다. 이는 handoff 원문 요구와 다른 운영상 예외로 기록한다.
 
 ## 9. 운영 룰 (모든 단계 공통)
 
