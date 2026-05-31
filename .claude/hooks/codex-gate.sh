@@ -23,10 +23,13 @@ log_line() { # verdict | crit_count | viol_count | triggered_files
   printf '%s | %s | %s | %s | %s\n' "$(date -Is)" "$1" "$2" "$3" "$4" >> "$LOG_FILE"
 }
 emit_system_message() { # message
-  python -c 'import json, sys; print(json.dumps({"systemMessage": sys.argv[1]}, ensure_ascii=False))' "$1"
+  # stdout을 UTF-8로 고정: Windows 콘솔 기본 인코딩(cp949)이 em-dash 등을 못 실어 크래시하는 것 방지
+  python -c 'import json, sys; sys.stdout.reconfigure(encoding="utf-8"); print(json.dumps({"systemMessage": sys.argv[1]}, ensure_ascii=False))' "$1"
 }
 escalate() { # message
   printf '%s | %s\n' "$(date -Is)" "$1" >> "$ESC_LOG"
+  # force-pass는 검증을 건너뛴 사건 → SKIP/PASS보다 더 잘 보여야 하므로 systemMessage로 노출
+  emit_system_message "게이트 강제 통과 — 사람 확인 필요: $1"
 }
 read_state() {
   FAIL_COUNT=0; PARSE_FAIL_COUNT=0
