@@ -31,16 +31,57 @@ escalate() { # message
   # force-pass는 검증을 건너뛴 사건 → SKIP/PASS보다 더 잘 보여야 하므로 systemMessage로 노출
   emit_system_message "게이트 강제 통과 — 사람 확인 필요: $1"
 }
-read_state() {
-  FAIL_COUNT=0; PARSE_FAIL_COUNT=0
-  if [ -f "$STATE_FILE" ]; then
-    read -r FAIL_COUNT PARSE_FAIL_COUNT < "$STATE_FILE" || true
+read_state() { # gate_key triggered_key
+  STATE_STATUS="new"; FAIL_COUNT=0; PARSE_FAIL_COUNT=0
+  if [ ! -f "$STATE_FILE" ]; then
+    return 0
   fi
+  # 캐시(passed/escalated 재사용)는 gate_key(=내용+prompt+schema+hook) 완전 일치 시에만 적용한다.
+  # fail streak(연속 실패 카운트)은 triggered(파일 집합) 일치 시 승계한다 — diff가 바뀌어도 같은 파일을
+  # 계속 고치며 실패하면 카운트가 누적되어 3회 escalation에 실제로 도달한다(이전엔 diff마다 리셋되어 무력).
+  STATE_OUT="$(python -c '
+import json, sys
+path, gate_key, trig = sys.argv[1], sys.argv[2], sys.argv[3]
+status, fail, parse = "new", 0, 0
+try:
+    with open(path, "r", encoding="utf-8") as fp:
+        d = json.load(fp)
+    if d.get("gate_key") == gate_key:
+        status = str(d.get("status") or "new")
+    if d.get("triggered") == trig:
+        fail = int(d.get("fail_count") or 0)
+        parse = int(d.get("parse_fail_count") or 0)
+    sys.stdout.write(f"{status}\t{fail}\t{parse}")
+except Exception:
+    sys.stdout.write("new\t0\t0")
+' "$STATE_FILE" "$1" "$2" 2>/dev/null || printf 'new\t0\t0')"
+  STATE_STATUS="$(printf '%s' "$STATE_OUT" | cut -f1)"
+  FAIL_COUNT="$(printf '%s' "$STATE_OUT" | cut -f2)"
+  PARSE_FAIL_COUNT="$(printf '%s' "$STATE_OUT" | cut -f3)"
   FAIL_COUNT=${FAIL_COUNT:-0}
   PARSE_FAIL_COUNT=${PARSE_FAIL_COUNT:-0}
 }
-write_state() { printf '%s %s\n' "$FAIL_COUNT" "$PARSE_FAIL_COUNT" > "$STATE_FILE"; }
-reset_state() { FAIL_COUNT=0; PARSE_FAIL_COUNT=0; write_state; }
+write_state() { # status
+  python -c '
+import json, sys
+path, status, gate_key, diff_hash, triggered, fail, parse, updated_at = sys.argv[1:9]
+data = {
+    "gate_key": gate_key,
+    "triggered": triggered,
+    "diff_hash": diff_hash,
+    "fail_count": int(fail),
+    "parse_fail_count": int(parse),
+    "status": status,
+    "updated_at": updated_at,
+}
+with open(path, "w", encoding="utf-8") as fp:
+    json.dump(data, fp, ensure_ascii=False, indent=2)
+    fp.write("\n")
+' "$STATE_FILE" "$1" "$GATE_KEY" "$DIFF_HASH" "$TRIG_CSV" "$FAIL_COUNT" "$PARSE_FAIL_COUNT" "$(date -Is)"
+}
+log_target() {
+  printf '%s | key=%s | status=%s' "$TRIG_CSV" "$GATE_KEY" "${STATE_STATUS:-new}"
+}
 
 # ── 1) 무한 Stop 루프 가드 ───────────────────────────────────────────────
 INPUT="$(cat)"
@@ -54,9 +95,7 @@ except Exception:
 ' 2>/dev/null || echo "0")"
 [ "$STOP_ACTIVE" = "1" ] && exit 0
 
-read_state
-
-# ── 2) 트리거 가드 — spec 관련 변경이 있을 때만 Codex 호출 ────────────────
+# ── 2) 트리거 가드 — spec/handoff/harness 관련 변경이 있을 때만 Codex 호출 ──
 if git rev-parse --verify -q HEAD >/dev/null 2>&1; then
   BASE="HEAD"
 else
@@ -66,33 +105,46 @@ fi
 CHANGED="$( { git -c core.quotepath=false diff --name-only "$BASE"; \
               git -c core.quotepath=false ls-files --others --exclude-standard; } | sort -u )"
 
-TRIGGERED=""
+SPEC_TRIGGERED=""
+HARNESS_TRIGGERED=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
     docs/phase0-snapshot/*) ;;                 # 참조 스냅샷 → 트리거 제외
-    adr/*.md)  TRIGGERED="${TRIGGERED}${f}"$'\n' ;;
-    docs/*.md) TRIGGERED="${TRIGGERED}${f}"$'\n' ;;   # 통합본/envelope/kafka-payloads 등 docs/ 신규·변경 spec
+    adr/*.md)  SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;
+    docs/*.md) SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;   # 통합본/envelope/kafka-payloads 등 docs/ 신규·변경 spec
+    handoff/adr-*.md) SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;
+    .claude/hooks/*.sh|.claude/hooks/*.cmd|.claude/settings.json|.claude/codex-schema.json)
+      HARNESS_TRIGGERED="${HARNESS_TRIGGERED}${f}"$'\n'
+      ;;
   esac
 done <<EOF
 $CHANGED
 EOF
 
+TRIGGERED="${SPEC_TRIGGERED}${HARNESS_TRIGGERED}"
+
 # pipefail+set -e 환경: TRIGGERED가 비면 grep이 exit 1을 내므로 || true로 방어
-TRIG_CSV="$(printf '%s' "$TRIGGERED" | grep -v '^$' | tr '\n' ',' | sed 's/,$//' || true)"
+TRIG_CSV="$(printf '%s' "$TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
+SPEC_CSV="$(printf '%s' "$SPEC_TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
+HARNESS_CSV="$(printf '%s' "$HARNESS_TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
 
 if [ -z "$TRIG_CSV" ]; then
-  # handoff/, e2e/, .claude/ 등 작업 산출물만 변경 → 매번 검토 비용 크므로 스킵
-  log_line "skipped" 0 0 "(no spec change)"
-  emit_system_message "[codex-gate] SKIP: Codex 검증 대상 spec 변경 없음."
+  # 게이트 트리거 = spec(docs/·adr/·handoff/adr-*.md) 또는 harness(.claude/hooks/*.sh·*.cmd·settings.json·codex-schema.json).
+  # 그 외(e2e/, 일반 handoff/, 기타 .claude/ 산출물 등)만 바뀐 경우 → 매번 검토 비용이 크므로 스킵.
+  log_line "skipped" 0 0 "(no gate-triggering change)"
+  emit_system_message "[codex-gate] SKIP: Codex 검증 트리거 대상(spec docs/adr/handoff-adr · harness hooks/settings/schema) 변경 없음."
   exit 0
 fi
 
-# ── 3) 검토 입력 구성 (추적 변경 diff + 미추적 신규 spec 파일 내용) ───────
-REVIEW_INPUT="$(git -c core.quotepath=false diff "$BASE")"
+# ── 3) 검토 입력 구성 (트리거 파일 diff + 미추적 신규 파일 내용) ──────────
+REVIEW_INPUT=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  if ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+    REVIEW_INPUT="${REVIEW_INPUT}
+$(git -c core.quotepath=false diff "$BASE" -- "$f")"
+  else
     # 미추적 파일은 diff에 안 잡히므로 내용을 직접 합류
     REVIEW_INPUT="${REVIEW_INPUT}
 --- NEW FILE: ${f} ---
@@ -102,9 +154,37 @@ done <<EOF
 $TRIGGERED
 EOF
 
-# ── 4) Codex 호출 (fallback: codex exec, read-only) ──────────────────────
-PROMPT="통합본 v0.9 내부 일관성 + 8토픽 spec(kafka-payloads, envelope) 정합성 + ADR 결정과 spec 정의의 불일치 + Open question으로 남겨야 할 사항을 무심코 결정한 흔적이 있는지 검토. 아래 diff를 read-only로만 검토하고 codex-schema.json 형식의 JSON으로만 응답."
+# ── 검토 프롬프트 구성 — spec/harness 모드를 합산(둘 다면 병합, 어느 한쪽 지시도 누락되지 않게) ──
+SPEC_PROMPT="통합본 v0.9 내부 일관성 + 8토픽 spec(kafka-payloads, envelope) 정합성 + ADR 결정과 spec 정의의 불일치 + Open question으로 남겨야 할 사항을 무심코 결정한 흔적이 있는지 검토. handoff/adr-*.md가 포함되면 ADR/최종 handoff/사전 분석 문서 간 위상 충돌도 검토."
+HARNESS_PROMPT="Claude Code Stop hook/harness 변경 리뷰. Bash/Windows Git Bash 호환성, 상태 파일/캐시 로직, trigger 범위, fail/pass/escalation 흐름, 로그와 systemMessage가 오해를 만들 가능성을 중점 검토."
+PROMPT=""
+[ -n "$SPEC_CSV" ] && PROMPT="$SPEC_PROMPT"
+[ -n "$HARNESS_CSV" ] && PROMPT="${PROMPT:+$PROMPT
+}$HARNESS_PROMPT"
+PROMPT="$PROMPT
+아래 diff를 read-only로만 검토하고 codex-schema.json 형식의 JSON으로만 응답."
 
+# 같은 변경분은 같은 gate_key를 갖는다. 통과/확인 필요 상태면 재호출하지 않는다.
+# gate_key에 prompt + schema + hook 자체 해시를 포함 → diff가 같아도 검토 정책(prompt/schema/hook)이
+# 바뀌면 gate_key가 달라져 stale PASS를 재사용하지 않고 새 기준으로 재검증한다.
+DIFF_HASH="$(printf '%s' "$REVIEW_INPUT" | python -c 'import hashlib, sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())')"
+SCHEMA_HASH="$(python -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "$SCHEMA" 2>/dev/null || echo nohash)"
+SELF_HASH="$(python -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo nohash)"
+GATE_KEY="$(python -c 'import hashlib, sys; print(hashlib.sha256(("\0".join(sys.argv[1:])).encode("utf-8")).hexdigest())' "$TRIG_CSV" "$DIFF_HASH" "$PROMPT" "$SCHEMA_HASH" "$SELF_HASH")"
+
+read_state "$GATE_KEY" "$TRIG_CSV"
+if [ "$STATE_STATUS" = "passed" ]; then
+  log_line "skipped(already_passed)" 0 0 "$(log_target)"
+  emit_system_message "[codex-gate] SKIP(already_passed): 같은 변경분은 이미 Codex 검증 PASS 완료. 대상: $TRIG_CSV"
+  exit 0
+fi
+if [ "$STATE_STATUS" = "escalated" ]; then
+  log_line "skipped(already_force_passed)" 0 0 "$(log_target)"
+  emit_system_message "[codex-gate] SKIP(already_force_passed): 이 변경분은 검증 누적 실패로 게이트가 '강제 통과(사람 확인 필요)' 처리된 상태입니다 — 종료는 허용되지만 Codex 검증을 통과한 것은 아닙니다. 변경분을 수정하면 새 기준으로 재검증합니다. 대상: $TRIG_CSV"
+  exit 0
+fi
+
+# ── 4) Codex 호출 (fallback: codex exec, read-only) — PROMPT는 위 §3에서 모드 병합으로 구성됨 ──
 rm -f "$LAST_MSG" "$ISSUES_FILE"
 set +e
 printf '%s' "$REVIEW_INPUT" | codex exec --sandbox read-only \
@@ -144,12 +224,15 @@ if [ "$PARSE_RC" -ne 0 ] || [ -z "$PARSE_OUT" ]; then
   PARSE_FAIL_COUNT=$((PARSE_FAIL_COUNT + 1))
   if [ "$PARSE_FAIL_COUNT" -ge 2 ]; then
     escalate "Codex 응답 파싱 2회 연속 실패 — 사람 확인 필요 (triggered: $TRIG_CSV)"
-    log_line "parse_error(escalated)" 0 0 "$TRIG_CSV"
-    reset_state
+    STATE_STATUS="escalated"
+    FAIL_COUNT=0; PARSE_FAIL_COUNT=0   # escalation 발동 → streak 리셋(다음 수정분은 0부터 재누적)
+    log_line "parse_error(escalated)" 0 0 "$(log_target)"
+    write_state "escalated"
     exit 0
   fi
-  write_state
-  log_line "parse_error" 0 0 "$TRIG_CSV"
+  STATE_STATUS="parse_error"
+  write_state "parse_error"
+  log_line "parse_error" 0 0 "$(log_target)"
   {
     echo "[codex-gate] Codex 응답 파싱 실패. 원본 출력 앞 200자:"
     head -c 200 "$LAST_MSG" 2>/dev/null || true
@@ -165,8 +248,11 @@ VIOL_COUNT="$(printf '%s' "$PARSE_OUT" | cut -f3)"
 
 # ── 5b) verdict == pass ──────────────────────────────────────────────────
 if [ "$VERDICT" = "pass" ]; then
-  log_line "pass" "$CRIT_COUNT" "$VIOL_COUNT" "$TRIG_CSV"
-  reset_state
+  FAIL_COUNT=0
+  PARSE_FAIL_COUNT=0
+  STATE_STATUS="passed"
+  log_line "pass" "$CRIT_COUNT" "$VIOL_COUNT" "$(log_target)"
+  write_state "passed"
   emit_system_message "[codex-gate] PASS: Codex 검증 완료. blocking issue 없음, 수정사항 없음. 대상: $TRIG_CSV"
   exit 0
 fi
@@ -174,14 +260,17 @@ fi
 # ── 5c) verdict == fail ──────────────────────────────────────────────────
 PARSE_FAIL_COUNT=0   # 파싱은 성공했으므로 연속 파싱 실패 카운터 리셋
 FAIL_COUNT=$((FAIL_COUNT + 1))
-if [ "$FAIL_COUNT" -gt 3 ]; then
-  escalate "Codex 검증 fail 3회 초과 — 사람 확인 필요 (triggered: $TRIG_CSV)"
-  log_line "fail(escalated)" "$CRIT_COUNT" "$VIOL_COUNT" "$TRIG_CSV"
-  reset_state
+if [ "$FAIL_COUNT" -ge 3 ]; then
+  escalate "Codex 검증 fail 3회 도달 — 사람 확인 필요 (triggered: $TRIG_CSV)"
+  STATE_STATUS="escalated"
+  FAIL_COUNT=0; PARSE_FAIL_COUNT=0   # escalation 발동 → streak 리셋(다음 수정분은 0부터 재누적)
+  log_line "fail(escalated)" "$CRIT_COUNT" "$VIOL_COUNT" "$(log_target)"
+  write_state "escalated"
   exit 0
 fi
-write_state
-log_line "fail" "$CRIT_COUNT" "$VIOL_COUNT" "$TRIG_CSV"
+STATE_STATUS="failing"
+write_state "failing"
+log_line "fail" "$CRIT_COUNT" "$VIOL_COUNT" "$(log_target)"
 {
   echo "[codex-gate] Codex 검증 FAIL — 종료 보류. 아래 항목을 해소한 뒤 다시 종료하십시오:"
   cat "$ISSUES_FILE" 2>/dev/null
