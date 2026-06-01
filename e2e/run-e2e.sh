@@ -1,20 +1,30 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v1)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v3)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
 #   2. [정적] 데모 spec v0.2.1 §5.4 논리 계약 회귀 0 확인
 #   3. [정적] envelope 예외 위상 — heartbeats에 envelope 헤더 검사 없음 확인
 #   4. [유닛] hub mvn test / script-agent go test ./... 실행 후 결과 기록
-#   5. [동적 — Docker 가용 시] infra 기동 → hub run → script-agent run
-#             → AGENT_STARTED 확인 → SCRIPT_JOB 등록 → JOB_RESULT 수신
-#             → script-agent 종료 → AGENT_STOPPED 확인 → infra 종료
-#      동적 검증은 현 데모 skeleton이 AGENT_STARTED/SCRIPT_JOB/JOB_RESULT 흐름을
-#      완전 구현했을 때 통과한다. 미구현 단계는 SKIP으로 기록한다.
+#   5. [주석 drift] 관측 기록
+#   6. [동적 — --dynamic 인자 전달 시만 실행] infra 기동 → hub run → script-agent run
+#             → heartbeat 수신 확인 (PASS 조건: Spring Kafka DEBUG 실제 레코드 수신 라인 출현 +
+#                failed to decode / no agent.heartbeat data points 부재)
+#
+# v3 변경사항 (하네스 버그 3건 수정):
+#   - 버그 A (IPv6 우회): script-agent 기동 시 OTLP_ENDPOINT/KAFKA_BROKERS를 127.0.0.1로 명시
+#   - 버그 B (kafka 클린 시작): up -d 전 down -v 실행으로 잔존 볼륨/메시지 제거
+#   - 버그 C (grep 오인 매칭): 초기화 로그 제외, 실제 ConsumerRecord 수신 라인
+#     (ntainer#1-0-C-1.*KafkaMessageListenerContainer.*Received: [1-9])만 양성으로 판정
+#
+# 사용:
+#   ./run-e2e.sh            # 정적+유닛만 (§1~§5)
+#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§6)
 #
 # 규칙:
 #   - 실패 시 코드를 고치지 않는다 — 로그만 기록하고 종료한다.
 #   - 형제 repo(../hub, ../script-agent, ../infra)는 절대 수정하지 않는다.
+#   - script-agent 상태 파일(.agent_id/.agent_state)은 e2e/.run-tmp/로 우회한다.
 #   - 결과는 e2e/results/<timestamp>.md 에 저장된다.
 #
 # 근거 문서:
@@ -25,6 +35,16 @@
 #   데모 spec v0.2.1 §5.4 (Phase 0 ground truth)
 
 set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# 인자 파싱
+# ---------------------------------------------------------------------------
+DYNAMIC_MODE=false
+for arg in "$@"; do
+    case "$arg" in
+        --dynamic) DYNAMIC_MODE=true ;;
+    esac
+done
 
 # ---------------------------------------------------------------------------
 # 경로 설정
@@ -264,58 +284,245 @@ if file_contains "${HEARTBEAT_GO}" "otlp_json"; then
 fi
 
 # ---------------------------------------------------------------------------
-# §6. 동적 검증 — Docker 기동 시도 (현재 구현 범위 기반 SKIP 정책)
+# §6. 동적 검증 — --dynamic 인자 있을 때만 실제 기동
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== §6 동적 검증 (Docker) ==="
 
-# Docker 가용성 확인
-DOCKER_OK=false
-if docker info --format "{{.ServerVersion}}" > /dev/null 2>&1; then
-    DOCKER_VER=$(docker info --format "{{.ServerVersion}}" 2>/dev/null)
-    log_info "Docker 데몬 가용 (버전: ${DOCKER_VER})"
-    DOCKER_OK=true
+# 동적 모드가 아닐 경우 SKIP
+if [ "${DYNAMIC_MODE}" = "false" ]; then
+    log_skip "동적 E2E 기동 시나리오: --dynamic 인자 없음 — 정적+유닛 검증만 수행. 동적 기동은 --dynamic 인자 전달 시 실행됨."
 else
-    log_info "Docker 데몬 불가 — 동적 검증 전체 SKIP"
-fi
+    # --dynamic 모드: 실제 기동 오케스트레이션
+    echo "[INFO] --dynamic 모드 활성 — 실제 인프라/서비스 기동 시작"
 
-if [ "${DOCKER_OK}" = "true" ]; then
-    # §6-A: infra 기동 상태 확인 (현재 실행 중인지)
-    COMPOSE_FILE="${INFRA_DIR}/docker-compose.yml"
-    KAFKA_RUNNING=$(docker compose -f "${COMPOSE_FILE}" ps --status running --format json 2>/dev/null | grep -c "kafka" || true)
-
-    if [ "${KAFKA_RUNNING}" -gt 0 ]; then
-        log_info "infra: kafka 컨테이너 이미 실행 중"
+    # Docker 가용성 확인
+    if ! docker info --format "{{.ServerVersion}}" > /dev/null 2>&1; then
+        log_fail "Docker 데몬 불가 — 동적 검증 전체 SKIP"
     else
-        log_info "infra: kafka 미기동 상태"
-    fi
+        DOCKER_VER=$(docker info --format "{{.ServerVersion}}" 2>/dev/null)
+        log_info "Docker 데몬 가용 (버전: ${DOCKER_VER})"
 
-    # §6-B: 데모 end-to-end 시나리오 (AGENT_STARTED → SCRIPT_JOB → JOB_RESULT → AGENT_STOPPED)
-    #   현재 hub/script-agent 데모 skeleton의 구현 완료 수준 확인:
-    #   - heartbeat 파이프라인(§1~§3 정적 검증) : 구현됨
-    #   - AGENT_STARTED audit 이벤트 : AuditConsumer 코드 존재 여부 확인
-    AUDIT_CONSUMER="${HUB_DIR}/src/main/java/com/monitoring/hub/ingest/audit/AuditConsumer.java"
-    if [ -f "${AUDIT_CONSUMER}" ]; then
-        log_info "hub/AuditConsumer.java 존재 — AGENT_STARTED 이벤트 처리 코드 있음"
-    else
-        log_info "hub/AuditConsumer.java 없음"
-    fi
+        # 임시 작업 폴더 — script-agent 상태 파일 우회용
+        RUN_TMP="${SCRIPT_DIR}/.run-tmp"
+        mkdir -p "${RUN_TMP}/state"
 
-    #   - SCRIPT_JOB / JOB_RESULT 완전 종단 루프 : script-agent job runner 여부 확인
-    AGENT_JOB_DIR="${AGENT_DIR}/internal/job"
-    if [ -d "${AGENT_JOB_DIR}" ]; then
-        log_info "script-agent/internal/job 디렉터리 존재 — Job runner 코드 있음"
-    else
-        log_info "script-agent/internal/job 없음"
-    fi
+        HUB_RUN_LOG="${RESULTS_DIR}/${TIMESTAMP}-hub-run.log"
+        AGENT_RUN_LOG="${RESULTS_DIR}/${TIMESTAMP}-agent-run.log"
+        COMPOSE_FILE="${INFRA_DIR}/docker-compose.yml"
 
-    # 실제 동적 기동 검증 (infra → hub → agent → 이벤트 확인)은
-    # hub가 standalone 모드로 Kafka 없이 기동되지 않거나 (EmbeddedKafka 미설정),
-    # script-agent가 실제 Collector endpoint를 요구하므로 별도 오케스트레이션이 필요하다.
-    # 현재 baseline에서는 정적 검증으로 ADR-0002 컷오버 정합을 검증하고,
-    # 동적 기동 시나리오는 SKIP으로 기록한다.
-    log_skip "동적 E2E 기동 시나리오 (infra up → hub run → agent run → 이벤트 수신 확인): 현 baseline은 정적 검증만 수행. 동적 기동 시나리오는 인프라·서비스 기동 오케스트레이션 완성 후 활성화 필요."
-    add_blocker "동적 E2E 시나리오(infra/hub/agent 실제 기동·이벤트 확인)는 이번 baseline에 포함되지 않음 — 활성화 조건: hub standalone 기동 가능(EmbeddedKafka 또는 실 Kafka), script-agent OTel Collector endpoint 연결 가능. 사람이 활성화 여부를 결정해야 함."
+        HUB_PID=""
+        AGENT_PID=""
+        DYNAMIC_STARTED=false
+
+        # Windows 프로세스 트리 종료 헬퍼.
+        # Git Bash의 $!는 MSYS PID라서 `kill`은 그 PID만 죽이고, mvn/go run이
+        # fork한 실제 JVM(HubApplication)·agent.exe는 MSYS 트리 밖이라 살아남는다
+        # (→ 포트 8080 점유 잔존 → 다음 run 기동 실패). MSYS가 노출하는
+        # /proc/<msys_pid>/winpid로 Windows PID를 얻어 `taskkill //T //F`로
+        # 트리 전체(fork된 자식 포함)를 강제 종료한다. (//는 MSYS 경로 변환 회피용)
+        win_tree_kill() {
+            local msys_pid="$1"
+            [ -z "${msys_pid}" ] && return 0
+            local winpid
+            winpid=$(cat "/proc/${msys_pid}/winpid" 2>/dev/null || true)
+            if [ -n "${winpid}" ]; then
+                taskkill //PID "${winpid}" //T //F >/dev/null 2>&1 || true
+            fi
+            kill "${msys_pid}" 2>/dev/null || true
+        }
+
+        # 포트 소유자 직접 종료.
+        # spring-boot:run이 fork한 HubApplication은 mvn 종료 시 재부모화되어
+        # win_tree_kill의 트리 밖으로 빠진다(→ 8080 점유 잔존). 포트 소유 PID를
+        # PowerShell로 직접 찾아 taskkill하는 것이 유일하게 확실한 방법이다.
+        kill_port_owner() {
+            local port="$1"
+            local pid
+            pid=$(powershell -NoProfile -Command \
+                "(Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue).OwningProcess" \
+                2>/dev/null | tr -d '\r' | grep -E '^[0-9]+$' | head -1 || true)
+            if [ -n "${pid}" ]; then
+                taskkill //PID "${pid}" //T //F >/dev/null 2>&1 || true
+            fi
+        }
+
+        # teardown — EXIT trap에 등록 (어떤 실패에서도 정리 보장)
+        teardown() {
+            echo "[INFO] teardown 시작..."
+            # agent 종료 (go run launcher 트리 + 재부모화 대비 agent.exe 이미지 net)
+            if [ -n "${AGENT_PID}" ]; then
+                win_tree_kill "${AGENT_PID}"
+                # go run이 fork한 컴파일 바이너리는 항상 agent.exe로 명명된다 — 재부모화분 정리.
+                taskkill //IM agent.exe //F >/dev/null 2>&1 || true
+                echo "[INFO] script-agent (PID=${AGENT_PID}) 종료 + agent.exe net 정리"
+            fi
+            # hub 종료 (subshell/mvn 트리 + 재부모화된 HubApplication은 포트 8080 소유자로 정리)
+            if [ -n "${HUB_PID}" ]; then
+                win_tree_kill "${HUB_PID}"
+                kill_port_owner 8080
+                echo "[INFO] hub (PID=${HUB_PID}) 종료 + 8080 소유자 정리"
+            fi
+            # infra down (동적 기동을 실제로 시작한 경우에만)
+            if [ "${DYNAMIC_STARTED}" = "true" ]; then
+                echo "[INFO] infra docker compose down -v ..."
+                docker compose -f "${COMPOSE_FILE}" down -v 2>/dev/null || true
+            fi
+            # 임시 폴더 삭제
+            rm -rf "${RUN_TMP}" 2>/dev/null || true
+            echo "[INFO] teardown 완료"
+        }
+        trap teardown EXIT
+
+        # §6-1: kafka 클린 시작 — 잔존 볼륨/메시지 제거 후 기동
+        # [버그 B 수정] up -d 전에 down -v로 이전 세션 데이터 완전 제거
+        echo "[INFO] §6-1: 이전 세션 정리 (docker compose down -v)..."
+        docker compose -f "${COMPOSE_FILE}" down -v 2>&1 || true
+        log_info "클린 시작: 이전 kafka 볼륨/토픽 데이터 제거 완료 — offset 0부터 시작 예정"
+
+        echo "[INFO] §6-1: infra docker compose up -d ..."
+        docker compose -f "${COMPOSE_FILE}" up -d 2>&1
+        DYNAMIC_STARTED=true
+
+        # kafka healthy 대기 (healthcheck interval=5s, retries=12, start_period=10s → 최대 90s)
+        echo "[INFO] kafka healthy 대기 (최대 90s)..."
+        KAFKA_WAIT=0
+        KAFKA_READY=false
+        while [ ${KAFKA_WAIT} -lt 90 ]; do
+            # docker inspect 방식으로 체크
+            KAFKA_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' \
+                "$(docker compose -f "${COMPOSE_FILE}" ps -q kafka 2>/dev/null)" 2>/dev/null || echo "unknown")
+            if [ "${KAFKA_HEALTH}" = "healthy" ]; then
+                KAFKA_READY=true
+                log_info "kafka healthy 확인 (${KAFKA_WAIT}s 경과)"
+                break
+            fi
+            sleep 5
+            KAFKA_WAIT=$((KAFKA_WAIT + 5))
+        done
+
+        if [ "${KAFKA_READY}" = "false" ]; then
+            log_fail "kafka가 90s 내 healthy 상태 미도달 — 동적 검증 중단"
+            # teardown은 trap이 처리
+        else
+            # §6-2: hub 기동 (DEBUG 레벨 env로 켜기, hub kafka는 localhost 그대로 — JVM IPv4 선호)
+            echo "[INFO] §6-2: hub 기동 (spring-boot:run + DEBUG env)..."
+            (
+                cd "${HUB_DIR}"
+                LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_KAFKA=DEBUG \
+                LOGGING_LEVEL_COM_MONITORING_HUB_INGEST_HEARTBEAT=DEBUG \
+                mvn spring-boot:run --no-transfer-progress 2>&1
+            ) > "${HUB_RUN_LOG}" 2>&1 &
+            HUB_PID=$!
+            log_info "hub PID=${HUB_PID}, 로그=${HUB_RUN_LOG}"
+
+            # hub /health 폴링 (최대 120s — Spring 부팅+mvn)
+            echo "[INFO] hub /health 폴링 (최대 120s)..."
+            HUB_WAIT=0
+            HUB_READY=false
+            while [ ${HUB_WAIT} -lt 120 ]; do
+                if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
+                    HUB_READY=true
+                    log_info "hub /health 응답 확인 (${HUB_WAIT}s 경과)"
+                    break
+                fi
+                # hub 프로세스가 죽었는지 확인
+                if ! kill -0 "${HUB_PID}" 2>/dev/null; then
+                    log_fail "hub 프로세스가 예기치 않게 종료됨 (PID=${HUB_PID})"
+                    break
+                fi
+                sleep 5
+                HUB_WAIT=$((HUB_WAIT + 5))
+            done
+
+            if [ "${HUB_READY}" = "false" ]; then
+                log_fail "hub가 120s 내 /health 응답 없음 — 동적 검증 중단"
+                HUB_TAIL=$(tail -20 "${HUB_RUN_LOG}" 2>/dev/null || echo "로그 없음")
+                log_info "hub 로그 tail(20): ${HUB_TAIL}"
+            else
+                # §6-3: script-agent 기동
+                # [버그 A 수정] localhost → 127.0.0.1 명시로 Go IPv6([::1]) 해석 우회
+                echo "[INFO] §6-3: script-agent 기동 (OTLP=http://127.0.0.1:14318, KAFKA=127.0.0.1:9092, interval=2s)..."
+                (
+                    cd "${AGENT_DIR}"
+                    OTLP_ENDPOINT=http://127.0.0.1:14318 \
+                    KAFKA_BROKERS=127.0.0.1:9092 \
+                    HEARTBEAT_INTERVAL_SECONDS=2 \
+                    AGENT_ID_PATH="${RUN_TMP}/.agent_id" \
+                    LOG_STATE_DIR="${RUN_TMP}/state" \
+                    go run ./cmd/agent 2>&1
+                ) > "${AGENT_RUN_LOG}" 2>&1 &
+                AGENT_PID=$!
+                log_info "script-agent PID=${AGENT_PID}, 로그=${AGENT_RUN_LOG}"
+
+                # §6-4: 판정 — hub-run.log 폴링 (최대 75s)
+                # PASS 조건:
+                #   (1) heartbeats 토픽 실제 레코드 수신 라인 출현
+                #       패턴: ntainer#1-0-C-1 스레드에서 KafkaMessageListenerContainer가 출력한
+                #       "Received: N records" (N >= 1). 클린 시작이므로 최초 수신은 agent 발행분.
+                #       제외: KafkaListenerAnnotationBeanPostProcessor / partitions assigned /
+                #              Subscribed to topic / 0 records (빈 poll)
+                #   (2) "failed to decode heartbeat payload" WARN 부재
+                #   (3) "no agent.heartbeat data points" DEBUG 부재
+                #
+                # [버그 C 수정] 기존 grep이 초기화 라인에 오인 매칭하던 문제 해결:
+                #   - 실제 레코드 수신: "ntainer#1-0-C-1.*KafkaMessageListenerContainer.*Received: [1-9]"
+                #   - 클린 시작 후 agent agent 가 보낸 메시지만 수신되므로 N>=1이면 실제 수신
+                echo "[INFO] §6-4: hub 로그 폴링으로 heartbeat 수신 판정 (최대 75s)..."
+                POLL_WAIT=0
+                HEARTBEAT_RECEIVED=false
+                RECV_LINE=""
+                while [ ${POLL_WAIT} -lt 75 ]; do
+                    # ntainer#1-0-C-1: heartbeats 컨테이너 스레드 (경험적 확인)
+                    # "Received: N records" (N>=1) 라인만 양성
+                    RECV_LINE=$(grep -E "ntainer#1-0-C-1.*KafkaMessageListenerContainer.*Received: [1-9][0-9]* records" \
+                        "${HUB_RUN_LOG}" 2>/dev/null | head -1 || true)
+                    if [ -n "${RECV_LINE}" ]; then
+                        HEARTBEAT_RECEIVED=true
+                        break
+                    fi
+                    sleep 3
+                    POLL_WAIT=$((POLL_WAIT + 3))
+                done
+
+                if [ "${HEARTBEAT_RECEIVED}" = "true" ]; then
+                    # 부재 조건 확인
+                    # [버그 수정] grep -c는 매치 0건일 때 "0"을 출력하면서 exit 1을 반환한다.
+                    # 기존 `|| echo "0"`는 grep이 찍은 "0"에 더해 한 번 더 "0"을 찍어
+                    # 변수값이 "0\n0"(멀티라인)이 되고 정상 비교가 깨졌다.
+                    # `|| true`로 exit 0만 보장하면 grep이 출력한 단일 "0"이 그대로 들어간다.
+                    DECODE_FAIL=$(grep -c "failed to decode heartbeat payload" "${HUB_RUN_LOG}" 2>/dev/null || true)
+                    NO_DATAPOINTS=$(grep -c "no agent.heartbeat data points" "${HUB_RUN_LOG}" 2>/dev/null || true)
+                    DECODE_FAIL=${DECODE_FAIL:-0}
+                    NO_DATAPOINTS=${NO_DATAPOINTS:-0}
+
+                    if [ "${DECODE_FAIL}" = "0" ] && [ "${NO_DATAPOINTS}" = "0" ]; then
+                        log_pass "§6 동적 E2E: heartbeat 수신 + 디코드 성공 확인. 수신 라인: [${RECV_LINE}]"
+                        # 보조 코로보레이션: hub UI agent ONLINE 확인 (판정 게이트 아님)
+                        UI_CHECK=$(curl -sf http://localhost:8080/ 2>/dev/null | grep -i "ONLINE\|online" | head -1 || true)
+                        if [ -n "${UI_CHECK}" ]; then
+                            log_info "코로보레이션: hub UI(/)에서 ONLINE 상태 감지 — [${UI_CHECK}]"
+                        else
+                            log_info "코로보레이션: hub UI(/) ONLINE 상태 미감지 (판정 게이트 아님)"
+                        fi
+                    else
+                        log_fail "§6 동적 E2E: heartbeat 수신됐으나 디코드 실패 감지. decode_fail=${DECODE_FAIL}, no_datapoints=${NO_DATAPOINTS}. 수신 라인: [${RECV_LINE}]"
+                        # 관련 로그 라인 기록
+                        FAIL_LINES=$(grep -E "failed to decode|no agent.heartbeat" "${HUB_RUN_LOG}" 2>/dev/null | head -5 || true)
+                        log_info "디코드 실패 로그: ${FAIL_LINES}"
+                    fi
+                else
+                    log_fail "§6 동적 E2E: 75s 내 heartbeats 토픽 실제 레코드 수신 라인 미출현 — timeout"
+                    # 진단용 로그 tail
+                    HUB_LAST=$(tail -15 "${HUB_RUN_LOG}" 2>/dev/null || echo "로그 없음")
+                    AGENT_LAST=$(tail -10 "${AGENT_RUN_LOG}" 2>/dev/null || echo "로그 없음")
+                    log_info "hub 로그 마지막 15줄: ${HUB_LAST}"
+                    log_info "agent 로그 마지막 10줄: ${AGENT_LAST}"
+                fi
+            fi
+        fi
+        # teardown은 EXIT trap이 처리
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -332,12 +539,17 @@ elif [ ${FAIL} -gt 0 ]; then
 fi
 [ ${PASS} -eq 0 ] && [ ${FAIL} -eq 0 ] && OVERALL_STATUS="blocked"
 
+# 동적 모드 여부를 메타에 기록
+DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
+[ "${DYNAMIC_MODE}" = "true" ] && DYNAMIC_LABEL="활성 (--dynamic 전달)"
+
 {
     echo "# E2E 검증 결과 — ${TIMESTAMP}"
     echo ""
     echo "**실행일시**: $(date '+%Y-%m-%d %H:%M:%S %Z')"
     echo "**종합 상태**: ${OVERALL_STATUS^^}"
     echo "**PASS**: ${PASS}  **FAIL**: ${FAIL}  **SKIP**: ${SKIP}"
+    echo "**동적 모드**: ${DYNAMIC_LABEL}"
     echo ""
     echo "## 검증 범위"
     echo ""
@@ -346,7 +558,14 @@ fi
     echo "- envelope 예외 위상 (heartbeats-topic: OTLP 위임군 → envelope 헤더 검사 없음)"
     echo "- hub mvn test / script-agent go test ./..."
     echo "- 주석 drift 관측"
-    echo "- 동적 E2E 시나리오 (Docker)"
+    echo "- 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
+    echo ""
+    echo "## v3 하네스 수정 사항"
+    echo ""
+    echo "- 버그 A (IPv6 우회): script-agent OTLP_ENDPOINT=http://127.0.0.1:14318, KAFKA_BROKERS=127.0.0.1:9092 명시"
+    echo "- 버그 B (kafka 클린 시작): up -d 전 down -v 실행으로 잔존 볼륨/메시지 제거"
+    echo "- 버그 C (grep 정교화): ntainer#1-0-C-1 스레드의 'Received: N records' (N>=1) 패턴으로 실제 수신만 판정"
+    echo "  - 제외: KafkaListenerAnnotationBeanPostProcessor / partitions assigned / Subscribed to topic / 0 records"
     echo ""
     echo "## 발견 사항"
     echo ""
@@ -366,10 +585,14 @@ fi
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v1)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v3, --dynamic opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"
+    if [ "${DYNAMIC_MODE}" = "true" ]; then
+        echo "- hub 런타임 로그: \`e2e/results/${TIMESTAMP}-hub-run.log\`"
+        echo "- agent 런타임 로그: \`e2e/results/${TIMESTAMP}-agent-run.log\`"
+    fi
 } > "${RESULT_FILE}"
 
 echo ""
