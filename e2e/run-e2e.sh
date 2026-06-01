@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v3)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v4)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
@@ -16,6 +16,12 @@
 #   - 버그 B (kafka 클린 시작): up -d 전 down -v 실행으로 잔존 볼륨/메시지 제거
 #   - 버그 C (grep 오인 매칭): 초기화 로그 제외, 실제 ConsumerRecord 수신 라인
 #     (ntainer#1-0-C-1.*KafkaMessageListenerContainer.*Received: [1-9])만 양성으로 판정
+#
+# v4 변경사항 (코드 리뷰 반영 — 안전성):
+#   - ① compose 프로젝트를 'monitoring-e2e'로 격리 → down -v가 형제 infra 볼륨 불간섭
+#   - ② 무차별 종료 제거 → hub=/health 시점 8080 소유 PID, agent=기동 후 신규 agent.exe PID만 정밀 종료
+#   - ③ DYNAMIC_STARTED를 up -d 직전에 설정 → 부분 실패 시에도 trap이 infra 정리
+#   - ④ Docker 불가 메시지를 FAIL 의미로 정정(SKIP 표기 제거)
 #
 # 사용:
 #   ./run-e2e.sh            # 정적+유닛만 (§1~§5)
@@ -298,7 +304,7 @@ else
 
     # Docker 가용성 확인
     if ! docker info --format "{{.ServerVersion}}" > /dev/null 2>&1; then
-        log_fail "Docker 데몬 불가 — 동적 검증 전체 SKIP"
+        log_fail "Docker 데몬 불가 — --dynamic 모드는 Docker 필수이므로 동적 검증 수행 불가(FAIL)."
     else
         DOCKER_VER=$(docker info --format "{{.ServerVersion}}" 2>/dev/null)
         log_info "Docker 데몬 가용 (버전: ${DOCKER_VER})"
@@ -311,16 +317,26 @@ else
         AGENT_RUN_LOG="${RESULTS_DIR}/${TIMESTAMP}-agent-run.log"
         COMPOSE_FILE="${INFRA_DIR}/docker-compose.yml"
 
+        # [수정 ①] 형제 infra(기본 compose 프로젝트명 'infra')의 볼륨을 건드리지 않도록
+        # E2E 전용 프로젝트명으로 격리한다. 이로써 down -v는 이 e2e 스택의 볼륨만 삭제하고
+        # 개발자가 따로 띄운 infra 프로젝트의 데이터는 절대 건드리지 않는다.
+        # (단 호스트 포트 9092/14318은 공유 — 기존 infra가 가동 중이면 포트 충돌로 기동 실패할 수 있음.)
+        E2E_PROJECT="monitoring-e2e"
+        dc() { docker compose -p "${E2E_PROJECT}" -f "${COMPOSE_FILE}" "$@"; }
+
         HUB_PID=""
         AGENT_PID=""
+        HUB_APP_WINPID=""     # /health 시점의 8080 소유 PID(=이번 run의 hub) — teardown 정밀 종료용
+        AGENT_APP_WINPID=""   # 기동 후 새로 등장한 agent.exe PID(=이번 run의 agent) — teardown 정밀 종료용
         DYNAMIC_STARTED=false
 
-        # Windows 프로세스 트리 종료 헬퍼.
-        # Git Bash의 $!는 MSYS PID라서 `kill`은 그 PID만 죽이고, mvn/go run이
-        # fork한 실제 JVM(HubApplication)·agent.exe는 MSYS 트리 밖이라 살아남는다
-        # (→ 포트 8080 점유 잔존 → 다음 run 기동 실패). MSYS가 노출하는
-        # /proc/<msys_pid>/winpid로 Windows PID를 얻어 `taskkill //T //F`로
-        # 트리 전체(fork된 자식 포함)를 강제 종료한다. (//는 MSYS 경로 변환 회피용)
+        # ── Windows 프로세스 종료 헬퍼 (Git Bash/MSYS) ──
+        # $!는 MSYS PID라 `kill`은 그 PID만 죽이고, mvn/go run이 fork한 실제
+        # JVM(HubApplication)·agent.exe는 트리·재부모화로 살아남는다(→ 8080 점유 잔존).
+        # 그래서 (a) launcher 트리는 win_tree_kill로 정리하고, (b) 실제 앱은 기동 시점에
+        # 포착한 그 PID만 정밀 종료한다([수정 ②] — 임의 동명/동포트 프로세스 무차별 종료 방지).
+
+        # launcher(서브셸/mvn/go run) 트리 종료: /proc/<msys_pid>/winpid → taskkill //T
         win_tree_kill() {
             local msys_pid="$1"
             [ -z "${msys_pid}" ] && return 0
@@ -332,41 +348,43 @@ else
             kill "${msys_pid}" 2>/dev/null || true
         }
 
-        # 포트 소유자 직접 종료.
-        # spring-boot:run이 fork한 HubApplication은 mvn 종료 시 재부모화되어
-        # win_tree_kill의 트리 밖으로 빠진다(→ 8080 점유 잔존). 포트 소유 PID를
-        # PowerShell로 직접 찾아 taskkill하는 것이 유일하게 확실한 방법이다.
-        kill_port_owner() {
-            local port="$1"
-            local pid
-            pid=$(powershell -NoProfile -Command \
-                "(Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue).OwningProcess" \
-                2>/dev/null | tr -d '\r' | grep -E '^[0-9]+$' | head -1 || true)
-            if [ -n "${pid}" ]; then
-                taskkill //PID "${pid}" //T //F >/dev/null 2>&1 || true
-            fi
+        # 특정 포트를 LISTEN 중인 PID 1개 반환(없으면 빈 문자열) — '우리 hub' 식별용.
+        resolve_port_owner() {
+            powershell -NoProfile -Command \
+                "(Get-NetTCPConnection -LocalPort $1 -State Listen -ErrorAction SilentlyContinue).OwningProcess" \
+                2>/dev/null | tr -d '\r' | grep -E '^[0-9]+$' | head -1 || true
+        }
+
+        # 현재 살아있는 agent.exe(이미지명) PID 목록을 공백 구분으로 반환 — 신규 PID diff용.
+        list_agent_pids() {
+            powershell -NoProfile -Command \
+                "(Get-Process agent -ErrorAction SilentlyContinue).Id" \
+                2>/dev/null | tr -d '\r' | grep -E '^[0-9]+$' | tr '\n' ' ' || true
         }
 
         # teardown — EXIT trap에 등록 (어떤 실패에서도 정리 보장)
         teardown() {
             echo "[INFO] teardown 시작..."
-            # agent 종료 (go run launcher 트리 + 재부모화 대비 agent.exe 이미지 net)
+            # agent: 이번 run이 포착한 실제 바이너리 PID만 정밀 종료 + launcher 트리 ([수정 ②])
+            if [ -n "${AGENT_APP_WINPID}" ]; then
+                taskkill //PID "${AGENT_APP_WINPID}" //T //F >/dev/null 2>&1 || true
+            fi
             if [ -n "${AGENT_PID}" ]; then
                 win_tree_kill "${AGENT_PID}"
-                # go run이 fork한 컴파일 바이너리는 항상 agent.exe로 명명된다 — 재부모화분 정리.
-                taskkill //IM agent.exe //F >/dev/null 2>&1 || true
-                echo "[INFO] script-agent (PID=${AGENT_PID}) 종료 + agent.exe net 정리"
+                echo "[INFO] script-agent 종료 (app winpid=${AGENT_APP_WINPID:-none})"
             fi
-            # hub 종료 (subshell/mvn 트리 + 재부모화된 HubApplication은 포트 8080 소유자로 정리)
+            # hub: /health 시점에 포착한 8080 소유 PID(=이번 run hub)만 종료 + launcher 트리 ([수정 ②])
+            if [ -n "${HUB_APP_WINPID}" ]; then
+                taskkill //PID "${HUB_APP_WINPID}" //T //F >/dev/null 2>&1 || true
+            fi
             if [ -n "${HUB_PID}" ]; then
                 win_tree_kill "${HUB_PID}"
-                kill_port_owner 8080
-                echo "[INFO] hub (PID=${HUB_PID}) 종료 + 8080 소유자 정리"
+                echo "[INFO] hub 종료 (app winpid=${HUB_APP_WINPID:-none})"
             fi
-            # infra down (동적 기동을 실제로 시작한 경우에만)
+            # infra: e2e 전용 프로젝트만 정리 — 형제 infra 볼륨 불간섭 ([수정 ①])
             if [ "${DYNAMIC_STARTED}" = "true" ]; then
-                echo "[INFO] infra docker compose down -v ..."
-                docker compose -f "${COMPOSE_FILE}" down -v 2>/dev/null || true
+                echo "[INFO] infra(${E2E_PROJECT}) docker compose down -v ..."
+                dc down -v 2>/dev/null || true
             fi
             # 임시 폴더 삭제
             rm -rf "${RUN_TMP}" 2>/dev/null || true
@@ -374,15 +392,17 @@ else
         }
         trap teardown EXIT
 
-        # §6-1: kafka 클린 시작 — 잔존 볼륨/메시지 제거 후 기동
-        # [버그 B 수정] up -d 전에 down -v로 이전 세션 데이터 완전 제거
-        echo "[INFO] §6-1: 이전 세션 정리 (docker compose down -v)..."
-        docker compose -f "${COMPOSE_FILE}" down -v 2>&1 || true
-        log_info "클린 시작: 이전 kafka 볼륨/토픽 데이터 제거 완료 — offset 0부터 시작 예정"
+        # §6-1: kafka 클린 시작 — e2e 전용 프로젝트의 잔존 볼륨/메시지만 제거 후 기동
+        # [버그 B 수정 + 수정 ①] dc()로 e2e 전용 프로젝트에 한정 → 형제 infra 볼륨 불간섭
+        echo "[INFO] §6-1: 이전 e2e 세션 정리 (${E2E_PROJECT} down -v)..."
+        dc down -v 2>&1 || true
+        log_info "클린 시작: e2e 전용 kafka 볼륨/토픽 제거 완료 — offset 0부터 시작 예정"
 
-        echo "[INFO] §6-1: infra docker compose up -d ..."
-        docker compose -f "${COMPOSE_FILE}" up -d 2>&1
+        # [수정 ③] up 호출 '직전'부터 cleanup 대상으로 표시 — up이 일부 컨테이너만 만들고
+        # 실패(set -e 종료)해도 trap teardown이 DYNAMIC_STARTED=true를 보고 down -v로 정리한다.
+        echo "[INFO] §6-1: infra docker compose up -d (${E2E_PROJECT})..."
         DYNAMIC_STARTED=true
+        dc up -d 2>&1
 
         # kafka healthy 대기 (healthcheck interval=5s, retries=12, start_period=10s → 최대 90s)
         echo "[INFO] kafka healthy 대기 (최대 90s)..."
@@ -391,7 +411,7 @@ else
         while [ ${KAFKA_WAIT} -lt 90 ]; do
             # docker inspect 방식으로 체크
             KAFKA_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' \
-                "$(docker compose -f "${COMPOSE_FILE}" ps -q kafka 2>/dev/null)" 2>/dev/null || echo "unknown")
+                "$(dc ps -q kafka 2>/dev/null)" 2>/dev/null || echo "unknown")
             if [ "${KAFKA_HEALTH}" = "healthy" ]; then
                 KAFKA_READY=true
                 log_info "kafka healthy 확인 (${KAFKA_WAIT}s 경과)"
@@ -424,6 +444,12 @@ else
                 if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
                     HUB_READY=true
                     log_info "hub /health 응답 확인 (${HUB_WAIT}s 경과)"
+                    # [수정 ②] 지금 8080을 LISTEN 중인 PID = 방금 우리가 띄운 hub.
+                    # 이 PID만 teardown에서 정밀 종료한다(임의 8080 점유 프로세스 무차별 종료 방지).
+                    HUB_APP_WINPID="$(resolve_port_owner 8080)"
+                    if [ -n "${HUB_APP_WINPID}" ]; then
+                        log_info "hub 앱 winpid=${HUB_APP_WINPID} (8080 소유 — teardown 정밀 종료 대상)"
+                    fi
                     break
                 fi
                 # hub 프로세스가 죽었는지 확인
@@ -442,6 +468,9 @@ else
             else
                 # §6-3: script-agent 기동
                 # [버그 A 수정] localhost → 127.0.0.1 명시로 Go IPv6([::1]) 해석 우회
+                # [수정 ②] 기동 전 기존 agent.exe PID 집합을 기록 → 기동 후 새로 등장한
+                # PID만 '이번 run이 띄운 agent'로 식별(무관한 agent.exe 무차별 종료 방지).
+                AGENT_PIDS_BEFORE="$(list_agent_pids)"
                 echo "[INFO] §6-3: script-agent 기동 (OTLP=http://127.0.0.1:14318, KAFKA=127.0.0.1:9092, interval=2s)..."
                 (
                     cd "${AGENT_DIR}"
@@ -454,6 +483,23 @@ else
                 ) > "${AGENT_RUN_LOG}" 2>&1 &
                 AGENT_PID=$!
                 log_info "script-agent PID=${AGENT_PID}, 로그=${AGENT_RUN_LOG}"
+
+                # [수정 ②] go run이 컴파일·fork한 실제 agent.exe(재부모화돼 launcher 종료로는
+                # 안 죽음)의 PID를 포착 — 기동 전 집합에 없던 새 PID만 우리 것으로 식별.
+                ACAP=0
+                while [ ${ACAP} -lt 20 ]; do
+                    for p in $(list_agent_pids); do
+                        case " ${AGENT_PIDS_BEFORE} " in
+                            *" ${p} "*) ;;
+                            *) AGENT_APP_WINPID="${p}" ;;
+                        esac
+                    done
+                    if [ -n "${AGENT_APP_WINPID}" ]; then break; fi
+                    sleep 2; ACAP=$((ACAP + 2))
+                done
+                if [ -n "${AGENT_APP_WINPID}" ]; then
+                    log_info "script-agent 앱 winpid=${AGENT_APP_WINPID} (teardown 정밀 종료 대상)"
+                fi
 
                 # §6-4: 판정 — hub-run.log 폴링 (최대 75s)
                 # PASS 조건:
@@ -560,12 +606,19 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "- 주석 drift 관측"
     echo "- 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
     echo ""
-    echo "## v3 하네스 수정 사항"
+    echo "## 하네스 수정 이력"
     echo ""
+    echo "v3 (실 기동 안정화):"
     echo "- 버그 A (IPv6 우회): script-agent OTLP_ENDPOINT=http://127.0.0.1:14318, KAFKA_BROKERS=127.0.0.1:9092 명시"
     echo "- 버그 B (kafka 클린 시작): up -d 전 down -v 실행으로 잔존 볼륨/메시지 제거"
     echo "- 버그 C (grep 정교화): ntainer#1-0-C-1 스레드의 'Received: N records' (N>=1) 패턴으로 실제 수신만 판정"
     echo "  - 제외: KafkaListenerAnnotationBeanPostProcessor / partitions assigned / Subscribed to topic / 0 records"
+    echo ""
+    echo "v4 (안전성 — 코드 리뷰 반영):"
+    echo "- 수정 ①: compose 프로젝트를 '${E2E_PROJECT}'로 격리 → down -v가 형제 infra 볼륨을 건드리지 않음"
+    echo "- 수정 ②: 무차별 종료 제거 — hub는 /health 시점 8080 소유 PID, agent는 기동 후 신규 agent.exe PID만 정밀 종료"
+    echo "- 수정 ③: DYNAMIC_STARTED를 up -d 직전에 설정 → 부분 실패 시에도 trap이 infra 정리"
+    echo "- 수정 ④: Docker 불가 시 메시지를 FAIL 의미로 정정(SKIP 표기 제거)"
     echo ""
     echo "## 발견 사항"
     echo ""
@@ -585,7 +638,7 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v3, --dynamic opt-in)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v4, --dynamic opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"
