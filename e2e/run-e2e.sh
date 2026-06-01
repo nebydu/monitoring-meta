@@ -425,6 +425,14 @@ else
             log_fail "kafka가 90s 내 healthy 상태 미도달 — 동적 검증 중단"
             # teardown은 trap이 처리
         else
+            # [리뷰 ① 반영] hub 기동 '전' 8080 소유자를 기록한다. /health 200이 우리 hub가
+            # 아니라 기존에 8080에 떠 있던 다른 서비스에서 올 수 있으므로, 기동 후 '새로 8080을
+            # 잡은 PID'만 우리 hub로 인정한다(기존 PID는 readiness로도, teardown 대상으로도 제외).
+            HUB_OWNER_PRE="$(resolve_port_owner 8080)"
+            if [ -n "${HUB_OWNER_PRE}" ]; then
+                log_info "주의: hub 기동 전 이미 8080 점유(PID=${HUB_OWNER_PRE}) — 이 PID는 우리 hub로 인정하지 않고 teardown 대상에서도 제외"
+            fi
+
             # §6-2: hub 기동 (DEBUG 레벨 env로 켜기, hub kafka는 localhost 그대로 — JVM IPv4 선호)
             echo "[INFO] §6-2: hub 기동 (spring-boot:run + DEBUG env)..."
             (
@@ -442,15 +450,17 @@ else
             HUB_READY=false
             while [ ${HUB_WAIT} -lt 120 ]; do
                 if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
-                    HUB_READY=true
-                    log_info "hub /health 응답 확인 (${HUB_WAIT}s 경과)"
-                    # [수정 ②] 지금 8080을 LISTEN 중인 PID = 방금 우리가 띄운 hub.
-                    # 이 PID만 teardown에서 정밀 종료한다(임의 8080 점유 프로세스 무차별 종료 방지).
-                    HUB_APP_WINPID="$(resolve_port_owner 8080)"
-                    if [ -n "${HUB_APP_WINPID}" ]; then
-                        log_info "hub 앱 winpid=${HUB_APP_WINPID} (8080 소유 — teardown 정밀 종료 대상)"
+                    # [수정 ② + 리뷰 ①] 8080을 '새로' 잡은 PID(기동 전 소유자와 다른)만 우리 hub로
+                    # 인정한다. 기존 서비스가 8080에서 /health 200을 주더라도 그 PID는 잡지 않는다
+                    # (readiness 미인정 → 계속 대기 → 우리 hub가 바인딩 실패하면 timeout/프로세스 종료로 FAIL).
+                    CUR_OWNER="$(resolve_port_owner 8080)"
+                    if [ -n "${CUR_OWNER}" ] && [ "${CUR_OWNER}" != "${HUB_OWNER_PRE}" ]; then
+                        HUB_READY=true
+                        HUB_APP_WINPID="${CUR_OWNER}"
+                        log_info "hub /health 응답 확인 (${HUB_WAIT}s 경과), 앱 winpid=${HUB_APP_WINPID} (신규 8080 소유 — teardown 정밀 종료 대상)"
+                        break
                     fi
-                    break
+                    # 소유자 미확인 또는 기존 서비스(=우리 hub 아직 미바인딩) → 계속 대기
                 fi
                 # hub 프로세스가 죽었는지 확인
                 if ! kill -0 "${HUB_PID}" 2>/dev/null; then
