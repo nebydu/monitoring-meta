@@ -1,10 +1,19 @@
 # ADR-0005: Kafka 토픽 명명 규칙 + envelope/재명명 실행 선후
 
-- 상태(Status): **Proposed (제안)** — D-4(2) 부분만 RESOLVED, D-4(1) 구체 컨벤션은 비준 대기
+- 상태(Status): **Proposed (제안)** — 전체 ADR은 Proposed이며, 부분 결정 D-4(2)만 RESOLVED, D-4(1) 구체 컨벤션은 비준 대기
 - 대상 Phase: Phase 1
 - 근거 정본: 통합본 v0.9 §4.4.1(신규 시스템 Kafka 토픽) / §4.4.2(메시징 매트릭스 "Topic 네이밍") / §8.3 ADR#4·#5·#6, `docs/kafka-payloads.md`(현행 잠정 토픽명), `docs/envelope.md` §4(envelope 4종 적용 대상)
 - 관련 ROADMAP: `docs/phase1/ROADMAP_PHASE1_v0_3.md` §7(8토픽 계약 매트릭스)·§13 Track 4(T4-1)·§17 D-4
 - 영향 repo: hub, script-agent, infra, monitoring-meta
+
+### Decision status (부분 결정 구조)
+
+| 결정 | 상태 | 일자 | 근거 |
+|---|---|---|---|
+| D-4(2) 실행 선후 (envelope 먼저) | **Accepted / Resolved** | 2026-06-04 | §2.1 (envelope=헤더, 토픽명 독립) |
+| D-4(1) 구체 명명 컨벤션 | **Proposed (비준 대기)** | — | §3 후보 A/B/C |
+
+> 위 표가 본 ADR의 부분 결정 구조다. **전체 ADR 상태(Status) = Proposed**이며, 그 안에서 D-4(2)만 Resolved로 닫혔고 D-4(1)은 비준 대기다. 본 ADR이 `Accepted`로 전환되는 시점은 D-4(1) 구체 명명 컨벤션이 사람 비준으로 닫힐 때다(§5 Consequences).
 
 ---
 

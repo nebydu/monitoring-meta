@@ -8,7 +8,7 @@
 |---|---|---|
 | 작업 ID (work-id) | `phase1-001-envelope-scope` | ROADMAP §16 슬라이스 1 |
 | 대상 repo | monitoring-meta(범위 결정) → hub, script-agent, infra(후속 구현) | 본 문서는 범위/선후 확정 + repo별 작업 분해 |
-| 기준 monitoring-meta commit | `f6697ac840d8f498974c5bb8d14038f93de7fbb3` (작성 시점 정본 — v0.3·envelope·kafka-payloads 포함) | 정본(통합본/envelope/kafka-payloads/ROADMAP v0.3) 고정 시점. 본 handoff·`adr/0005`는 그 다음 커밋에 추가됨. **실행 전 `git rev-parse HEAD`로 최신 full 40자 재확인** |
+| 기준 monitoring-meta commit | `bed89c4` (이 handoff·`adr/0005`·ROADMAP v0.3 D-4 반영이 모두 포함된 커밋 — 완전 재현 가능) | 정본(통합본/envelope/kafka-payloads/ROADMAP v0.3/`adr/0005`) 고정 시점. **실행 전 `git rev-parse HEAD`로 최신 full 40자 재확인** |
 | 작성일 | 2026-06-04 | |
 | 근거 ADR | `adr/0005-topic-naming.md`(D-4(2) RESOLVED: envelope 먼저), ADR#2(heartbeats OTLP 예외) | |
 
