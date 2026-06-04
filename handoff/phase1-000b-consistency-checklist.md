@@ -6,7 +6,7 @@
 |---|---|---|
 | 작업 ID (work-id) | `phase1-000b` | `docs/phase1/checklist.md`(commit edd892c)의 해소·이관본 |
 | target | `meta` | monitoring-meta 내부 정합성 처리(코드 repo 무관) |
-| 기준 monitoring-meta commit | `4940e1a115b911e452f96f0083f1c4dc6ede879f` | v0.3 §1 헤더 pin과 동일 정본 시점 |
+| 기준 monitoring-meta commit | `5d20cf2178c08ec15970b28f766dbbe284725c69` | 본 handoff·`adr/0005` decision status 표·v0.3 해소 반영이 모두 포함된 커밋(완전 재현). v0.3 정본 base pin은 §1의 `4940e1a`로 별도 유지 |
 | 작성일 | 2026-06-05 | |
 | 근거 ADR | `adr/0005-topic-naming.md` | D-4 승격 ADR |
 
