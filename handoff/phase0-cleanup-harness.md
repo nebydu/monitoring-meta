@@ -7,11 +7,10 @@
 | 발행 | monitoring-meta / analyzer |
 | 발행일 | 2026-06-05 |
 | 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup-000-impact.md` |
-| 기준 monitoring-meta commit (full 40자) | `<META_COMMIT_AFTER_STEP3>` |
+| 기준 monitoring-meta commit (full 40자) | `be990c7b936c283d1ad15519fbb9dd6ac7f3deea` |
 | 우선순위 | **낮음** (`.example` 템플릿 — 런타임 직접 영향 없음) |
 
-> **commit pin 주의**: `<META_COMMIT_AFTER_STEP3>`는 자리표시자다. meta가 정리 커밋 후
-> full 40자 해시로 채운다. 실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인.
+> **commit pin 주의**: 위 pin은 phase0-cleanup 정리 커밋에서 채워졌다. 실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인.
 
 ---
 

@@ -7,12 +7,9 @@
 | 발행 | monitoring-meta / analyzer |
 | 발행일 | 2026-06-05 |
 | 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup-000-impact.md` |
-| 기준 monitoring-meta commit (full 40자) | `<META_COMMIT_AFTER_STEP3>` |
+| 기준 monitoring-meta commit (full 40자) | `be990c7b936c283d1ad15519fbb9dd6ac7f3deea` |
 
-> **commit pin 주의**: 위 `<META_COMMIT_AFTER_STEP3>`는 자리표시자다. monitoring-meta가
-> 본 정리 커밋(데모 spec 단일 정본화 + envelope/_TEMPLATE/PROJECT_OVERVIEW repoint)을
-> 마친 뒤 그 full 40자 해시로 채운다. **실행 직전 `git rev-parse HEAD`(monitoring-meta)로
-> 재확인**하고 repoint 경로가 그 commit의 phase0-snapshot 정본을 가리키는지 확인한다.
+> **commit pin 주의**: 위 pin은 phase0-cleanup 정리 커밋(데모 spec 단일 정본화 + ROADMAP/envelope/PROJECT_OVERVIEW/.claude repoint + HANDOFF.md archive 강등)에서 채워졌다. **실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인**하고 repoint 경로가 그 commit의 phase0-snapshot 정본을 가리키는지 확인한다.
 
 ---
 
