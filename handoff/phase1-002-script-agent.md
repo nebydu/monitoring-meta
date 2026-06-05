@@ -1,4 +1,4 @@
-# 작업 spec — phase1-002-script-agent (Track 0 T0-3: envelope 적용 구현 — script-agent/Go)
+# 작업 spec — phase1-002-script-agent (Track 0 — T0-3 산출물 → T0-4 구현 지시 — script-agent/Go)
 
 > 이 handoff는 script-agent(Go) 세션이 받아 구현한다. envelope 적용 **범위**는 phase1-001에서 확정됐고(`handoff/phase1-001-envelope-scope.md`), 본 문서는 script-agent repo에서 **실제 구현할 것만** 한정한다. 코드 작업은 script-agent 세션에서 한다 — meta는 지시서만 쓴다.
 

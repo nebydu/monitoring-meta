@@ -1,4 +1,4 @@
-# phase1-002 영향 분석 — envelope 적용 구현 (Track 0 T0-3)
+# phase1-002 영향 분석 — envelope 적용 (Track 0 — T0-3 산출물 → T0-4 구현 근거)
 
 > 이 문서는 analyzer가 작성한 **영향 분석 노트**다. 결정 문서가 아니라 현황 판정 + repo별 작업 윤곽 + 결정 필요 사안 정리다.
 > phase1-001(`handoff/phase1-001-envelope-scope.md`)이 envelope 적용 **범위**(공통 6 ● / OTLP 2 ✕)를 확정했고, 본 분석은 그 범위 안에서 **지금 실제로 무엇을 구현할지**를 코드 실재 기준으로 한정한다.

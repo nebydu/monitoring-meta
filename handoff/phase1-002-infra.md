@@ -1,4 +1,4 @@
-# 점검 노트 — phase1-002-infra (Track 0 T0-3: envelope 적용 — infra 영향)
+# 점검 노트 — phase1-002-infra (Track 0 — T0-3 산출물 → T0-4 구현 점검 — infra 영향)
 
 > envelope은 **애플리케이션 Kafka 헤더** 규약이라 infra(Collector/broker) 직접 변경은 없다. 이 노트는 infra 세션이 "envelope 때문에 바꿀 게 있나"를 빠르게 확인하기 위한 가벼운 점검 항목이다. 결론: **이번 phase1-002에서 infra 변경 작업은 없다.**
 

@@ -1,4 +1,4 @@
-# 작업 spec — phase1-002-hub (Track 0 T0-3: envelope 적용 구현 — hub/Java)
+# 작업 spec — phase1-002-hub (Track 0 — T0-3 산출물 → T0-4 구현 지시 — hub/Java)
 
 > 이 handoff는 hub(Java/Spring) 세션이 받아 구현한다. envelope 적용 **범위**는 phase1-001에서 확정됐고(`handoff/phase1-001-envelope-scope.md`), 본 문서는 hub repo에서 **실제 구현할 것만** 한정한다. 코드 작업은 hub 세션에서 한다 — meta는 지시서만 쓴다.
 
