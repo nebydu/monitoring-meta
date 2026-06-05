@@ -1,5 +1,7 @@
 # 점검 노트 — phase1-002-infra (Track 0 — T0-3 산출물 → T0-4 구현 점검 — infra 영향)
 
+> **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 비준 대비" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 정본은 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
+
 > envelope은 **애플리케이션 Kafka 헤더** 규약이라 infra(Collector/broker) 직접 변경은 없다. 이 노트는 infra 세션이 "envelope 때문에 바꿀 게 있나"를 빠르게 확인하기 위한 가벼운 점검 항목이다. 결론: **이번 phase1-002에서 infra 변경 작업은 없다.**
 
 ## 1. 필수 헤더

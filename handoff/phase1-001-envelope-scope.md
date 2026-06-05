@@ -1,5 +1,7 @@
 # 작업 spec — phase1-001-envelope-scope (Track 0: envelope 적용 범위 + 선후)
 
+> **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 비준 대기" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 정본은 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
+
 > 이 handoff는 ROADMAP §9 Track 0의 T0-1(envelope 적용 범위 + 제외 사유)·T0-2(envelope/재명명 선후)를 확정하는 **범위 결정 문서**다. owner_repo = monitoring-meta(spec/contract 소유). 실제 envelope 구현은 후속 `handoff/phase1-002-{hub,script-agent,infra}.md`(T0-3/T0-4)에서 hub/script-agent로 분배한다.
 
 ## 1. 필수 헤더

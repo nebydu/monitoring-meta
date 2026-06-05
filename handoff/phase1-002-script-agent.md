@@ -1,5 +1,7 @@
 # 작업 spec — phase1-002-script-agent (Track 0 — T0-3 산출물 → T0-4 구현 지시 — script-agent/Go)
 
+> **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 비준 대기" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 정본은 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
+
 > 이 handoff는 script-agent(Go) 세션이 받아 구현한다. envelope 적용 **범위**는 phase1-001에서 확정됐고(`handoff/phase1-001-envelope-scope.md`), 본 문서는 script-agent repo에서 **실제 구현할 것만** 한정한다. 코드 작업은 script-agent 세션에서 한다 — meta는 지시서만 쓴다.
 
 ## 1. 필수 헤더
