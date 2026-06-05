@@ -1,5 +1,24 @@
 # Phase 1 ROADMAP — v0.3 (정본 후보)
 
+> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **거울** — 갱신 2026-06-05)
+>
+> **지금 가능**
+> - [결정] **D-4(1)** — 토픽 구체 명명 컨벤션 비준(`adr/0005-topic-naming.md` 후보 A/B/C). → §17
+> - [작업] **§16-2** — envelope 구현 분배(`handoff/phase1-002-envelope-remaining-topics`, D-4(2) 해소로 비준과 무관하게 착수 가능). → §9 Track 0
+> - [결정] **D-3** 영속(#12)·인증(#7) 실행순서 / **D-5** 데모 정정 ADR 귀속 3건. → §17
+>
+> **막힘 (외부/선행 대기)**
+> - **D-1·D-2·D-8** — 통합본 Open(§J/§C/§A). 외부 정보 필요 — 추측 금지.
+> - **§16-5**(모듈 분리)=D-2 후 / **§16-11·12**(토픽 재명명·result 분리)=D-4(1) 비준 후 / **D-6**(owner_repo)=D-2 후.
+>
+> **최근 완료**
+> - phase0-cleanup — 데모 spec 단일화·HANDOFF archive·source_ref 재배선 (e2e PASS 16/0/0, 06-05)
+> - D-9 Phase 1 확정(06-03) · D-4(2) envelope 먼저(06-04) · command-topic routing=ADR#4 비준(06-05)
+>
+> *갱신 규칙: 정본(§17 D-목록 / §9~§14 Track)을 **먼저** 갱신 → 본 블록은 그 거울. 완료 기준 — 결정 항목=사람 비준 즉시 / 작업 항목=e2e PASS 후.*
+
+---
+
 > **위상**: 이 문서는 `monitoring-meta/docs/통합본_v0_9.md`를 최상위 기준으로 삼는 **Phase 1 정본 후보 ROADMAP**이다. 입력 draft(`ROADMAP_PHASE1_draft_v0_2.md`)를 Pass 1 normalization(`handoff/phase1-000-roadmap-normalization.md`) 검증 결과로 정정·반영해 생성했다. draft를 그대로 정본화한 것이 아니다.
 >
 > **문서 위상 우선순위**: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지, 정본 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`) → 통합본 v0.9 + kafka-payloads + envelope(Phase 1+ 도달 목표). "통합본 우선"은 **사실 주장(범위·각 ADR 결정)** 에만 적용한다. tier 순서 / owner_repo / handoff 분리 같은 **계획 레이어**는 ROADMAP 고유 판단이므로 보존하되, 불확실하면 `DECISION_REQUIRED`로 둔다.
