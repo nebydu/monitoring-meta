@@ -629,12 +629,16 @@ else
 fi
 
 # §7-D: hub — inspectSource가 reject/throw 없이 관찰 전용인지 확인
-#   처리 흐름에 영향을 주는 throw/return/reject가 없어야 한다(§2.3 비규범)
-#   단 null/header=null 에 대한 early return은 허용(가드 안전성)
-if grep -qE "^[^*]*throw new|^[^*]*IllegalArgumentException|^[^*]*IllegalStateException" "" 2>/dev/null; then
-    log_fail "hub/EnvelopeHeaders.java: inspectSource에 throw/reject 로직 포함 — §2.3 위반(미지 x-source에 깨지면 안 됨)"
+#   inspectSource 메서드 본문만 추출(awk: 메서드 시작~4칸 들여쓰기 닫는 중괄호)해
+#   Javadoc/주석(//)을 제거한 뒤 throw/reject 코드가 있는지 검사한다.
+#   단 null/header=null 에 대한 early return(bare return)은 허용(가드 안전성).
+ISRC_BODY=$(awk '/public static void inspectSource/{f=1} f{print} f&&/^    }/{exit}' "${ENVELOPE_HEADERS}" 2>/dev/null | sed 's://.*$::')
+if [ -z "${ISRC_BODY}" ]; then
+    log_fail "hub/EnvelopeHeaders.java: inspectSource 본문 추출 실패 — 메서드 부재 또는 시그니처 변경"
+elif echo "${ISRC_BODY}" | grep -qE 'throw |IllegalArgumentException|IllegalStateException|reject'; then
+    log_fail "hub/EnvelopeHeaders.java: inspectSource 본문에 throw/reject 로직 포함 — §2.3 위반(미지 x-source에 깨지면 안 됨)"
 else
-    log_pass "hub/EnvelopeHeaders.java: throw/reject 없음 확인 (관찰 전용 가드 — §2.3 준수)"
+    log_pass "hub/EnvelopeHeaders.java: inspectSource 본문 throw/reject 없음 확인 (관찰 전용 가드 — §2.3 준수)"
 fi
 
 # §7-E: hub — JobResultConsumer가 inspectSource 호출하는지 확인
@@ -668,10 +672,15 @@ fi
 
 # §7-I: script-agent — SourceFromHeaders가 폐쇄 enum / allowlist 검증 없이
 #   값+존재여부만 반환하는지 확인 (§2.3 비규범 목록 준수)
-if file_contains "${AGENT_ENVELOPE_GO}" "allowlist\|KNOWN_SOURCES\|reject\|ErrUnknown"; then
-    log_fail "script-agent/kafka/envelope.go: SourceFromHeaders에 allowlist/reject 로직 포함 — §2.3 위반"
+#   함수 본문만 추출(awk: 함수 시작~col0 닫는 중괄호) + 주석(//) 제거 후 검사.
+#   주석에 "allowlist 검증을 하지 않는다" 설명이 있어 파일 전체 grep은 오탐.
+SFH_BODY=$(awk '/^func SourceFromHeaders/{f=1} f{print} f&&/^}/{exit}' "${AGENT_ENVELOPE_GO}" 2>/dev/null | sed 's://.*$::')
+if [ -z "${SFH_BODY}" ]; then
+    log_fail "script-agent/kafka/envelope.go: SourceFromHeaders 본문 추출 실패 — 함수 부재 또는 시그니처 변경"
+elif echo "${SFH_BODY}" | grep -qE 'allowlist|KNOWN_SOURCES|reject|[Ee]rrUnknown|errors\.|fmt\.Errorf|return[^,]*err'; then
+    log_fail "script-agent/kafka/envelope.go: SourceFromHeaders 본문에 allowlist/reject/error 로직 포함 — §2.3 위반"
 else
-    log_pass "script-agent/kafka/envelope.go: allowlist/reject 없음 확인 (값+존재여부만 반환 — §2.3 준수)"
+    log_pass "script-agent/kafka/envelope.go: SourceFromHeaders 본문 allowlist/reject 없음 확인 (값+존재여부만 반환 — §2.3 준수)"
 fi
 
 # §7-J: script-agent — envelope_test.go에 SourceFromHeaders 테스트 케이스 존재 확인
