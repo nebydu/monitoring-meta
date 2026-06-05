@@ -57,7 +57,7 @@ LIVE dangling 검증 비대상).
 | repo | 파일 | LIVE/HIST | 처리주체 | 처리 | 비고 |
 |---|---|---|---|---|---|
 | meta | `docs/phase0-snapshot/PROJECT_OVERVIEW.md` | LIVE | analyzer | 데모 spec 경로 5곳 정정 + §3.1/§8.1 superseded 표시 | **완료(이번)** — 본문 보존, 표시만 |
-| meta | `docs/phase1/ROADMAP_PHASE1_v0_3.md` | LIVE | analyzer | **변경 안 함** | `HANDOFF.md §5/§7` source_ref → **[결정 필요] D-C1** (§4). 무결성 자가확인 결과는 §5 |
+| meta | `docs/phase1/ROADMAP_PHASE1_v0_3.md` | LIVE | analyzer→meta메인 | **D-C1 재배선 적용(be990c7)** | 작성 시점엔 [결정 필요]였으나, 사용자 D-C1 결정 후 메인이 루트 `HANDOFF.md §5/§7` source_ref 15곳을 ROADMAP §9~§14/§17·통합본 §8.3/§13_open으로 외과적 재배선. §4·§16 "HANDOFF"(handoff/ 역할)는 보존. 무결성 보존(§5) |
 | meta | `handoff/adr-002-analysis.md` (라인7) | HIST | analyzer | **본문 비수정** | (a)repoint 후보였으나 303줄 전면 Write 무결성 위험 → 본 표에 "경로는 당시 기준" 집약. LIVE 검증 비대상 |
 | meta | `handoff/adr-002-hub.md` (라인23) | HIST | analyzer | **본문 비수정** | 당시 repo 사본을 가리킨 시점 사실. 본 표 집약 |
 | meta | `handoff/adr-002-script-agent.md` (라인21) | HIST | analyzer | **본문 비수정** | 동일 |
@@ -159,12 +159,12 @@ hub와 동형. Go 컨텍스트(go test), 동일 파일군 + provenance + 사본 
   를 ROADMAP 자체 절로 **무손실 치환 불가**. 게다가 루트 HANDOFF.md는 `archive/` 강등이
   **메인 세션 처리 대상**이라, 강등 후 (a) archive 경로로 재배선할지 (b) ROADMAP §4·§5에 §5/§7
   요지를 인라인 흡수할지 (c) 참조를 통합본/envelope 정본으로 대체할지 결정이 선행돼야 한다.
-  → **analyzer는 ROADMAP를 변경하지 않음.** 결정 후 별도 외과적 Edit handoff 필요.
+  → analyzer는 ROADMAP를 변경하지 않았음. **[해소 2026-06-05] D-C1 결정 = ROADMAP 자체 절+통합본 정본 재배선((b)/(c) 혼합). 메인 세션이 §5/§7 source_ref 15곳을 외과적 Edit로 재배선(be990c7). §4·§16 "HANDOFF"(handoff/ 역할 명칭)는 보존.**
 
 - **D-C2 (HANDOFF.md archive 연동 repo 참조 순서)**: 각 repo `.claude/CLAUDE.md`·
   `agents/analyzer.md`의 "HANDOFF §5 체크박스 수동 갱신" 룰 제거 + provenance 인용 정리는 repo
   세션 handoff에 포함했으나, 루트 HANDOFF.md 강등 자체는 메인 세션 몫이다. **강등 시점**과
-  repo repoint 시점의 순서를 메인이 조율해야 한다(강등 먼저면 repo의 HANDOFF 인용이 일제히 dangling).
+  repo repoint 시점의 순서를 메인이 조율해야 한다(강등 먼저면 repo의 HANDOFF 인용이 일제히 dangling). **[해소 2026-06-05] D-C2 기본값 적용: 메인이 meta-side 의존을 먼저 끊고 be990c7에서 archive 강등 → repo는 분배 세션에서 자기 인용 정리. 강등~repoint 사이 dangling 창을 줄이려 루트에 redirect tombstone `HANDOFF.md`(전체 본문은 `archive/HANDOFF.md`)를 둠.**
 
 - **(없음 확인)** 통합본 v0.9 `[Open]` / `13_open.md` / 미결 ADR을 새로 건드리는 변경은 본 작업에
   포함되지 않음. PROJECT_OVERVIEW의 Alert/Incident phase 귀속 충돌은 **정본(통합본/ROADMAP)이 이미
@@ -172,10 +172,10 @@ hub와 동형. Go 컨텍스트(go test), 동일 파일군 + provenance + 사본 
 
 ---
 
-## 5. ROADMAP 무결성 자가확인 (변경 안 함 — 현 상태 보존 확인)
+## 5. ROADMAP 무결성 (D-C1 재배선 적용 후 — be990c7)
 
 - 섹션: §1~§19 **19개 전부 존재**(`## 1`~`## 19` grep 확인).
 - ADR 행: §5.1 ADR status 표에 `#1`~`#18` **18개 행 존재**.
 - §1 기준 pin: `4940e1a115b911e452f96f0083f1c4dc6ede879f` **보존**.
 - 문서 버전: **v0.3 (정본 후보) 보존**.
-- 결론: D-C1 결정 전까지 ROADMAP는 무변경. 위 4개 무결성 지표 모두 현 상태 유지.
+- 결론: **(정정)** analyzer 작성 시점엔 ROADMAP 무변경이었으나, 사용자 D-C1 결정 후 메인 세션이 루트 `HANDOFF.md §5/§7` source_ref 15곳을 외과적 재배선(be990c7). §4·§16 "HANDOFF"(handoff/ 역할 명칭)는 보존. 위 4개 무결성 지표(섹션/ADR/pin/버전)는 **재배선 후에도 그대로 유지됨**을 재확인.

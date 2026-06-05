@@ -1,6 +1,7 @@
 > **위상**: Phase 0 데모 동작 spec v0.2.1 — 동결 baseline(Phase 0 회귀 앵커). monitoring-meta 단일 정본.
 > 셋업기에는 hub/docs·script-agent/docs 양쪽 사본으로 존재했으나 Phase 0 산출물 정리(작업 B)로 이 위치에 단일화됨.
 > 본문은 v0.2.1 원문 그대로이며 수정 금지. hub/script-agent는 상대경로 `../monitoring-meta/docs/phase0-snapshot/`로 참조한다.
+> ※ 본문 §0의 "변경 시 문서 버전 bump + 양쪽 코드 동시 갱신" 등은 **Phase 0 당시 운영 규칙**이며, 동결 snapshot인 본 문서에는 적용되지 않는다(갱신 대상 아님 — 본문은 회귀 앵커로 보존만 한다).
 
 # Monitoring Demo — Message Spec (v0.2.1, 데모 단계)
 

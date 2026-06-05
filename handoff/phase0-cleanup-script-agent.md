@@ -72,9 +72,9 @@ Phase 0 셋업기에 script-agent repo 로컬(`script-agent/docs/`)에 데모 sp
 ## 5. DoD (완료기준) — 순서 강제
 
 1. (먼저) 4.1~4.3 repoint·룰 정리 완료.
-2. (검증) script-agent repo 내 데모 spec **LIVE dangling 0**:
-   `rg "docs/monitoring-demo-message-spec-v0\.2\.1\.md" script-agent` 결과 중 현행 유효
-   참조가 새 경로만 남고 구 로컬 경로는 0건.
+2. (검증) **script-agent repo 루트에서 실행** — 데모 spec **LIVE dangling 0**:
+   `rg "monitoring-demo-message-spec-v0\.2\.1\.md" .` (현재 repo 트리 전체) 결과 중 현행 유효
+   참조가 새 경로(`../monitoring-meta/docs/phase0-snapshot/...`)만 남고 구 로컬 경로(`docs/...`)는 0건.
 3. (검증) `script-agent/.claude/codex-gate.profile` 데모 spec 회귀 문구 새 경로로 정확 교체 + 게이트 정상.
 4. (검증) HANDOFF.md 수동 갱신 룰 제거 / HANDOFF dangling 인용 0.
 5. (마지막) `script-agent/docs/monitoring-demo-message-spec-v0.2.1.md` 삭제.

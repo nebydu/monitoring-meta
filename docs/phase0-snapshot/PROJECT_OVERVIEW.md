@@ -27,7 +27,7 @@
 > 클론 방법은 §2 참조.
 >
 > 작성 기준일: **2026-05-27**, spec 버전 **v0.2.1**. 코드 변경 시 본 문서의
-> 해당 절도 함께 갱신한다 (ground truth는 `monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` — phase0-cleanup으로 각 repo 사본에서 단일 정본으로 이관).
+> 해당 절도 함께 갱신한다 (ground truth는 `monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` — phase0-cleanup으로 각 repo 사본에서 단일 정본으로 이관). **단 이 "코드 변경 시 함께 갱신" 문구는 Phase 0 당시 운영 규칙이며, 본 문서는 Phase 0 snapshot이라 더 이상 갱신 대상이 아니다(상단 위상 주석 참조).**
 
 ---
 
