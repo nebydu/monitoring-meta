@@ -8,7 +8,7 @@
 |---|---|
 | 작업 ID (work-id) | `phase1-002-hub` |
 | 대상 repo | `hub` (Java/Spring) |
-| 기준 monitoring-meta commit | `<META_PIN_AFTER_COMMIT>` (메인이 커밋 후 full 40자로 치환). **실행 전 `git rev-parse HEAD`로 monitoring-meta 최신 재확인** |
+| 기준 monitoring-meta commit | `0d509a2aaf845264aed59597f7ad65ed90ed168b` (full 40자). **실행 전 `git rev-parse HEAD`로 monitoring-meta 최신 재확인** |
 | 작성일 | 2026-06-05 |
 | 근거 | `docs/envelope.md` §2.2·§2.3·§4.1·§6, phase1-001 §5.2, `adr/0005`(D-4(2) RESOLVED) |
 | 선행 | phase1-001(범위 확정), envelope.md(정본) |

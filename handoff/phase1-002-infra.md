@@ -8,7 +8,7 @@
 |---|---|
 | 작업 ID (work-id) | `phase1-002-infra` |
 | 대상 repo | `infra` |
-| 기준 monitoring-meta commit | `<META_PIN_AFTER_COMMIT>` (메인이 커밋 후 full 40자로 치환). **실행 전 `git rev-parse HEAD` 재확인** |
+| 기준 monitoring-meta commit | `0d509a2aaf845264aed59597f7ad65ed90ed168b` (full 40자). **실행 전 `git rev-parse HEAD` 재확인** |
 | 작성일 | 2026-06-05 |
 | 근거 | `docs/envelope.md` §4.2(OTLP 위임군), phase1-001 §7 infra |
 
