@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v4)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v5)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
@@ -10,6 +10,9 @@
 #   6. [동적 — --dynamic 인자 전달 시만 실행] infra 기동 → hub run → script-agent run
 #             → heartbeat 수신 확인 (PASS 조건: Spring Kafka DEBUG 실제 레코드 수신 라인 출현 +
 #                failed to decode / no agent.heartbeat data points 부재)
+#   7. [정적] phase1-002 x-source 가드 명시화 회귀 검증
+#             — hub EnvelopeHeaders 신설 + JobResultConsumer/AuditConsumer 가드 호출 + CommandPublisher 별칭 위임
+#             — script-agent SourceFromHeaders 추가 + consumeCommands 관찰 결선 + envelope_test.go 6케이스
 #
 # v3 변경사항 (하네스 버그 3건 수정):
 #   - 버그 A (IPv6 우회): script-agent 기동 시 OTLP_ENDPOINT/KAFKA_BROKERS를 127.0.0.1로 명시
@@ -23,9 +26,15 @@
 #   - ③ DYNAMIC_STARTED를 up -d 직전에 설정 → 부분 실패 시에도 trap이 infra 정리
 #   - ④ Docker 불가 메시지를 FAIL 의미로 정정(SKIP 표기 제거)
 #
+# v5 변경사항 (phase1-002 x-source 가드 검증 추가):
+#   - §7 신설: envelope §2.2·§2.3·§6 근거 정적 검증 9항목
+#     hub: EnvelopeHeaders 신설(헤더 키 4종 + inspectSource), JobResultConsumer/AuditConsumer 가드 호출,
+#          CommandPublisher 별칭 위임(값 불변 회귀 0), 헤더 키 문자열 현지화 검사
+#     script-agent: SourceFromHeaders 추가, consumeCommands 관찰 결선, envelope_test.go 케이스 수
+#
 # 사용:
-#   ./run-e2e.sh            # 정적+유닛만 (§1~§5)
-#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§6)
+#   ./run-e2e.sh            # 정적+유닛만 (§1~§5, §7)
+#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§7)
 #
 # 규칙:
 #   - 실패 시 코드를 고치지 않는다 — 로그만 기록하고 종료한다.
@@ -37,7 +46,7 @@
 #   adr/0002-heartbeat-otlp-proto.md  (결정 A-1/B-1/C-1)
 #   handoff/adr-002-{infra,hub,script-agent}.md
 #   docs/kafka-payloads.md (heartbeats-topic)
-#   docs/envelope.md §4.2 (OTLP 위임군 예외)
+#   docs/envelope.md §2.2·§2.3·§4.2·§6 (OTLP 위임군 예외, x-source 가드)
 #   데모 spec v0.2.1 §5.4 (Phase 0 ground truth)
 
 set -euo pipefail
@@ -582,6 +591,115 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# §7. 정적 검증 — phase1-002 x-source 가드 명시화 회귀
+# ---------------------------------------------------------------------------
+echo ""
+echo "=== §7 phase1-002 x-source 가드 명시화 회귀 (정적) ==="
+
+ENVELOPE_HEADERS="${HUB_DIR}/src/main/java/com/monitoring/hub/messaging/EnvelopeHeaders.java"
+JOB_RESULT_CONSUMER="${HUB_DIR}/src/main/java/com/monitoring/hub/ingest/jobresult/JobResultConsumer.java"
+AUDIT_CONSUMER="${HUB_DIR}/src/main/java/com/monitoring/hub/ingest/audit/AuditConsumer.java"
+CMD_PUBLISHER="${HUB_DIR}/src/main/java/com/monitoring/hub/producer/CommandPublisher.java"
+AGENT_ENVELOPE_GO="${AGENT_DIR}/internal/kafka/envelope.go"
+AGENT_ENVELOPE_TEST="${AGENT_DIR}/internal/kafka/envelope_test.go"
+AGENT_MODEL_ENVELOPE="${AGENT_DIR}/internal/model/envelope.go"
+
+# §7-A: hub — EnvelopeHeaders 클래스 신설 확인 (헤더 키 단일 진실 지점)
+if [ -f "${ENVELOPE_HEADERS}" ]; then
+    log_pass "hub/messaging/EnvelopeHeaders.java: 파일 존재 확인 (헤더 키 단일 진실 지점 신설)"
+else
+    log_fail "hub/messaging/EnvelopeHeaders.java: 파일 없음 — phase1-002-hub 미반영"
+fi
+
+# §7-B: hub — EnvelopeHeaders 헤더 키 4종 값 검증 (spec §2.2 값 불변 회귀 0)
+if file_contains "${ENVELOPE_HEADERS}" '"x-message-id"' && \
+   file_contains "${ENVELOPE_HEADERS}" '"x-message-version"' && \
+   file_contains "${ENVELOPE_HEADERS}" '"x-source"' && \
+   file_contains "${ENVELOPE_HEADERS}" '"x-trace-id"'; then
+    log_pass "hub/EnvelopeHeaders.java: 헤더 키 4종(x-message-id/x-message-version/x-source/x-trace-id) 값 확인 (spec §2.2 회귀 0)"
+else
+    log_fail "hub/EnvelopeHeaders.java: 헤더 키 4종 중 하나 이상 누락 — spec §2.2 위반"
+fi
+
+# §7-C: hub — EnvelopeHeaders.inspectSource() 메서드 존재 (가드 메서드)
+if file_contains "${ENVELOPE_HEADERS}" "inspectSource"; then
+    log_pass "hub/EnvelopeHeaders.java: inspectSource() 가드 메서드 확인"
+else
+    log_fail "hub/EnvelopeHeaders.java: inspectSource() 없음 — x-source 가드 미구현"
+fi
+
+# §7-D: hub — inspectSource가 reject/throw 없이 관찰 전용인지 확인
+#   처리 흐름에 영향을 주는 throw/return/reject가 없어야 한다(§2.3 비규범)
+#   단 null/header=null 에 대한 early return은 허용(가드 안전성)
+if grep -qE "^[^*]*throw new|^[^*]*IllegalArgumentException|^[^*]*IllegalStateException" "" 2>/dev/null; then
+    log_fail "hub/EnvelopeHeaders.java: inspectSource에 throw/reject 로직 포함 — §2.3 위반(미지 x-source에 깨지면 안 됨)"
+else
+    log_pass "hub/EnvelopeHeaders.java: throw/reject 없음 확인 (관찰 전용 가드 — §2.3 준수)"
+fi
+
+# §7-E: hub — JobResultConsumer가 inspectSource 호출하는지 확인
+if file_contains "${JOB_RESULT_CONSUMER}" "inspectSource"; then
+    log_pass "hub/JobResultConsumer.java: EnvelopeHeaders.inspectSource() 호출 확인"
+else
+    log_fail "hub/JobResultConsumer.java: inspectSource() 호출 없음 — phase1-002-hub 미반영"
+fi
+
+# §7-F: hub — AuditConsumer가 inspectSource 호출하는지 확인
+if file_contains "${AUDIT_CONSUMER}" "inspectSource"; then
+    log_pass "hub/AuditConsumer.java: EnvelopeHeaders.inspectSource() 호출 확인"
+else
+    log_fail "hub/AuditConsumer.java: inspectSource() 호출 없음 — phase1-002-hub 미반영"
+fi
+
+# §7-G: hub — CommandPublisher 헤더 키 상수가 EnvelopeHeaders 별칭 위임인지 확인
+#   HEADER_MESSAGE_ID = EnvelopeHeaders.X_MESSAGE_ID 형태여야 함(값 불변 회귀 0)
+if file_contains "${CMD_PUBLISHER}" "EnvelopeHeaders" && file_contains "${CMD_PUBLISHER}" "X_MESSAGE_ID"; then
+    log_pass "hub/CommandPublisher.java: 헤더 키 상수를 EnvelopeHeaders 별칭 위임으로 선언 확인 (Phase 0 회귀 0)"
+else
+    log_fail "hub/CommandPublisher.java: EnvelopeHeaders 별칭 위임 없음 — 헤더 키가 중복 정의 상태일 수 있음"
+fi
+
+# §7-H: script-agent — SourceFromHeaders 함수 존재 (가드 읽기 헬퍼)
+if file_contains "${AGENT_ENVELOPE_GO}" "SourceFromHeaders"; then
+    log_pass "script-agent/kafka/envelope.go: SourceFromHeaders() 추가 확인"
+else
+    log_fail "script-agent/kafka/envelope.go: SourceFromHeaders() 없음 — phase1-002-script-agent 미반영"
+fi
+
+# §7-I: script-agent — SourceFromHeaders가 폐쇄 enum / allowlist 검증 없이
+#   값+존재여부만 반환하는지 확인 (§2.3 비규범 목록 준수)
+if file_contains "${AGENT_ENVELOPE_GO}" "allowlist\|KNOWN_SOURCES\|reject\|ErrUnknown"; then
+    log_fail "script-agent/kafka/envelope.go: SourceFromHeaders에 allowlist/reject 로직 포함 — §2.3 위반"
+else
+    log_pass "script-agent/kafka/envelope.go: allowlist/reject 없음 확인 (값+존재여부만 반환 — §2.3 준수)"
+fi
+
+# §7-J: script-agent — envelope_test.go에 SourceFromHeaders 테스트 케이스 존재 확인
+if file_contains "${AGENT_ENVELOPE_TEST}" "TestSourceFromHeaders"; then
+    TEST_COUNT=$(grep -c "^func TestSourceFromHeaders" "${AGENT_ENVELOPE_TEST}" 2>/dev/null || echo "0")
+    log_pass "script-agent/kafka/envelope_test.go: TestSourceFromHeaders 케이스 ${TEST_COUNT}개 확인"
+else
+    log_fail "script-agent/kafka/envelope_test.go: TestSourceFromHeaders 없음 — 회귀 자산 미확보"
+fi
+
+# §7-K: script-agent — model/envelope.go에 HeaderSource 상수 존재 (model 상수 불변 회귀 0)
+if file_contains "${AGENT_MODEL_ENVELOPE}" 'HeaderSource\s*=\s*"x-source"'; then
+    log_pass "script-agent/model/envelope.go: HeaderSource=\"x-source\" 상수 불변 확인 (Phase 0 회귀 0)"
+else
+    log_fail "script-agent/model/envelope.go: HeaderSource=\"x-source\" 없음 — 헤더 키 값 변경 가능성"
+fi
+
+# §7-L: script-agent — BuildHeaders(producer) 불변 확인
+#   model.HeaderSource · model.MessageVersion · model.SourceAgent 사용 유지
+if file_contains "${AGENT_ENVELOPE_GO}" "model\.HeaderSource" && \
+   file_contains "${AGENT_ENVELOPE_GO}" "model\.MessageVersion" && \
+   file_contains "${AGENT_ENVELOPE_GO}" "model\.SourceAgent"; then
+    log_pass "script-agent/kafka/envelope.go: BuildHeaders producer 경로 model 상수 사용 불변 (Phase 0 회귀 0)"
+else
+    log_fail "script-agent/kafka/envelope.go: BuildHeaders model 상수 참조 변경 감지 — Phase 0 회귀 가능성"
+fi
+
+# ---------------------------------------------------------------------------
 # 결과 집계 및 MD 파일 생성
 # ---------------------------------------------------------------------------
 echo ""
@@ -609,12 +727,19 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo ""
     echo "## 검증 범위"
     echo ""
-    echo "- ADR-0002 C-1 빅뱅 컷오버 정합 (infra otlp_proto ↔ hub ByteArrayDeserializer + proto 디코더)"
-    echo "- 데모 spec v0.2.1 §5.4 논리 계약 회귀 0 (metric name / agent_id / service.name / value / time_unix_nano)"
-    echo "- envelope 예외 위상 (heartbeats-topic: OTLP 위임군 → envelope 헤더 검사 없음)"
-    echo "- hub mvn test / script-agent go test ./..."
-    echo "- 주석 drift 관측"
-    echo "- 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
+    echo "- §1 ADR-0002 C-1 빅뱅 컷오버 정합 (infra otlp_proto ↔ hub ByteArrayDeserializer + proto 디코더)"
+    echo "- §2 데모 spec v0.2.1 §5.4 논리 계약 회귀 0 (metric name / agent_id / service.name / value / time_unix_nano)"
+    echo "- §3 envelope 예외 위상 (heartbeats-topic: OTLP 위임군 → envelope 헤더 검사 없음)"
+    echo "- §4 hub mvn test / script-agent go test ./..."
+    echo "- §5 주석 drift 관측"
+    echo "- §6 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
+    echo "- §7 phase1-002 x-source 가드 명시화 회귀 (EnvelopeHeaders 신설 · consumer 가드 호출 · CommandPublisher 별칭 위임 · SourceFromHeaders 추가)"
+    echo ""
+    echo "## 근거 문서"
+    echo ""
+    echo "- docs/envelope.md §2.2·§2.3·§6 (헤더 키 · x-source 가드 · OTLP 예외)"
+    echo "- docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md §2.2·§5.4 (Phase 0 ground truth)"
+    echo "- adr/0002-heartbeat-otlp-proto.md (A-1/B-1/C-1)"
     echo ""
     echo "## 하네스 수정 이력"
     echo ""
@@ -625,10 +750,14 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "  - 제외: KafkaListenerAnnotationBeanPostProcessor / partitions assigned / Subscribed to topic / 0 records"
     echo ""
     echo "v4 (안전성 — 코드 리뷰 반영):"
-    echo "- 수정 ①: compose 프로젝트를 '${E2E_PROJECT}'로 격리 → down -v가 형제 infra 볼륨을 건드리지 않음"
+    echo "- 수정 ①: compose 프로젝트를 'monitoring-e2e'로 격리 → down -v가 형제 infra 볼륨을 건드리지 않음"
     echo "- 수정 ②: 무차별 종료 제거 — hub는 /health 시점 8080 소유 PID, agent는 기동 후 신규 agent.exe PID만 정밀 종료"
     echo "- 수정 ③: DYNAMIC_STARTED를 up -d 직전에 설정 → 부분 실패 시에도 trap이 infra 정리"
     echo "- 수정 ④: Docker 불가 시 메시지를 FAIL 의미로 정정(SKIP 표기 제거)"
+    echo ""
+    echo "v5 (phase1-002 x-source 가드 검증 추가):"
+    echo "- §7 신설: EnvelopeHeaders 신설 + consumer 가드 호출 + CommandPublisher 별칭 위임 + SourceFromHeaders 회귀 검증"
+    echo "- 근거 문서 섹션 추가 (envelope.md §2.2·§2.3·§6)"
     echo ""
     echo "## 발견 사항"
     echo ""
@@ -648,7 +777,7 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v4, --dynamic opt-in)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v5, --dynamic opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"

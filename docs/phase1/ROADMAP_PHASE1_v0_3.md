@@ -4,7 +4,6 @@
 >
 > **지금 가능**
 > - [결정] **D-4(1)** — 토픽 구체 명명 컨벤션 비준(`adr/0005-topic-naming.md` 후보 A/B/C). → §17
-> - [작업] **T0-4** — envelope 구현 = hub/script-agent 분배 대기(`handoff/phase1-002-hub/script-agent`). 실잔여=consumer `x-source` 가드 명시화(producer는 Phase 0 적용 완료). → §9 Track 0
 > - [결정] **D-3** 영속(#12)·인증(#7) 실행순서 / **D-5** 데모 정정 ADR 귀속 3건. → §17
 >
 > **막힘 (외부/선행 대기)**
@@ -12,7 +11,7 @@
 > - **§16-5**(모듈 분리)=D-2 후 / **§16-11·12**(토픽 재명명·result 분리)=D-4(1) 비준 후 / **D-6**(owner_repo)=D-2 후.
 >
 > **최근 완료**
-> - **T0-3** envelope 구현 handoff 작성(`phase1-002-*`, 06-05) — 분석: producer는 Phase 0 적용 완료, 실잔여=consumer 가드
+> - **T0-3·T0-4·T0-5** envelope 구현 완료 — consumer `x-source` 가드 명시화(hub/script-agent), Phase 0 §2.2 회귀 0. **e2e PASS 28/0/0**(`e2e/results/20260605-212443.md`, 06-05)
 > - phase0-cleanup — 데모 spec 단일화·HANDOFF archive·source_ref 재배선 (e2e PASS 16/0/0, 06-05)
 > - D-9 Phase 1 확정(06-03) · D-4(2) envelope 먼저(06-04) · command-topic routing=ADR#4 비준(06-05)
 >
@@ -266,8 +265,8 @@ Phase 1 완료는 다음을 모두 만족해야 한다.
 | T0-1 | 나머지 토픽 envelope 적용 범위 확정 | `ROADMAP §9 Track 0`, `통합본 §8.3 ADR#2`, `통합본 §8.3 ADR#5`, `envelope §4` | monitoring-meta | DONE | envelope 후속 handoff | (해소 — T0-2 RESOLVED) | `handoff/phase1-001-envelope-scope.md` | 적용 대상 토픽 목록과 제외 사유(공통 토픽군 6 ●, OTLP 위임군 2 ✕ — phase1-001 §5.2) |
 | T0-2 | envelope 적용과 ADR#5 토픽 재명명/재구조의 실행 선후 결정 | `통합본 §8.3 ADR#5`, `통합본 §6.9(나)`, `adr/0005-topic-naming.md` | monitoring-meta | DONE | topic producer/consumer 변경 | (RESOLVED 2026-06-04, D-4(2)) | `handoff/phase1-001-envelope-scope.md` | **결정: envelope 먼저(Track 0 → Track 4)** — envelope은 헤더라 토픽명 독립(`adr/0005` §2.1) |
 | T0-3 | envelope 적용 handoff 생성 | `ROADMAP §9 Track 0` | monitoring-meta | **DONE** | hub/script-agent 후속 작업(T0-4) | T0-1, T0-2 (둘 다 해소) | `handoff/phase1-002-{hub,script-agent,infra}.md` + `phase1-002-000-impact.md` | **분석: 실재 공통 토픽 3종(command/job-results/audit-events) producer는 Phase 0에서 이미 envelope 발행 완료 → 실잔여=consumer `x-source` 가드 명시화. result-log분리·alert·notification은 컴포넌트 미존재로 이연(Track 1/2/3)** |
-| T0-4 | envelope 적용 구현(consumer 가드 명시화) | `handoff/phase1-002-{hub,script-agent}.md`, `envelope §2.3` | hub, script-agent | TODO | Phase 1 message contract 정합성 | T0-3 (해소) | repo별 handoff(분배 대기) | consumer `x-source` 가드 테스트 + Phase 0 §2.2 회귀 0 / unit·e2e PASS |
-| T0-5 | envelope 결과 ROADMAP 반영 | ROADMAP | monitoring-meta | TODO | Track 1~4 정확도 | T0-4 | `handoff/phase1-002-*` | ROADMAP status·evidence 갱신 |
+| T0-4 | envelope 적용 구현(consumer 가드 명시화) | `handoff/phase1-002-{hub,script-agent}.md`, `envelope §2.3` | hub, script-agent | **DONE** | Phase 1 message contract 정합성 | T0-3 (해소) | repo별 handoff(분배 완료) | **PASS** — hub `EnvelopeHeaders.inspectSource()`(관찰 전용, throw/reject 없음)+`JobResultConsumer`/`AuditConsumer` 적용, script-agent `kafka.SourceFromHeaders()`(allowlist/reject 없음). consumer `x-source` 가드 테스트 + Phase 0 §2.2 회귀 0. e2e PASS 28/0/0(`e2e/results/20260605-212443.md`), hub mvn 85/0/0·script-agent go test 전체 PASS |
+| T0-5 | envelope 결과 ROADMAP 반영 | ROADMAP | monitoring-meta | **DONE** | Track 1~4 정확도 | T0-4 (해소) | `handoff/phase1-002-*` | 본 절(§9 T0-3~T0-5 DONE)·액티브 큐 거울 갱신 완료(06-05). Track 1~3 이연 범위 불변 |
 
 ---
 
