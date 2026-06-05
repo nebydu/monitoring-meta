@@ -1,4 +1,11 @@
-# 인계 문서 — monitoring 본개발 자동화 셋업
+# [ARCHIVED] 인계 문서 — monitoring 본개발 자동화 셋업
+
+> **[superseded — 2026-06-05, phase0-cleanup]** 이 문서는 Phase 0 셋업기의 단일 인계 자산이었으나 `archive/`로 강등됐다. 셋업기 기록(provenance)으로 **보존만** 하며 더 이상 갱신하지 않는다(아래 §5 "사람이 수동 갱신" 룰 폐기).
+> 현행 정본 매핑:
+> - **작업 위상(구 §5)** → `docs/phase1/ROADMAP_PHASE1_v0_3.md` **§9~§14 Track status** + **§5.1 ADR 판정 매트릭스**
+> - **미결정 사안(구 §7)** → ROADMAP **§17 D-목록**
+> - **데모 spec 정본** → `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` (양쪽 repo 사본에서 단일화)
+> - **문서 위상/정본 위치(구 §3)** → ROADMAP §1·§4 + `docs/통합본_v0_9.md`
 
 > 이 문서는 새 대화창에서도 동일한 컨텍스트로 작업을 이어가기 위한 단일 인계 자산이다. 작업 단계가 바뀔 때마다 §5 체크리스트와 §7 미결정 사안을 갱신한다.
 >

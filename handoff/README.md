@@ -1,6 +1,6 @@
 # handoff/ — repo 간 작업 spec 교환소
 
-monitoring-meta가 분석·결정한 결과를 각 repo(hub / script-agent) 세션으로 넘기는 작업 산출물이 시간순으로 누적되는 곳이다. (루트 `HANDOFF.md`는 별개 — 현재 상태 인계 문서다.)
+monitoring-meta가 분석·결정한 결과를 각 repo(hub / script-agent) 세션으로 넘기는 작업 산출물이 시간순으로 누적되는 곳이다. (셋업기 루트 `HANDOFF.md`는 phase0-cleanup으로 `archive/HANDOFF.md`로 강등됨 — 현행 작업 위상·미결정의 정본은 `docs/phase1/ROADMAP_PHASE1_v0_3.md` §9~§14/§17이다.)
 
 ## 작업 spec 작성 절차
 

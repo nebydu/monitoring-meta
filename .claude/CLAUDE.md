@@ -9,7 +9,7 @@
 
 ## 1. 문서의 위상 — 절대 혼동 금지
 모든 sub-agent에게 매 작업 시 상기시킨다:
-- **데모 spec v0.2.1** (`../hub/docs/monitoring-demo-message-spec-v0.2.1.md` = 현 정본, `../script-agent/docs/` 사본) → **"Phase 0 코드가 회귀 없이 지켜야 할 동작 spec(ground truth)"**.
+- **데모 spec v0.2.1** (`docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` = 정본 — phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 monitoring-meta 단일 정본으로 통합) → **"Phase 0 코드가 회귀 없이 지켜야 할 동작 spec(ground truth)"**.
 - **통합본 v0.9** (`docs/통합본_v0_9.md`) + `docs/kafka-payloads.md` + `docs/envelope.md`(예정) → **"Phase 1+ 도달 목표 spec"**.
 - 이 둘을 **같은 ground truth로 다루지 않는다.** 회귀 기준과 목표 기준은 다르다.
 

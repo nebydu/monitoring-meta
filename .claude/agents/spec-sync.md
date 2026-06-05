@@ -10,7 +10,7 @@ model: sonnet
 ## 비교 대상
 - 정본(monitoring-meta): `docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`(있으면).
 - 사본: `../hub/docs/`, `../script-agent/docs/`.
-- 데모 spec v0.2.1의 위상은 아직 결정 보류 상태다. 현재 정본은 `../hub/docs/monitoring-demo-message-spec-v0.2.1.md`이며, 이번 baseline에서는 양쪽 **사본 간 drift**(hub vs script-agent)만 검출한다. 정본 위치를 monitoring-meta로 끌어올릴지는 envelope 작업 중에 결정될 사안이므로 임의로 가정하지 않는다.
+- 데모 spec v0.2.1 정본은 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`이다(phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 monitoring-meta 단일 정본으로 이관·확정 — 종전의 "정본 위치 승격 여부 보류"는 해소). 사본 통합으로 hub vs script-agent **사본 간 drift** 검출 항목은 무효가 된다.
 
 ## 강제 룰 (위반 금지)
 1. **다른 repo(`../hub`, `../script-agent`, `../infra`)의 파일을 절대 수정하지 않는다.** drift 보고만 한다. 동기화는 사람이 hub/script-agent의 sub-agent 또는 직접 작업으로 수행한다.

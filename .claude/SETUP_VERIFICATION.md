@@ -12,7 +12,7 @@
 | `codex review --output-schema/--json` | **NG → fallback** (둘 다 미지원 → §5.7 codex exec 경로 채택) |
 | codex exec `--output-schema`/`--json`/`-o` | **OK** (지원 확인, `-o`로 최종 JSON 회수) |
 | 형제 디렉터리 hub/script-agent/infra | **OK** (모두 존재) |
-| 정본 문서 3개 | **OK** (`docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/phase0-snapshot/PROJECT_OVERVIEW.md`) |
+| 정본 문서 3개 | **OK** (`docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`). ※ `docs/phase0-snapshot/`(PROJECT_OVERVIEW + 데모 spec v0.2.1 정본)은 **Phase 0 스냅샷(참조용)**으로 재분류(phase0-cleanup) |
 | `.claude/` 기존 존재 | **OK** (미존재 → 덮어쓰기 우려 없음) |
 
 ## 원안 대비 합의된 편차
@@ -46,7 +46,7 @@
 
 ## dry-run C 보충
 - spec-sync agent 정의: frontmatter 정상(name=spec-sync, model=sonnet, tools=Read,Grep,Glob,Write). `/agents`에 표시될 것.
-- 입력 파일 존재 확인: `../hub/docs/monitoring-demo-message-spec-v0.2.1.md`, `../script-agent/docs/monitoring-demo-message-spec-v0.2.1.md` (둘 다 18,771 bytes), `handoff/` 쓰기 가능.
+- 입력 파일 존재 확인: `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` (데모 spec 단일 정본 — phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 통합), `handoff/` 쓰기 가능.
 - **사람 수행 절차**: 인터랙티브 Claude Code 세션에서 spec-sync를 호출하여 두 사본을 비교, `handoff/spec-drift-<timestamp>.md` 생성 확인.
 - 참고: 셋업을 수행한 자동화 하니스의 Agent 도구는 빌트인 타입만 노출하여 커스텀 agent를 직접 호출하지 못함(정상). 이는 agent 정의 결함이 아니며, 실제 Claude Code 세션에서는 정상 호출됨.
 

@@ -46,7 +46,7 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 - `../monitoring-meta/docs/통합본_v0_9.md` — Phase 1+ 도달 목표
 - `../monitoring-meta/docs/envelope.md` — 공통 봉투 정본
 - `../monitoring-meta/docs/kafka-payloads.md` — 8토픽 payload 정본
-- `docs/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준(각 repo 사본)
+- `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준(monitoring-meta 단일 정본 — 작업 B로 단일화)
 
 ## 4. 배경 / 목표
 

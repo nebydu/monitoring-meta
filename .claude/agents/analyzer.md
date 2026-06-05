@@ -9,7 +9,7 @@ model: opus
 
 ## 입력으로 보는 것 (모두 읽기 전용)
 - 정본: `docs/통합본_v0_9.md`(단일 정본 작업 지침), `docs/kafka-payloads.md`(별첨 페이로드 spec), `docs/envelope.md`(있으면).
-- Phase 0 데모 spec: `../hub/docs/monitoring-demo-message-spec-v0.2.1.md`(현 정본), `../script-agent/docs/monitoring-demo-message-spec-v0.2.1.md`(사본).
+- Phase 0 데모 spec: `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`(정본 — phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 monitoring-meta 단일 정본으로 통합).
 - 양쪽 repo 코드: `../hub`, `../script-agent`, `../infra` — grep/glob/read만.
 - 참조 스냅샷: `docs/phase0-snapshot/PROJECT_OVERVIEW.md`.
 

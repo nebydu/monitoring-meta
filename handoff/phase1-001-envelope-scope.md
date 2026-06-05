@@ -26,7 +26,7 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 - `../monitoring-meta/docs/통합본_v0_9.md` §4.4.1(토픽 표 envelope 컬럼) / §6.8(envelope·ID 컨벤션) / §6.9.3·§6.9.5(alert/notification Phase 1 확정·key)
 - `../monitoring-meta/adr/0005-topic-naming.md` — D-4(2) RESOLVED 근거
 - `../monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md` §7(8토픽 계약 매트릭스)
-- `docs/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준(각 repo 사본)
+- `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준(monitoring-meta 단일 정본 — 작업 B로 단일화)
 
 ## 4. 배경 / 목표
 

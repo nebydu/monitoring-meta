@@ -2,14 +2,14 @@
 
 > **문서 위상**
 > - 이 문서는 **envelope 4종 헤더 세부 규약의 정본(Phase 1+ 도달 목표)** 이다. 즉 envelope 헤더 규약에 한해 정본이며, **상위 아키텍처 결정은 통합본 v0.9를 따른다**(아래 우선순위 참조).
-> - 데모 spec v0.2.1 (`../hub/docs/monitoring-demo-message-spec-v0.2.1.md` §2.2)은 **Phase 0 코드가 회귀 없이 지켜야 할 동작 spec(ground truth)** 으로 위상이 다르다. 둘을 같은 ground truth로 다루지 않는다.
+> - 데모 spec v0.2.1 (`docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` §2.2)은 **Phase 0 코드가 회귀 없이 지켜야 할 동작 spec(ground truth)** 으로 위상이 다르다. 둘을 같은 ground truth로 다루지 않는다.
 > - 충돌 시 **통합본 v0.9 6.8/6.9가 상위 근거**다. 이 문서의 모든 "결정"은 통합본 6.8/6.9 또는 사람이 확정한 Q1~Q5에 근거가 있다.
 >
 > - 작성 일시: 2026-05-27
 > - 근거 문서:
 >   - `docs/통합본_v0_9.md` 6.8(메시지 envelope 및 ID 컨벤션) / 6.9(데모 정합성 매트릭스) / 4.4.1(토픽 표) / 8.2(ADR 결정표)
 >   - `docs/kafka-payloads.md` (별첨 payload spec — "envelope는 별도 — shared-libs/envelope")
->   - `../hub/docs/monitoring-demo-message-spec-v0.2.1.md` §2.2 (Phase 0 회귀 기준 헤더 정의)
+>   - `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` §2.2 (Phase 0 회귀 기준 헤더 정의)
 >   - `handoff/envelope-draft-analysis.md` (1라운드 분석 §1~§9)
 > - 확정 결정 출처: 사람 confirm된 Q1~Q5 (**2026-05-27 확정**; `handoff/envelope-draft-analysis.md` §7 확정 기록 참조).
 
