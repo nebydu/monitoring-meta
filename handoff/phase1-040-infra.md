@@ -76,3 +76,23 @@
   "next_action": "다음에 할 일 한 줄"
 }
 ```
+
+## 9. 실행 결과 보고 (infra 세션 — 2026-06-06)
+
+- 실행 시점 meta HEAD: `75047284858e56ce430485393857601cb2e4f7fd` (이 handoff를 추가한 커밋 — 기준 commit `f28587a` 직후이므로 drift 없음)
+- infra 커밋: `d732de3`(T4-1 재명명), `a6946ec`(codex-gate profile — 별건) / origin/main push 완료
+
+```json
+{
+  "status": "ok",
+  "outputs": ["docker-compose.yml", "otel-collector-config.yml"],
+  "findings": [
+    "kafka-init: command-topic/audit-topic/heartbeats-topic 생성 + job-results 유지 — 클린 기동 후 kafka-topics --list로 신규 3토픽+job-results 존재, 구 3토픽 미생성 확인 (DoD 충족)",
+    "otel exporter: topic heartbeats-topic 전환, collector 정상 기동(Everything is ready) 확인",
+    "주석 2곳(docker-compose.yml:75, otel-collector-config.yml:3) 동기화 — repo 전체 구 토픽명 잔존 0 (README에는 원래 없음, job-results 제외)",
+    "무관 변경 없음 (런타임 2곳 + 주석 2곳만 수정)"
+  ],
+  "blockers": [],
+  "next_action": "같은 컷오버 윈도우에서 hub(HEARTBEATS 상수)·script-agent 재명명 적용 — 인프라는 새 토픽으로 기동 중이므로 hub가 구 토픽 구독 상태로 e2e를 돌리면 heartbeat 수신 실패(§3.1 주의 사항)"
+}
+```
