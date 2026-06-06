@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v8)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v9)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
@@ -77,6 +77,14 @@
 #       ② "failed to fetch command" + "Group Coordinator Not Available" 재현 여부
 #       ③ 전반적 동작 판정: 에러 사라지면 "reuse-infra race artifact 결론", 재현되면 "진짜 회귀 후보"
 #   - §6-TEARDOWN: 컨테이너 잔류 없음 확인 — teardown 후 monitoring-e2e 프로젝트 컨테이너 부재 판정
+#
+# v9 변경사항 (하네스 버그 2건 수정 — §6-CMD + §6-PREV-ERR):
+#   - 버그 D (§6-CMD camelCase): /schedules POST 페이로드를 Jackson SNAKE_CASE 정책 준수 필드명으로 수정
+#     jobType->job_type, targetAgentId->target_agent_id (hub ScheduleRegistrationRequest record 필드와 일치)
+#     cron 0/15->0/5(5초마다)로 단축해 command 발화 지연 최소화
+#   - 버그 E (§6-PREV-ERR grep -c 판정): grep -c ... || echo "0" 결과에 개행이 섞여
+#     "0\n0" 형태가 되어 "= \"0\"" 문자열 비교가 역전됐음.
+#     산술 확장 $(( $(grep -c ...) )) 으로 정규화, -eq 0 산술 비교 사용.
 #
 # 사용:
 #   ./run-e2e.sh                          # 정적+유닛만 (§1~§5, §7~§8)
@@ -843,8 +851,8 @@ else
                     # 단 hub가 즉시 fire하는 즉발 실행(triggerNow)이 없으므로 command는 등록 시 즉시 발행되지 않을 수 있다.
                     # ScheduleService의 register → Quartz → trigger 발화 → CommandPublisher.publish 경로를 거침.
                     # 데모에서는 cron 첫 발화 시 command가 나가므로, 즉발 테스트를 위해 30초 내 발화하는 cron 사용.
-                    # "0/15 * * * * ?" = 15초마다. 30s 대기하면 command 최소 1회 발행 예상.
-                    SCHEDULE_PAYLOAD="{\"jobType\":\"SCRIPT_JOB\",\"spec\":{\"script_path\":\"echo hello\"},\"targetAgentId\":\"${LIVE_AGENT_ID}\",\"cron\":\"0/15 * * * * ?\"}"
+                    # "0/5 * * * * ?" = 5초마다. 15s 대기하면 command 최소 2회 발행 예상.
+                    SCHEDULE_PAYLOAD="{\"job_type\":\"SCRIPT_JOB\",\"spec\":{\"script_path\":\"/opt/scripts/check_disk.sh\",\"args\":[\"--threshold\",\"80\"],\"timeout_seconds\":30,\"output_cap_bytes\":65536},\"target_agent_id\":\"${LIVE_AGENT_ID}\",\"cron\":\"0/5 * * * * ?\"}"
                     SCHEDULE_RESP=$(curl -sf -X POST http://localhost:8080/schedules \
                         -H "Content-Type: application/json" \
                         -d "${SCHEDULE_PAYLOAD}" 2>/dev/null || echo "ERROR")
@@ -957,10 +965,12 @@ else
                     log_pass "§6-PREV-ERR ②: 'Group Coordinator Not Available' 에러 미재현 — 클린 부팅에서 command-topic consumer 정상 초기화. 직전 에러는 reuse-infra race artifact였음"
                 fi
 
-                # 전반적 판정
-                PREV_ERR1_COUNT=$(grep -c "failed to publish AGENT_STARTED" "${AGENT_RUN_LOG}" 2>/dev/null || echo "0")
-                PREV_ERR2_COUNT=$(grep -c "Group Coordinator Not Available" "${AGENT_RUN_LOG}" 2>/dev/null || echo "0")
-                if [ "${PREV_ERR1_COUNT}" = "0" ] && [ "${PREV_ERR2_COUNT}" = "0" ]; then
+                # 전반적 판정 (grep -c 결과를 산술 확장으로 정규화 — 개행 혼입 방지)
+                PREV_ERR1_COUNT=$( (grep "failed to publish AGENT_STARTED" "${AGENT_RUN_LOG}" 2>/dev/null || true) | wc -l )
+                PREV_ERR1_COUNT=$(( ${PREV_ERR1_COUNT:-0} + 0 ))
+                PREV_ERR2_COUNT=$( (grep "Group Coordinator Not Available" "${AGENT_RUN_LOG}" 2>/dev/null || true) | wc -l )
+                PREV_ERR2_COUNT=$(( ${PREV_ERR2_COUNT:-0} + 0 ))
+                if [ ${PREV_ERR1_COUNT} -eq 0 ] && [ ${PREV_ERR2_COUNT} -eq 0 ]; then
                     log_pass "§6-PREV-ERR 전반 판정: 직전 에러 2종 모두 미재현 — 클린 부팅(새 kafka 기동)에서 race artifact 없음 확인. 직전 --reuse-infra 에러는 group coordinator 미준비 race artifact로 결론 가능"
                 else
                     log_fail "§6-PREV-ERR 전반 판정: 직전 에러 재현됨 (AGENT_STARTED_FAIL=${PREV_ERR1_COUNT}, GRP_COORD_ERR=${PREV_ERR2_COUNT}) — 클린 부팅에서도 재현 → reuse-infra race 아닌 다른 원인 가능성"
@@ -1356,6 +1366,9 @@ fi
     echo "v8: §6-AUDIT/§6-CMD/§6-PREV-ERR 신설 — command/audit 라이브 경로 판정 + 직전 에러 재현 여부"
     echo "    클린 부팅 모드에서 kafka-init 완료 후 group coordinator 안정화 20s 대기"
     echo "    hub 로그에 AuditConsumer DEBUG 레벨 추가 (LOGGING_LEVEL_COM_MONITORING_HUB_INGEST_AUDIT=DEBUG)"
+    echo "v9: 하네스 버그 2건 수정"
+    echo "    버그 D: §6-CMD /schedules POST 페이로드 camelCase->snake_case (job_type/target_agent_id), cron 0/15->0/5"
+    echo "    버그 E: §6-PREV-ERR grep -c 산술 정규화 (-eq 0 비교, 개행 혼입 방지)"
     echo ""
     echo "## 발견 사항"
     echo ""
@@ -1375,7 +1388,7 @@ fi
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v8, --dynamic opt-in, --reuse-infra opt-in)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v9, --dynamic opt-in, --reuse-infra opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"
