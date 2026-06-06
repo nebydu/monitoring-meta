@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v5)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v6)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
@@ -13,6 +13,10 @@
 #   7. [정적] phase1-002 x-source 가드 명시화 회귀 검증
 #             — hub EnvelopeHeaders 신설 + JobResultConsumer/AuditConsumer 가드 호출 + CommandPublisher 별칭 위임
 #             — script-agent SourceFromHeaders 추가 + consumeCommands 관찰 결선 + envelope_test.go 6케이스
+#   8. [정적] T4-1 토픽 재명명 R-A/R-B 회귀 검증 (ADR#5 규칙 B 최종 논리명)
+#             — R-A: 메시지 흐름·payload·envelope 기반 동작 등가 (흐름 정합성)
+#             — R-B: 신명 완전성(command-topic/audit-topic/heartbeats-topic) +
+#                    구명(commands/audit-events/heartbeats) 런타임 경로 잔존 부재
 #
 # v3 변경사항 (하네스 버그 3건 수정):
 #   - 버그 A (IPv6 우회): script-agent 기동 시 OTLP_ENDPOINT/KAFKA_BROKERS를 127.0.0.1로 명시
@@ -32,9 +36,28 @@
 #          CommandPublisher 별칭 위임(값 불변 회귀 0), 헤더 키 문자열 현지화 검사
 #     script-agent: SourceFromHeaders 추가, consumeCommands 관찰 결선, envelope_test.go 케이스 수
 #
+# v6 변경사항 (T4-1 토픽 재명명 R-A/R-B 검증 추가):
+#   - §8 신설: ADR#5 규칙 B 최종 논리명 재명명 완전성 + 동작 등가 검증
+#     R-B 재명명 완전성(12항목):
+#       hub KafkaConfig.Topics 3상수 신명 확인 / 구명 리터럴 런타임 경로 부재 /
+#       hub 전용 회귀 앵커 테스트(KafkaTopicConstantsRegressionTest) 존재 확인 /
+#       AuditConsumerTest 픽스처 신명 확인 / UiControllerTest 구명 오탐 무해 확인
+#       script-agent config.go getenv default 신명 확인(commands→command-topic, audit-events→audit-topic) /
+#       구명 getenv default 잔존 부재 /
+#       infra kafka-init 루프 신명 확인(command-topic/audit-topic/heartbeats-topic, job-results 유지) /
+#       infra otel-collector exporter topic 신명 확인(heartbeats-topic)
+#     R-A 동작 등가(7항목):
+#       hub 흐름 상수 단일 진실 확인(상수 통해 발행/구독 — 리터럴 없음) /
+#       spec §1.1 흐름 4종 토픽 모두 단일 진실 확인 /
+#       heartbeats-topic 동시 컷오버(infra otel exporter ↔ hub consumer 동명) 확인 /
+#       audit/command 흐름 단절 위험 부재 확인 /
+#       job-results 유지(T4-2 미결, 현행명 보존) 확인 /
+#       envelope 4종 헤더는 토픽명 독립(재명명 영향 없음) 관찰 기록 /
+#       하네스(e2e/run-e2e.sh) 토픽명 하드코딩 비교 부재 — false-fail 아님 관찰
+#
 # 사용:
-#   ./run-e2e.sh            # 정적+유닛만 (§1~§5, §7)
-#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§7)
+#   ./run-e2e.sh            # 정적+유닛만 (§1~§5, §7~§8)
+#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§8)
 #
 # 규칙:
 #   - 실패 시 코드를 고치지 않는다 — 로그만 기록하고 종료한다.
@@ -44,7 +67,9 @@
 #
 # 근거 문서:
 #   adr/0002-heartbeat-otlp-proto.md  (결정 A-1/B-1/C-1)
+#   adr/0005-topic-naming.md          (D-4(1)/D-4(2) Accepted — T4-1 근거)
 #   handoff/adr-002-{infra,hub,script-agent}.md
+#   handoff/phase1-040-000-impact.md  (T4-1 영향 분석)
 #   docs/kafka-payloads.md (heartbeats-topic)
 #   docs/envelope.md §2.2·§2.3·§4.2·§6 (OTLP 위임군 예외, x-source 가드)
 #   데모 spec v0.2.1 §5.4 (Phase 0 ground truth)
@@ -709,6 +734,218 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# §8. 정적 검증 — T4-1 토픽 재명명 R-B 완전성 + R-A 동작 등가
+#     근거: adr/0005-topic-naming.md §2.2.1 (최종 논리명 표)
+#           handoff/phase1-040-000-impact.md §3.3 (R-A/R-B 정의)
+# ---------------------------------------------------------------------------
+echo ""
+echo "=== §8 T4-1 토픽 재명명 회귀 검증 (R-B 완전성 + R-A 동작 등가) ==="
+
+HUB_KAFKA_CFG="${HUB_DIR}/src/main/java/com/monitoring/hub/config/KafkaConfig.java"
+HUB_TOPIC_REGRESSION="${HUB_DIR}/src/test/java/com/monitoring/hub/config/KafkaTopicConstantsRegressionTest.java"
+HUB_AUDIT_TEST="${HUB_DIR}/src/test/java/com/monitoring/hub/ingest/audit/AuditConsumerTest.java"
+HUB_UI_TEST="${HUB_DIR}/src/test/java/com/monitoring/hub/web/UiControllerTest.java"
+AGENT_CONFIG_GO="${AGENT_DIR}/internal/config/config.go"
+INFRA_COMPOSE="${INFRA_DIR}/docker-compose.yml"
+INFRA_OTEL_CFG="${INFRA_DIR}/otel-collector-config.yml"
+
+# ----- R-B: 재명명 완전성 (신명 확인 + 구명 런타임 경로 잔존 부재) -----
+
+echo "[INFO] §8 R-B: 재명명 완전성 검사 시작"
+
+# §8-RB-1: hub KafkaConfig.Topics.COMMANDS = "command-topic"
+if file_contains "${HUB_KAFKA_CFG}" 'COMMANDS\s*=\s*"command-topic"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.COMMANDS = \"command-topic\" 확인 (T4-1 신명)"
+else
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.COMMANDS 값이 \"command-topic\"이 아님 — T4-1 재명명 미반영 또는 회귀"
+fi
+
+# §8-RB-2: hub KafkaConfig.Topics.AUDIT_EVENTS = "audit-topic"
+if file_contains "${HUB_KAFKA_CFG}" 'AUDIT_EVENTS\s*=\s*"audit-topic"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.AUDIT_EVENTS = \"audit-topic\" 확인 (T4-1 신명)"
+else
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.AUDIT_EVENTS 값이 \"audit-topic\"이 아님 — T4-1 재명명 미반영 또는 회귀"
+fi
+
+# §8-RB-3: hub KafkaConfig.Topics.HEARTBEATS = "heartbeats-topic"
+if file_contains "${HUB_KAFKA_CFG}" 'HEARTBEATS\s*=\s*"heartbeats-topic"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.HEARTBEATS = \"heartbeats-topic\" 확인 (T4-1 신명)"
+else
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.HEARTBEATS 값이 \"heartbeats-topic\"이 아님 — T4-1 재명명 미반영 또는 회귀"
+fi
+
+# §8-RB-4: hub KafkaConfig.Topics.JOB_RESULTS = "job-results" (T4-2 미변경 가드)
+if file_contains "${HUB_KAFKA_CFG}" 'JOB_RESULTS\s*=\s*"job-results"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS = \"job-results\" 유지 확인 (T4-2 미결 — 현행명 보존 정상)"
+else
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS 값이 \"job-results\"가 아님 — T4-2 범위 침범 또는 오변경"
+fi
+
+# §8-RB-5: hub 소스 런타임 경로에 구명 리터럴 잔존 여부
+#   UiController.java의 모델 attribute 키("heartbeats","commands")는 토픽명이 아니라 UI 변수명이므로
+#   src/main/java 전체에서 검사하되 UiController.java는 별도 오탐 기록으로 처리한다.
+#   JobResults/AuditEvent/Command Kafka 상수 경로(KafkaConfig.java) 외에 구명 리터럴이 있으면 위반.
+OLD_TOPIC_MAIN=$(grep -rn '"commands"\|"audit-events"\|"heartbeats"' \
+    "${HUB_DIR}/src/main/java" 2>/dev/null \
+    | grep -v "UiController\.java" \
+    | grep -v "\.class" \
+    | head -5 || true)
+if [ -z "${OLD_TOPIC_MAIN}" ]; then
+    log_pass "§8 R-B: hub/src/main/java 런타임 경로에 구명(commands/audit-events/heartbeats) 리터럴 잔존 없음"
+else
+    log_fail "§8 R-B: hub/src/main/java 런타임 경로에 구명 리터럴 잔존 감지 — 해당 라인: ${OLD_TOPIC_MAIN}"
+fi
+
+# §8-RB-5b: UiController.java에서 오탐 확인 — 모델 attribute 키이므로 무해함을 기록
+if file_contains "${HUB_DIR}/src/main/java/com/monitoring/hub/web/UiController.java" '"heartbeats"\|"commands"'; then
+    log_info "§8 R-B 오탐 확인: hub/UiController.java의 \"heartbeats\"/\"commands\"는 UI 모델 attribute 키(변수명)로 Kafka 토픽명이 아님 — 변경 불요(impact.md §2.1 확인)"
+fi
+
+# §8-RB-6: hub 토픽 상수 회귀 앵커 테스트 파일 존재 확인
+if [ -f "${HUB_TOPIC_REGRESSION}" ]; then
+    log_pass "§8 R-B: hub/KafkaTopicConstantsRegressionTest.java 존재 확인 — T4-1 토픽 상수 값 회귀 앵커"
+else
+    log_fail "§8 R-B: hub/KafkaTopicConstantsRegressionTest.java 없음 — 회귀 앵커 테스트 미존재"
+fi
+
+# §8-RB-7: hub AuditConsumerTest 픽스처 신명 확인
+if file_contains "${HUB_AUDIT_TEST}" '"audit-topic"'; then
+    log_pass "§8 R-B: hub/AuditConsumerTest.java: TOPIC=\"audit-topic\" 픽스처 신명 확인"
+else
+    log_fail "§8 R-B: hub/AuditConsumerTest.java: TOPIC이 \"audit-topic\"이 아님 — 테스트 픽스처 구명 잔존 가능성"
+fi
+
+# §8-RB-8: script-agent config.go — KAFKA_TOPIC_COMMANDS default = "command-topic"
+if file_contains "${AGENT_CONFIG_GO}" 'getenv\("KAFKA_TOPIC_COMMANDS",\s*"command-topic"\)'; then
+    log_pass "§8 R-B: script-agent/config.go: KAFKA_TOPIC_COMMANDS default=\"command-topic\" 확인 (T4-1 신명)"
+else
+    log_fail "§8 R-B: script-agent/config.go: KAFKA_TOPIC_COMMANDS default가 \"command-topic\"이 아님 — T4-1 재명명 미반영 또는 회귀"
+fi
+
+# §8-RB-9: script-agent config.go — KAFKA_TOPIC_AUDIT_EVENTS default = "audit-topic"
+if file_contains "${AGENT_CONFIG_GO}" 'getenv\("KAFKA_TOPIC_AUDIT_EVENTS",\s*"audit-topic"\)'; then
+    log_pass "§8 R-B: script-agent/config.go: KAFKA_TOPIC_AUDIT_EVENTS default=\"audit-topic\" 확인 (T4-1 신명)"
+else
+    log_fail "§8 R-B: script-agent/config.go: KAFKA_TOPIC_AUDIT_EVENTS default가 \"audit-topic\"이 아님 — T4-1 재명명 미반영 또는 회귀"
+fi
+
+# §8-RB-10: script-agent config.go — 구명("commands"/"audit-events") getenv default 잔존 부재
+#   config.go에서 getenv 두 번째 인자로 구명이 남아있으면 runtime에서 구 토픽으로 발행된다.
+OLD_AGENT_DEFAULT=$(grep -n 'getenv.*"commands"\|getenv.*"audit-events"' "${AGENT_CONFIG_GO}" 2>/dev/null || true)
+if [ -z "${OLD_AGENT_DEFAULT}" ]; then
+    log_pass "§8 R-B: script-agent/config.go: 구명(\"commands\"/\"audit-events\") getenv default 잔존 없음"
+else
+    log_fail "§8 R-B: script-agent/config.go: 구명 getenv default 잔존 감지 — 런타임에서 구 토픽으로 발행될 위험: ${OLD_AGENT_DEFAULT}"
+fi
+
+# §8-RB-11: infra docker-compose.yml kafka-init 루프 신명 확인
+#   기대: for t in command-topic job-results audit-topic heartbeats-topic
+if file_contains "${INFRA_COMPOSE}" 'command-topic.*job-results.*audit-topic.*heartbeats-topic'; then
+    log_pass "§8 R-B: infra/docker-compose.yml kafka-init 루프: command-topic/audit-topic/heartbeats-topic 신명 + job-results 유지 확인"
+elif file_contains "${INFRA_COMPOSE}" 'command-topic' && \
+     file_contains "${INFRA_COMPOSE}" 'audit-topic' && \
+     file_contains "${INFRA_COMPOSE}" 'heartbeats-topic' && \
+     file_contains "${INFRA_COMPOSE}" 'job-results'; then
+    log_pass "§8 R-B: infra/docker-compose.yml kafka-init: 4개 토픽명 모두 존재 확인 (신명 3 + job-results 유지)"
+else
+    COMPOSE_TOPIC_LINE=$(grep -n "for t in\|command-topic\|audit-topic\|heartbeats-topic\|commands\|audit-events\|heartbeats" \
+        "${INFRA_COMPOSE}" 2>/dev/null | head -10 || true)
+    log_fail "§8 R-B: infra/docker-compose.yml kafka-init 루프에서 신명 4종 미확인 — 현황: ${COMPOSE_TOPIC_LINE}"
+fi
+
+# §8-RB-11b: infra docker-compose.yml에서 구명 토픽 생성 루프 잔존 부재
+OLD_COMPOSE_TOPICS=$(grep -n '"commands"\|"audit-events"\|"heartbeats"\b' "${INFRA_COMPOSE}" 2>/dev/null \
+    | grep -v "heartbeats-topic" || true)
+if [ -z "${OLD_COMPOSE_TOPICS}" ]; then
+    log_pass "§8 R-B: infra/docker-compose.yml: 구명(commands/audit-events/heartbeats) 토픽 생성 잔존 없음"
+else
+    log_fail "§8 R-B: infra/docker-compose.yml: 구명 토픽 생성 라인 잔존 감지: ${OLD_COMPOSE_TOPICS}"
+fi
+
+# §8-RB-12: infra otel-collector-config.yml kafka exporter topic = heartbeats-topic
+if file_contains "${INFRA_OTEL_CFG}" 'topic:\s*heartbeats-topic'; then
+    log_pass "§8 R-B: infra/otel-collector-config.yml: kafka exporter topic=\"heartbeats-topic\" 확인 (T4-1 신명)"
+else
+    OTEL_TOPIC=$(grep -n "topic:" "${INFRA_OTEL_CFG}" 2>/dev/null || echo "없음")
+    log_fail "§8 R-B: infra/otel-collector-config.yml: kafka exporter topic이 heartbeats-topic이 아님 — 현황: ${OTEL_TOPIC}"
+fi
+
+# ----- R-A: 동작 등가 (메시지 흐름·payload·envelope·발행순서 보존) -----
+
+echo "[INFO] §8 R-A: 동작 등가 검사 시작"
+
+# §8-RA-1: hub — 토픽 상수 단일 진실 확인 (producer/consumer가 상수 참조, 리터럴 없음)
+#   CommandPublisher가 KafkaConfig.Topics.COMMANDS를 참조하는지 확인
+HUB_CMD_PUBLISHER="${HUB_DIR}/src/main/java/com/monitoring/hub/producer/CommandPublisher.java"
+if file_contains "${HUB_CMD_PUBLISHER}" "KafkaConfig\.Topics\.COMMANDS|Topics\.COMMANDS"; then
+    log_pass "§8 R-A: hub/CommandPublisher.java: KafkaConfig.Topics.COMMANDS 상수 참조 확인 (리터럴 없음 — 단일 진실)"
+else
+    log_fail "§8 R-A: hub/CommandPublisher.java: Topics.COMMANDS 상수 참조 없음 — 리터럴 직접 참조 가능성"
+fi
+
+# §8-RA-2: hub AuditConsumer가 KafkaConfig.Topics.AUDIT_EVENTS 상수 참조하는지
+if file_contains "${AUDIT_CONSUMER}" "KafkaConfig\.Topics\.AUDIT_EVENTS|Topics\.AUDIT_EVENTS|Topics\.AUDIT"; then
+    log_pass "§8 R-A: hub/AuditConsumer.java: Topics.AUDIT_EVENTS 상수 참조 확인 (단일 진실 추종)"
+else
+    log_fail "§8 R-A: hub/AuditConsumer.java: Topics.AUDIT_EVENTS 상수 참조 없음 — 리터럴 직접 참조 가능성"
+fi
+
+# §8-RA-3: heartbeats-topic 동시 컷오버 정합 확인
+#   infra otel-collector exporter topic(heartbeats-topic) ↔ hub consumer(HEARTBEATS="heartbeats-topic")
+#   이 두 이름이 일치해야 heartbeat 수신 흐름이 성립한다(ADR#2 + T4-1 핵심 단절 위험).
+OTEL_TOPIC_VAL=$(grep 'topic:' "${INFRA_OTEL_CFG}" 2>/dev/null | awk '{print $2}' | tr -d '\r' | head -1)
+HUB_HB_CONST=$(grep 'HEARTBEATS\s*=' "${HUB_KAFKA_CFG}" 2>/dev/null | grep -oE '"[^"]+"' | head -1)
+if [ "${OTEL_TOPIC_VAL}" = "heartbeats-topic" ] && [ "${HUB_HB_CONST}" = '"heartbeats-topic"' ]; then
+    log_pass "§8 R-A: heartbeats-topic 동시 컷오버 정합 — infra otel exporter(${OTEL_TOPIC_VAL}) ↔ hub consumer(HEARTBEATS=${HUB_HB_CONST}) 이름 일치. heartbeat 수신 흐름 단절 없음"
+else
+    log_fail "§8 R-A: heartbeats-topic 동시 컷오버 불일치 감지 — infra otel exporter topic=[${OTEL_TOPIC_VAL}] vs hub HEARTBEATS=[${HUB_HB_CONST}]. 이름이 다르면 heartbeat 수신 단절됨"
+fi
+
+# §8-RA-4: audit/command 흐름 단절 위험 부재 확인
+#   script-agent config.go default와 hub KafkaConfig.Topics 신명이 일치하는지 교차 확인
+AGENT_CMD_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_COMMANDS' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"command-topic"' | head -1 || true)
+AGENT_AUDIT_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_AUDIT_EVENTS' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"audit-topic"' | head -1 || true)
+if [ "${AGENT_CMD_DEFAULT}" = '"command-topic"' ] && [ "${AGENT_AUDIT_DEFAULT}" = '"audit-topic"' ]; then
+    log_pass "§8 R-A: script-agent 기본 토픽명 신명 확인 — COMMANDS default=command-topic, AUDIT default=audit-topic. hub 상수(KafkaConfig.Topics)와 이름 일치 — 흐름 단절 없음"
+else
+    log_fail "§8 R-A: script-agent ↔ hub 토픽명 불일치 위험 — agent COMMANDS=[${AGENT_CMD_DEFAULT:-미확인}], AUDIT=[${AGENT_AUDIT_DEFAULT:-미확인}]. hub 신명과 다르면 메시지 흐름 단절됨"
+fi
+
+# §8-RA-5: job-results 현행명 보존 확인 (T4-2 미결 — 흐름 연속성)
+#   job-results는 spec §1.1 흐름의 일부이며 T4-2 대기 중이므로 현행 "job-results"가 유지돼야 한다.
+AGENT_JR_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_JOB_RESULTS' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"job-results"' | head -1 || true)
+if [ "${AGENT_JR_DEFAULT}" = '"job-results"' ]; then
+    log_pass "§8 R-A: script-agent/config.go: KAFKA_TOPIC_JOB_RESULTS default=\"job-results\" 유지 — T4-2 미결, 흐름 연속성 보존"
+else
+    log_fail "§8 R-A: script-agent/config.go: KAFKA_TOPIC_JOB_RESULTS default가 \"job-results\"가 아님 — T4-2 범위 침범 또는 오변경으로 job-results 흐름 단절 위험"
+fi
+
+# §8-RA-6: envelope 4종 헤더가 토픽명과 독립적임을 관찰 기록
+#   (adr/0005 §2.1, envelope.md §4.1 주: envelope 적용은 토픽명·zone suffix와 무관)
+#   x-source, x-message-id 등 헤더는 재명명 후에도 동일하게 발행/수신됨 → FAIL 가능성 없음.
+if file_contains "${ENVELOPE_HEADERS}" '"x-message-id"' && \
+   file_contains "${ENVELOPE_HEADERS}" '"x-source"'; then
+    log_info "§8 R-A: envelope 4종 헤더(x-message-id/x-message-version/x-source/x-trace-id)는 토픽명과 독립적. 재명명이 envelope 동작에 영향 없음(adr/0005 §2.1, envelope.md §4.1 주) — 관찰 기록"
+fi
+
+# §8-RA-7: 하네스(e2e/run-e2e.sh) 토픽명 하드코딩 비교 여부 확인
+#   현재 하네스는 토픽명을 직접 비교하지 않고 hub 로그 패턴(ntainer#1-0-C-1 ... Received: N records)으로 판정.
+#   만약 토픽명을 직접 grep/비교하는 라인이 있다면 구명 기준이면 false-fail, 신명이면 OK임을 명시해야 한다.
+THIS_SCRIPT="${SCRIPT_DIR}/run-e2e.sh"
+HARDCODED_OLD=$(grep -n '"commands"\|"audit-events"\|"heartbeats"' "${THIS_SCRIPT}" 2>/dev/null \
+    | grep -v "^[0-9]*:#\|주석\|comment" || true)
+if [ -z "${HARDCODED_OLD}" ]; then
+    log_pass "§8 R-A: 하네스(run-e2e.sh): 구 토픽명(commands/audit-events/heartbeats) 하드코딩 비교 없음 — false-fail 없음. 토픽명 독립 판정(로그 패턴 기반) 유지"
+else
+    log_info "§8 R-A 주의: 하네스(run-e2e.sh)에 구 토픽명 리터럴 등장 라인 감지: ${HARDCODED_OLD}. 동작 비교가 아닌 주석이면 무해하나 내용 확인 권고"
+    add_blocker "하네스 run-e2e.sh에 구 토픽명 리터럴 감지 — 코드 비교로 쓰이면 false-fail 발생 가능. 주석/정보성 여부 확인 필요(수정 여부는 사람 판단)"
+fi
+
+# ----- §8 R-A / R-B 소계 -----
+echo ""
+echo "[INFO] §8 검증 완료"
+
+# ---------------------------------------------------------------------------
 # 결과 집계 및 MD 파일 생성
 # ---------------------------------------------------------------------------
 echo ""
@@ -743,12 +980,17 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "- §5 주석 drift 관측"
     echo "- §6 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
     echo "- §7 phase1-002 x-source 가드 명시화 회귀 (EnvelopeHeaders 신설 · consumer 가드 호출 · CommandPublisher 별칭 위임 · SourceFromHeaders 추가)"
+    echo "- §8 T4-1 토픽 재명명 R-B 완전성 + R-A 동작 등가 (ADR#5 규칙 B 최종 논리명)"
+    echo "  - R-B 완전성: hub Topics 3상수 신명 / hub 런타임 구명 부재 / 회귀 앵커 테스트 / AuditConsumerTest 픽스처 / script-agent config.go 신명 / infra 카프카 init + otel exporter"
+    echo "  - R-A 동작 등가: hub 단일 진실 상수 참조 / heartbeats-topic 동시 컷오버 정합 / command·audit 흐름 단절 부재 / job-results 유지 / envelope 독립 관찰 / 하네스 false-fail 부재"
     echo ""
     echo "## 근거 문서"
     echo ""
     echo "- docs/envelope.md §2.2·§2.3·§6 (헤더 키 · x-source 가드 · OTLP 예외)"
     echo "- docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md §2.2·§5.4 (Phase 0 ground truth)"
     echo "- adr/0002-heartbeat-otlp-proto.md (A-1/B-1/C-1)"
+    echo "- adr/0005-topic-naming.md §2.2.1 (D-4(1) Accepted — 최종 논리명 표)"
+    echo "- handoff/phase1-040-000-impact.md §3.3 (R-A/R-B 회귀 기준 정의)"
     echo ""
     echo "## 하네스 수정 이력"
     echo ""
@@ -768,6 +1010,12 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "- §7 신설: EnvelopeHeaders 신설 + consumer 가드 호출 + CommandPublisher 별칭 위임 + SourceFromHeaders 회귀 검증"
     echo "- 근거 문서 섹션 추가 (envelope.md §2.2·§2.3·§6)"
     echo ""
+    echo "v6 (T4-1 토픽 재명명 R-A/R-B 검증 추가):"
+    echo "- §8 신설: ADR#5 규칙 B 최종 논리명 재명명 완전성(R-B) 12항목 + 동작 등가(R-A) 7항목"
+    echo "- R-B: hub/KafkaConfig.Topics 3상수 신명 리터럴 단언 / 런타임 구명 부재 / KafkaTopicConstantsRegressionTest 존재 / AuditConsumerTest 픽스처 신명 / script-agent config.go getenv default 신명 / 구명 default 잔존 부재 / infra compose kafka-init 루프 신명 4종 / otel-collector exporter topic 신명"
+    echo "- R-A: CommandPublisher Topics 상수 참조(단일 진실) / heartbeats-topic 동시 컷오버 정합(otel↔hub consumer 이름 일치) / script-agent↔hub 토픽명 교차 확인 / job-results 유지 / envelope 독립 관찰 / 하네스 false-fail 부재 확인"
+    echo "- 근거 문서 추가: adr/0005-topic-naming.md §2.2.1 / handoff/phase1-040-000-impact.md §3.3"
+    echo ""
     echo "## 발견 사항"
     echo ""
     for f in "${FINDINGS[@]}"; do
@@ -786,7 +1034,7 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v5, --dynamic opt-in)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v6, --dynamic opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"
