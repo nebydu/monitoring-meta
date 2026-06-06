@@ -23,8 +23,5 @@
         ]
       }
     ]
-  },
-  "enabledPlugins": {
-    "harness@monitoring": false
   }
 }
