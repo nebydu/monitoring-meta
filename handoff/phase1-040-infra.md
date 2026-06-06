@@ -80,7 +80,7 @@
 ## 9. 실행 결과 보고 (infra 세션 — 2026-06-06)
 
 - 실행 시점 meta HEAD: `75047284858e56ce430485393857601cb2e4f7fd` (이 handoff를 추가한 커밋 — 기준 commit `f28587a` 직후이므로 drift 없음)
-- infra 커밋: `d732de3`(T4-1 재명명), `a6946ec`(codex-gate profile — 별건) / origin/main push 완료
+- infra 커밋: `d732de3`(T4-1 재명명), `a6946ec`(codex-gate profile — 별건, §9.1) / origin/main push 완료
 
 ```json
 {
@@ -96,3 +96,16 @@
   "next_action": "같은 컷오버 윈도우에서 hub(HEARTBEATS 상수)·script-agent 재명명 적용 — 인프라는 새 토픽으로 기동 중이므로 hub가 구 토픽 구독 상태로 e2e를 돌리면 heartbeat 수신 실패(§3.1 주의 사항)"
 }
 ```
+
+### 9.1 별건 — codex-gate consumer 적용 (infra, 2026-06-06)
+
+T4-1 실행 중 monitoring-harness plugin의 codex-gate Stop hook이 infra에서 구성 오류로 실패하는 것을 발견해, 사람 확인 게이트를 거쳐 다음을 적용했다(harness G-4/D-7 관련, T4-1 범위 밖 별건).
+
+| infra 커밋 | 내용 |
+|---|---|
+| `a6946ec` | `.claude/codex-gate.profile` 생성(infra 도메인 delta — 트리거 `*.yml`/`*.yaml`, ADR-0005 토픽 명명·ADR-0002 heartbeat 경로 중심 프롬프트, 임계 3/2) + `.gitattributes` LF 고정 |
+| `6d935df` | `.claude/settings.json` 생성 — `enabledPlugins: {"harness@monitoring": true}` project scope 커밋. 기존엔 user scope 활성화에만 의존해 새 clone에서 hook 미발동이었음 |
+
+- 결과: infra의 codex-gate 적용 수준이 hub/script-agent와 동등해짐(profile + enabledPlugins 모두 repo 공유).
+- 잔여(전 repo 공통): marketplace 등록(`monitoring` → monitoring-harness 디렉터리 source)은 머신별 1회 설정 — repo 커밋으로 해소 불가.
+- monitoring-meta는 plugin이 아닌 자체 `.claude/hooks/codex-gate.sh`(구형) 사용 중 — plugin 전환 여부는 harness milestone(H2~) 소관.
