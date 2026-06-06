@@ -1,6 +1,6 @@
 # 점검 노트 — phase1-002-infra (Track 0 — T0-3 산출물 → T0-4 구현 점검 — infra 영향)
 
-> **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 비준 대비" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 정본은 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
+> **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 승인 대비" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 기준 문서는 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
 
 > envelope은 **애플리케이션 Kafka 헤더** 규약이라 infra(Collector/broker) 직접 변경은 없다. 이 노트는 infra 세션이 "envelope 때문에 바꿀 게 있나"를 빠르게 확인하기 위한 가벼운 점검 항목이다. 결론: **이번 phase1-002에서 infra 변경 작업은 없다.**
 
@@ -31,9 +31,9 @@
 
 - 현재 broker에 별도 ACL 설정 없음(단일 데모 broker). envelope은 헤더라 ACL과 무관. → 점검 결과 **대상 없음**.
 
-### 3.3 토픽명 잠정 주의 (D-4(1) 비준 대비)
+### 3.3 토픽명 잠정 주의 (D-4(1) 승인 대비)
 
-- init 스크립트의 토픽명(`commands` 등)은 데모명이며 kafka-payloads 잠정 논리명(`command-topic` 등)과 다르다. **이번에 바꾸지 마라** — 토픽 재명명은 D-4(1)(`adr/0005`) 비준 후 Track 4-1 소관이다. 앱(hub/script-agent)과 init 스크립트의 토픽명이 **일치 상태로 유지**되는지만 확인.
+- init 스크립트의 토픽명(`commands` 등)은 데모명이며 kafka-payloads 잠정 논리명(`command-topic` 등)과 다르다. **이번에 바꾸지 마라** — 토픽 재명명은 D-4(1)(`adr/0005`) 승인 후 Track 4-1 소관이다. 앱(hub/script-agent)과 init 스크립트의 토픽명이 **일치 상태로 유지**되는지만 확인.
 
 ## 4. DoD
 

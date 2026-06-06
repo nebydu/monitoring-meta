@@ -14,21 +14,21 @@
 
 ---
 
-## 1. 문서 위상 (혼동 금지)
+## 1. 문서 성격 (혼동 금지)
 
-- 데모 spec v0.2.1 = Phase 0 회귀 ground truth. 본 작업으로 정본 위치가
+- 데모 spec v0.2.1 = Phase 0 회귀 ground truth. 본 작업으로 기준 문서 위치가
   `monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`로 통합됐다.
 - harness의 profile.example은 각 repo 훅 프로파일의 **샘플 템플릿**이므로 데모 spec 경로
-  언급이 있으면 새 정본 경로로 정렬해 둔다(샘플의 정확성 유지 목적).
+  언급이 있으면 새 기준 문서 경로로 정렬해 둔다(샘플의 정확성 유지 목적).
 
 ## 2. ground truth 참조
 
-- 데모 spec 단일 정본: `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`
+- 데모 spec 단일 기준 문서: `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`
 
 ## 3. 배경 / 범위
 
 `.example`은 복사해서 쓰는 템플릿이라 게이트가 직접 읽지 않는다(우선순위 낮음). 다만 잘못된
-경로를 샘플로 두면 신규 repo 셋업 시 dangling을 복제하므로 정본 경로로 정렬한다.
+경로를 샘플로 두면 신규 repo 셋업 시 dangling을 복제하므로 기준 문서 경로로 정렬한다.
 
 ## 4. 작업 분해
 
@@ -44,7 +44,7 @@
 
 ## 5. DoD (완료기준)
 
-1. 두 `.example`의 데모 spec 경로가 새 정본 경로로 교체됨(해당 언급이 없으면 변경 없음 + 그 사실 보고).
+1. 두 `.example`의 데모 spec 경로가 새 기준 문서 경로로 교체됨(해당 언급이 없으면 변경 없음 + 그 사실 보고).
 2. `rg "docs/monitoring-demo-message-spec-v0\.2\.1\.md" monitoring-harness/shared/hooks/profiles`
    결과에 구 로컬 경로 0건(새 경로만 또는 0건).
 3. 라이브 게이트 repoint(hub/script-agent §4.2)와 경로 문자열 일치.

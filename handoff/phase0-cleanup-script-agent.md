@@ -9,28 +9,28 @@
 | 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup-000-impact.md` |
 | 기준 monitoring-meta commit (full 40자) | `be990c7b936c283d1ad15519fbb9dd6ac7f3deea` |
 
-> **commit pin 주의**: 위 pin은 phase0-cleanup 정리 커밋(데모 spec 단일 정본화 + ROADMAP/envelope/PROJECT_OVERVIEW/.claude repoint + HANDOFF.md archive 강등)에서 채워졌다. **실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인**하고 repoint 경로가 그 commit의 phase0-snapshot 정본을 가리키는지 확인한다.
+> **commit pin 주의**: 위 pin은 phase0-cleanup 정리 커밋(데모 spec 단일 기준 문서화 + ROADMAP/envelope/PROJECT_OVERVIEW/.claude repoint + HANDOFF.md archive 격하)에서 채워졌다. **실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인**하고 repoint 경로가 그 commit의 phase0-snapshot 기준 문서를 가리키는지 확인한다.
 
 ---
 
-## 1. 문서 위상 (혼동 금지)
+## 1. 문서 성격 (혼동 금지)
 
-- **데모 spec v0.2.1 = Phase 0 회귀 ground truth.** 본 작업으로 정본 위치가
+- **데모 spec v0.2.1 = Phase 0 회귀 ground truth.** 본 작업으로 기준 문서 위치가
   `script-agent/docs/`에서 **`monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`**
-  로 이동한다(삭제가 아니라 단일 정본 통합).
+  로 이동한다(삭제가 아니라 단일 기준 문서 통합).
 - 통합본 v0.9 + kafka-payloads + envelope = Phase 1+ 도달 목표(본 작업 범위 아님).
 
 ## 2. ground truth 참조
 
-- 데모 spec 단일 정본: `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`
+- 데모 spec 단일 기준 문서: `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`
 - 데모 동작 개요(참조): `../monitoring-meta/docs/phase0-snapshot/PROJECT_OVERVIEW.md`
 
 ## 3. 배경
 
 Phase 0 셋업기에 script-agent repo 로컬(`script-agent/docs/`)에 데모 spec **사본**을
-두었다. hub와 동일하게 monitoring-meta 단일 정본으로 통합한다. retire 불가
-(데모 spec 회귀 계약 중 e2e는 §5.4만 커버) → phase0-snapshot 동결 baseline 보존.
-사본을 가리키던 모든 참조를 먼저 새 정본 경로로 재배선한 뒤 사본을 삭제한다.
+두었다. hub와 동일하게 monitoring-meta 단일 기준 문서로 통합한다. retire 불가
+(데모 spec 회귀 계약 중 e2e는 §5.4만 커버) → phase0-snapshot 고정 baseline 보존.
+사본을 가리키던 모든 참조를 먼저 새 기준 문서 경로로 재배선한 뒤 사본을 삭제한다.
 
 ## 4. 작업 분해
 
@@ -60,9 +60,9 @@ Phase 0 셋업기에 script-agent repo 로컬(`script-agent/docs/`)에 데모 sp
 ### 4.3 HANDOFF.md provenance 정리 + 수동 갱신 룰 제거
 
 - `script-agent/.claude/CLAUDE.md`, `script-agent/.claude/agents/analyzer.md`에서:
-  - **"HANDOFF.md §5 체크박스 수동 갱신" 류 룰 제거**(루트 HANDOFF.md archive 강등으로 무효).
+  - **"HANDOFF.md §5 체크박스 수동 갱신" 류 룰 제거**(루트 HANDOFF.md archive 격하으로 무효).
   - HANDOFF.md provenance 인용은 **인라인화** 또는 **제거**(dangling 인용 금지).
-- 루트 HANDOFF.md 파일 자체의 강등/이동은 **메타 메인 세션 몫**. script-agent세션은 repo 안의 인용만 정리.
+- 루트 HANDOFF.md 파일 자체의 격하/이동은 **메타 메인 세션 몫**. script-agent세션은 repo 안의 인용만 정리.
 
 ### 4.4 사본 삭제 (반드시 마지막)
 
@@ -82,12 +82,12 @@ Phase 0 셋업기에 script-agent repo 로컬(`script-agent/docs/`)에 데모 sp
 
 ## 6. 미결정 / 주의
 
-- 루트 HANDOFF.md archive 강등 시점과 본 repoint 순서는 메타 메인이 조율(분석서 D-C2).
-  강등이 먼저면 repo 내 HANDOFF 인용이 dangling되니 4.3을 그 전제로 수행.
+- 루트 HANDOFF.md archive 격하 시점과 본 repoint 순서는 메타 메인이 조율(분석서 D-C2).
+  격하이 먼저면 repo 내 HANDOFF 인용이 dangling되니 4.3을 그 전제로 수행.
 - 통합본 `[Open]` / 미결 ADR을 새로 건드리지 않는다.
 
 ## 7. 결과 스키마
 
 ```json
-{"status":"ok|blocked|failed","outputs":["수정/삭제 파일"],"findings":["dangling 검증 + go test 결과"],"blockers":["HANDOFF 강등 순서 등"],"next_action":"한 줄"}
+{"status":"ok|blocked|failed","outputs":["수정/삭제 파일"],"findings":["dangling 검증 + go test 결과"],"blockers":["HANDOFF 격하 순서 등"],"next_action":"한 줄"}
 ```

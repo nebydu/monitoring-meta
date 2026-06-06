@@ -1,14 +1,14 @@
 # handoff/ — repo 간 작업 spec 교환소
 
-monitoring-meta가 분석·결정한 결과를 각 repo(hub / script-agent) 세션으로 넘기는 작업 산출물이 시간순으로 누적되는 곳이다. (셋업기 루트 `HANDOFF.md`는 phase0-cleanup으로 `archive/HANDOFF.md`로 강등됨 — 현행 작업 위상·미결정의 정본은 `docs/phase1/ROADMAP_PHASE1_v0_3.md` §9~§14/§17이다.)
+monitoring-meta가 분석·결정한 결과를 각 repo(hub / script-agent) 세션으로 넘기는 작업 산출물이 시간순으로 누적되는 곳이다. (셋업기 루트 `HANDOFF.md`는 phase0-cleanup으로 `archive/HANDOFF.md`로 격하됨 — 현행 작업 상태·미결정의 기준 문서는 `docs/phase1/ROADMAP_PHASE1_v0_3.md` §9~§14/§17이다.)
 
 ## 작업 spec 작성 절차
 
 1. **템플릿 복사**: `_TEMPLATE-work-spec.md`를 복사한다.
 2. **파일명 규약**: `<work-id>-hub.md`, `<work-id>-script-agent.md` (한 파일 = 한 repo, 양쪽에 걸친 ADR이면 두 파일).
 3. **필수 헤더를 모두 채운다.** 특히 **`기준 monitoring-meta commit: <full-hash>`** 는 필수다.
-   - 이 spec이 가리키는 정본(통합본 v0.9 / envelope.md / kafka-payloads.md)의 고정 시점을 못 박는다.
-   - hub·script-agent는 정본을 상대 경로로 참조만 하므로, 작성↔실행 시점 사이 drift를 막으려면 기준 commit이 필요하다(상세는 템플릿 §1.1).
+   - 이 spec이 가리키는 기준 문서(통합본 v0.9 / envelope.md / kafka-payloads.md)의 고정 시점을 못 박는다.
+   - hub·script-agent는 기준 문서를 상대 경로로 참조만 하므로, 작성↔실행 시점 사이 drift를 막으려면 기준 commit이 필요하다(상세는 템플릿 §1.1).
    - monitoring-meta repo 루트에서 `git rev-parse HEAD`로 얻은 **full 40자 hash**를 기입한다(축약 금지).
 4. **미결정 사안**이 하나라도 걸리면 추측으로 채우지 말고 멈추고 사람을 호출한다.
 
