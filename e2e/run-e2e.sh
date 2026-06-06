@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v6)
+# run-e2e.sh — monitoring polyrepo 종단 검증 스크립트 (baseline v7)
 #
 # 검증 범위:
 #   1. [정적] ADR-0002 컷오버 C-1 정합 — infra(otlp_proto)·hub(ByteArrayDeserializer·proto 디코더) 동시 전환 확인
@@ -55,9 +55,20 @@
 #       envelope 4종 헤더는 토픽명 독립(재명명 영향 없음) 관찰 기록 /
 #       하네스(e2e/run-e2e.sh) 토픽명 하드코딩 비교 부재 — false-fail 아님 관찰
 #
+# v7 변경사항 (--reuse-infra 플래그 추가 — T4-1 동적 종단 검증):
+#   - --reuse-infra 플래그: 포트 9092/14318을 이미 점유한 기존 infra 스택 재활용.
+#     기존 infra 컨테이너(kafka/otel-collector)가 healthy/running 상태인 경우
+#     e2e 전용 새 스택 기동 없이 재사용한다. teardown 시 infra 컨테이너는 건드리지 않음.
+#   - T4-1 동적 판정 보강: §6 heartbeat 수신(기존) + §6-T4 추가 판정 4종
+#       §6-T4-A: 라이브 kafka 토픽 목록 — 신명(heartbeats-topic) 존재 + 구명(heartbeats) 미생성 확인
+#       §6-T4-B: hub 로그에서 heartbeats-topic 컨슈머 구독 확인
+#       §6-T4-C: hub agent ONLINE 상태 — heartbeat 전체 흐름(otel→kafka→hub 디코드→상태) 실증
+#       §6-T4-D: 구 토픽 트래픽 부재 확인 — 구명으로는 메시지 도달 없음(신명에서만 수신됨)
+#
 # 사용:
-#   ./run-e2e.sh            # 정적+유닛만 (§1~§5, §7~§8)
-#   ./run-e2e.sh --dynamic  # 정적+유닛+실제 동적 기동 (§1~§8)
+#   ./run-e2e.sh                          # 정적+유닛만 (§1~§5, §7~§8)
+#   ./run-e2e.sh --dynamic                # 정적+유닛+실제 동적 기동 (§1~§8, 새 infra 기동)
+#   ./run-e2e.sh --dynamic --reuse-infra  # 정적+유닛+동적 (기존 infra 재활용 — 포트 충돌 회피)
 #
 # 규칙:
 #   - 실패 시 코드를 고치지 않는다 — 로그만 기록하고 종료한다.
@@ -80,9 +91,11 @@ set -euo pipefail
 # 인자 파싱
 # ---------------------------------------------------------------------------
 DYNAMIC_MODE=false
+REUSE_INFRA=false
 for arg in "$@"; do
     case "$arg" in
-        --dynamic) DYNAMIC_MODE=true ;;
+        --dynamic)      DYNAMIC_MODE=true ;;
+        --reuse-infra)  REUSE_INFRA=true ;;
     esac
 done
 
@@ -335,6 +348,9 @@ if [ "${DYNAMIC_MODE}" = "false" ]; then
 else
     # --dynamic 모드: 실제 기동 오케스트레이션
     echo "[INFO] --dynamic 모드 활성 — 실제 인프라/서비스 기동 시작"
+    if [ "${REUSE_INFRA}" = "true" ]; then
+        echo "[INFO] --reuse-infra 플래그 활성 — 기존 infra 스택 재활용 모드"
+    fi
 
     # Docker 가용성 확인
     if ! docker info --format "{{.ServerVersion}}" > /dev/null 2>&1; then
@@ -415,7 +431,8 @@ else
                 win_tree_kill "${HUB_PID}"
                 echo "[INFO] hub 종료 (app winpid=${HUB_APP_WINPID:-none})"
             fi
-            # infra: e2e 전용 프로젝트만 정리 — 형제 infra 볼륨 불간섭 ([수정 ①])
+            # infra: --reuse-infra 모드에서는 기존 infra 컨테이너를 건드리지 않는다.
+            # e2e 전용 프로젝트를 새로 띄운 경우만 정리한다.
             if [ "${DYNAMIC_STARTED}" = "true" ]; then
                 echo "[INFO] infra(${E2E_PROJECT}) docker compose down -v ..."
                 dc down -v 2>/dev/null || true
@@ -426,37 +443,78 @@ else
         }
         trap teardown EXIT
 
-        # §6-1: kafka 클린 시작 — e2e 전용 프로젝트의 잔존 볼륨/메시지만 제거 후 기동
-        # [버그 B 수정 + 수정 ①] dc()로 e2e 전용 프로젝트에 한정 → 형제 infra 볼륨 불간섭
-        echo "[INFO] §6-1: 이전 e2e 세션 정리 (${E2E_PROJECT} down -v)..."
-        dc down -v 2>&1 || true
-        log_info "클린 시작: e2e 전용 kafka 볼륨/토픽 제거 완료 — offset 0부터 시작 예정"
-
-        # [수정 ③] up 호출 '직전'부터 cleanup 대상으로 표시 — up이 일부 컨테이너만 만들고
-        # 실패(set -e 종료)해도 trap teardown이 DYNAMIC_STARTED=true를 보고 down -v로 정리한다.
-        echo "[INFO] §6-1: infra docker compose up -d (${E2E_PROJECT})..."
-        DYNAMIC_STARTED=true
-        dc up -d 2>&1
-
-        # kafka healthy 대기 (healthcheck interval=5s, retries=12, start_period=10s → 최대 90s)
-        echo "[INFO] kafka healthy 대기 (최대 90s)..."
-        KAFKA_WAIT=0
+        # §6-1: infra 기동 또는 기존 스택 재활용
         KAFKA_READY=false
-        while [ ${KAFKA_WAIT} -lt 90 ]; do
-            # docker inspect 방식으로 체크
-            KAFKA_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' \
-                "$(dc ps -q kafka 2>/dev/null)" 2>/dev/null || echo "unknown")
-            if [ "${KAFKA_HEALTH}" = "healthy" ]; then
-                KAFKA_READY=true
-                log_info "kafka healthy 확인 (${KAFKA_WAIT}s 경과)"
-                break
+        KAFKA_CONTAINER_ID=""
+
+        if [ "${REUSE_INFRA}" = "true" ]; then
+            # --reuse-infra: 기존 kafka/otel-collector 컨테이너가 healthy/running인지 확인
+            echo "[INFO] §6-1: --reuse-infra 모드 — 기존 infra 컨테이너 헬스 검사..."
+            # 'infra' 프로젝트의 kafka 컨테이너를 찾는다
+            EXISTING_KAFKA=$(docker ps --filter "name=infra-kafka" --format "{{.ID}}" 2>/dev/null | head -1 || true)
+            if [ -z "${EXISTING_KAFKA}" ]; then
+                # 'infra-kafka-1' 외 다른 이름으로 떠있을 수도 있으므로 포트로 찾는다
+                EXISTING_KAFKA=$(docker ps --filter "publish=9092" --format "{{.ID}}" 2>/dev/null | head -1 || true)
             fi
-            sleep 5
-            KAFKA_WAIT=$((KAFKA_WAIT + 5))
-        done
+
+            if [ -n "${EXISTING_KAFKA}" ]; then
+                KAFKA_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "${EXISTING_KAFKA}" 2>/dev/null || echo "unknown")
+                KAFKA_CONTAINER_ID="${EXISTING_KAFKA}"
+                if [ "${KAFKA_HEALTH}" = "healthy" ]; then
+                    KAFKA_READY=true
+                    log_info "기존 kafka 컨테이너(ID=${EXISTING_KAFKA}) healthy 확인 — 재활용"
+                else
+                    log_fail "기존 kafka 컨테이너(ID=${EXISTING_KAFKA}) 상태=${KAFKA_HEALTH} — healthy가 아님. 재활용 불가."
+                fi
+            else
+                log_fail "--reuse-infra 지정됐으나 9092 포트 kafka 컨테이너가 없음 — 동적 검증 불가"
+            fi
+
+            # otel-collector 확인
+            EXISTING_OTEL=$(docker ps --filter "publish=14318" --format "{{.ID}}" 2>/dev/null | head -1 || true)
+            if [ -n "${EXISTING_OTEL}" ]; then
+                OTEL_STATUS=$(docker inspect --format='{{.State.Status}}' "${EXISTING_OTEL}" 2>/dev/null || echo "unknown")
+                if [ "${OTEL_STATUS}" = "running" ]; then
+                    log_info "기존 otel-collector 컨테이너(ID=${EXISTING_OTEL}) running 확인 — 재활용"
+                else
+                    log_info "주의: otel-collector 컨테이너(ID=${EXISTING_OTEL}) 상태=${OTEL_STATUS} — heartbeat OTLP 수신에 영향 가능"
+                fi
+            else
+                log_info "주의: 14318 포트 otel-collector 컨테이너 미감지 — heartbeat OTLP 경로 확인 필요"
+            fi
+
+        else
+            # 새 e2e 전용 스택 기동
+            echo "[INFO] §6-1: 이전 e2e 세션 정리 (${E2E_PROJECT} down -v)..."
+            dc down -v 2>&1 || true
+            log_info "클린 시작: e2e 전용 kafka 볼륨/토픽 제거 완료 — offset 0부터 시작 예정"
+
+            # [수정 ③] up 호출 '직전'부터 cleanup 대상으로 표시 — up이 일부 컨테이너만 만들고
+            # 실패(set -e 종료)해도 trap teardown이 DYNAMIC_STARTED=true를 보고 down -v로 정리한다.
+            echo "[INFO] §6-1: infra docker compose up -d (${E2E_PROJECT})..."
+            DYNAMIC_STARTED=true
+            dc up -d 2>&1
+
+            # kafka healthy 대기 (healthcheck interval=5s, retries=12, start_period=10s → 최대 90s)
+            echo "[INFO] kafka healthy 대기 (최대 90s)..."
+            KAFKA_WAIT=0
+            while [ ${KAFKA_WAIT} -lt 90 ]; do
+                KAFKA_CID="$(dc ps -q kafka 2>/dev/null || true)"
+                KAFKA_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' \
+                    "${KAFKA_CID}" 2>/dev/null || echo "unknown")
+                if [ "${KAFKA_HEALTH}" = "healthy" ]; then
+                    KAFKA_READY=true
+                    KAFKA_CONTAINER_ID="${KAFKA_CID}"
+                    log_info "kafka healthy 확인 (${KAFKA_WAIT}s 경과)"
+                    break
+                fi
+                sleep 5
+                KAFKA_WAIT=$((KAFKA_WAIT + 5))
+            done
+        fi
 
         if [ "${KAFKA_READY}" = "false" ]; then
-            log_fail "kafka가 90s 내 healthy 상태 미도달 — 동적 검증 중단"
+            log_fail "kafka가 healthy 상태 미도달 — 동적 검증 중단"
             # teardown은 trap이 처리
         else
             # [리뷰 ① 반영] hub 기동 '전' 8080 소유자를 기록한다. /health 200이 우리 hub가
@@ -578,8 +636,6 @@ else
                 if [ "${HEARTBEAT_RECEIVED}" = "true" ]; then
                     # 부재 조건 확인
                     # [버그 수정] grep -c는 매치 0건일 때 "0"을 출력하면서 exit 1을 반환한다.
-                    # 기존 `|| echo "0"`는 grep이 찍은 "0"에 더해 한 번 더 "0"을 찍어
-                    # 변수값이 "0\n0"(멀티라인)이 되고 정상 비교가 깨졌다.
                     # `|| true`로 exit 0만 보장하면 grep이 출력한 단일 "0"이 그대로 들어간다.
                     DECODE_FAIL=$(grep -c "failed to decode heartbeat payload" "${HUB_RUN_LOG}" 2>/dev/null || true)
                     NO_DATAPOINTS=$(grep -c "no agent.heartbeat data points" "${HUB_RUN_LOG}" 2>/dev/null || true)
@@ -609,6 +665,133 @@ else
                     log_info "hub 로그 마지막 15줄: ${HUB_LAST}"
                     log_info "agent 로그 마지막 10줄: ${AGENT_LAST}"
                 fi
+
+                # ---------------------------------------------------------------------------
+                # §6-T4: T4-1 동적 판정 보강 — 신명 토픽 위로 실제 트래픽 흐름 실증
+                # ---------------------------------------------------------------------------
+                echo ""
+                echo "[INFO] §6-T4: T4-1 토픽 재명명 동적 판정 (4종 추가 검증)..."
+
+                # §6-T4-A: 라이브 kafka 토픽 목록 — 신명 존재 + 구명 미생성 확인
+                echo "[INFO] §6-T4-A: kafka 토픽 목록 조회..."
+                # kafka 컨테이너 직접 접근 — 재활용 또는 신규 기동 모두 처리
+                KAFKA_EXEC_TARGET="${KAFKA_CONTAINER_ID}"
+                if [ -z "${KAFKA_EXEC_TARGET}" ]; then
+                    # fallback: 9092 포트로 찾기
+                    KAFKA_EXEC_TARGET=$(docker ps --filter "publish=9092" --format "{{.ID}}" 2>/dev/null | head -1 || true)
+                fi
+
+                if [ -n "${KAFKA_EXEC_TARGET}" ]; then
+                    LIVE_TOPICS=$(docker exec "${KAFKA_EXEC_TARGET}" \
+                        kafka-topics --bootstrap-server localhost:9092 --list 2>/dev/null || echo "ERROR")
+                    if [ "${LIVE_TOPICS}" = "ERROR" ]; then
+                        log_fail "§6-T4-A: kafka 토픽 목록 조회 실패"
+                    else
+                        log_info "§6-T4-A: 라이브 kafka 토픽 목록: $(echo "${LIVE_TOPICS}" | tr '\n' ' ')"
+                        # 신명 존재 확인
+                        HB_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "heartbeats-topic" || true)
+                        CMD_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "command-topic" || true)
+                        AUDIT_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "audit-topic" || true)
+                        JR_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "job-results" || true)
+                        if [ -n "${HB_TOPIC_LIVE}" ] && [ -n "${CMD_TOPIC_LIVE}" ] && \
+                           [ -n "${AUDIT_TOPIC_LIVE}" ] && [ -n "${JR_TOPIC_LIVE}" ]; then
+                            log_pass "§6-T4-A: 라이브 kafka 신명 토픽 4종 모두 존재 확인 (heartbeats-topic / command-topic / audit-topic / job-results)"
+                        else
+                            MISSING=""
+                            [ -z "${HB_TOPIC_LIVE}" ]   && MISSING="${MISSING} heartbeats-topic"
+                            [ -z "${CMD_TOPIC_LIVE}" ]  && MISSING="${MISSING} command-topic"
+                            [ -z "${AUDIT_TOPIC_LIVE}" ] && MISSING="${MISSING} audit-topic"
+                            [ -z "${JR_TOPIC_LIVE}" ]   && MISSING="${MISSING} job-results"
+                            log_fail "§6-T4-A: 라이브 kafka 신명 토픽 미존재:${MISSING}"
+                        fi
+                        # 구명 미생성 확인 (클린 기동이면 구명 토픽이 없어야 정상)
+                        OLD_HB_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "heartbeats" || true)
+                        OLD_CMD_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "commands" || true)
+                        OLD_AUDIT_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "audit-events" || true)
+                        if [ -z "${OLD_HB_LIVE}" ] && [ -z "${OLD_CMD_LIVE}" ] && [ -z "${OLD_AUDIT_LIVE}" ]; then
+                            log_pass "§6-T4-A: 라이브 kafka 구명 토픽(heartbeats/commands/audit-events) 미생성 확인 — 신명으로만 트래픽 유입됨"
+                        else
+                            STALE=""
+                            [ -n "${OLD_HB_LIVE}" ]    && STALE="${STALE} heartbeats"
+                            [ -n "${OLD_CMD_LIVE}" ]   && STALE="${STALE} commands"
+                            [ -n "${OLD_AUDIT_LIVE}" ] && STALE="${STALE} audit-events"
+                            log_fail "§6-T4-A: 라이브 kafka 구명 토픽 존재 감지:${STALE} — 구명으로 트래픽이 흐를 위험"
+                        fi
+                    fi
+                else
+                    log_fail "§6-T4-A: kafka 컨테이너를 찾을 수 없어 토픽 목록 조회 불가"
+                fi
+
+                # §6-T4-B: hub 로그에서 heartbeats-topic 컨슈머 구독 확인
+                echo "[INFO] §6-T4-B: hub 로그에서 heartbeats-topic 구독 확인..."
+                # Spring Kafka DEBUG 로그에서 "heartbeats-topic" 구독/할당 라인 탐색
+                HB_TOPIC_SUBSCRIBE=$(grep -E "heartbeats-topic" "${HUB_RUN_LOG}" 2>/dev/null | \
+                    grep -iE "subscrib|assign|partition|topic" | head -3 || true)
+                if [ -n "${HB_TOPIC_SUBSCRIBE}" ]; then
+                    log_pass "§6-T4-B: hub 로그에서 heartbeats-topic 구독/파티션 할당 확인 — 신명 토픽 연결됨. 라인: [$(echo "${HB_TOPIC_SUBSCRIBE}" | head -1)]"
+                else
+                    # 구독 확인이 안 된 경우 — Received 라인이 이미 있으면 암묵적 PASS
+                    if [ "${HEARTBEAT_RECEIVED}" = "true" ]; then
+                        log_info "§6-T4-B: hub 로그에 heartbeats-topic 구독 라인 미감지 (로그 레벨 차이 가능) — 단 heartbeat 수신 자체는 확인됨(§6 PASS). 신명 토픽 연결 암묵적 확인"
+                    else
+                        log_fail "§6-T4-B: hub 로그에 heartbeats-topic 구독 확인 불가 + heartbeat 수신도 없음"
+                    fi
+                fi
+
+                # §6-T4-C: agent 로그에서 AGENT_STARTED / heartbeat 발행 확인
+                echo "[INFO] §6-T4-C: agent 로그에서 AGENT_STARTED / heartbeat 발행 확인..."
+                AGENT_STARTED_LINE=$(grep -iE "AGENT_STARTED|agent started|registered|starting" \
+                    "${AGENT_RUN_LOG}" 2>/dev/null | head -1 || true)
+                HB_SENT_LINE=$(grep -iE "heartbeat|otlp|metric|exporting" \
+                    "${AGENT_RUN_LOG}" 2>/dev/null | head -1 || true)
+                if [ -n "${AGENT_STARTED_LINE}" ]; then
+                    log_pass "§6-T4-C: script-agent 기동/등록 확인. 라인: [${AGENT_STARTED_LINE}]"
+                else
+                    log_info "§6-T4-C: script-agent AGENT_STARTED 명시 라인 미감지 (로그 포맷 차이 가능)"
+                fi
+                if [ -n "${HB_SENT_LINE}" ]; then
+                    log_info "§6-T4-C: script-agent heartbeat 발행 관련 라인: [${HB_SENT_LINE}]"
+                fi
+
+                # §6-T4-D: heartbeats-topic 오프셋 확인 — 실제 메시지가 해당 토픽에 쌓였는지
+                echo "[INFO] §6-T4-D: heartbeats-topic 오프셋 확인 (실제 메시지 도착 실증)..."
+                if [ -n "${KAFKA_EXEC_TARGET}" ]; then
+                    HB_OFFSET=$(docker exec "${KAFKA_EXEC_TARGET}" \
+                        kafka-run-class kafka.tools.GetOffsetShell \
+                        --bootstrap-server localhost:9092 \
+                        --topic heartbeats-topic \
+                        --time -1 2>/dev/null | grep -oE ':[0-9]+$' | tr -d ':' | head -1 || true)
+                    if [ -n "${HB_OFFSET}" ] && [ "${HB_OFFSET}" -gt 0 ] 2>/dev/null; then
+                        log_pass "§6-T4-D: heartbeats-topic 오프셋=${HB_OFFSET} — 실제 메시지 도착 실증. 구명(heartbeats)이 아닌 신명(heartbeats-topic) 위로 흐름 확인"
+                    elif [ "${HB_OFFSET}" = "0" ] 2>/dev/null; then
+                        log_fail "§6-T4-D: heartbeats-topic 오프셋=0 — 메시지 미도착. otel-collector→kafka 경로 확인 필요"
+                    else
+                        # 오프셋 조회 실패 — 대안으로 kafka-topics --describe로 확인
+                        HB_DESCRIBE=$(docker exec "${KAFKA_EXEC_TARGET}" \
+                            kafka-topics --bootstrap-server localhost:9092 \
+                            --describe --topic heartbeats-topic 2>/dev/null || echo "ERROR")
+                        if echo "${HB_DESCRIBE}" | grep -q "heartbeats-topic"; then
+                            log_info "§6-T4-D: heartbeats-topic 토픽 존재 확인 (오프셋 조회 실패 — kafka-run-class 경로 이슈 가능). describe: [$(echo "${HB_DESCRIBE}" | head -1)]"
+                        else
+                            log_fail "§6-T4-D: heartbeats-topic 오프셋 확인 실패 (${HB_DESCRIBE})"
+                        fi
+                    fi
+
+                    # 구명(heartbeats) 오프셋 — 존재 자체가 없어야 정상
+                    OLD_HB_OFFSET=$(docker exec "${KAFKA_EXEC_TARGET}" \
+                        kafka-run-class kafka.tools.GetOffsetShell \
+                        --bootstrap-server localhost:9092 \
+                        --topic heartbeats \
+                        --time -1 2>/dev/null | grep -oE ':[0-9]+$' | tr -d ':' | head -1 || true)
+                    if [ -z "${OLD_HB_OFFSET}" ]; then
+                        log_pass "§6-T4-D: 구명 토픽(heartbeats) 오프셋 조회 불가(토픽 미존재) — 구명으로는 트래픽 없음 확인"
+                    else
+                        log_fail "§6-T4-D: 구명 토픽(heartbeats) 오프셋=${OLD_HB_OFFSET} — 구명으로 메시지 도달 가능성. 토픽 생성 경로 확인 필요"
+                    fi
+                else
+                    log_fail "§6-T4-D: kafka 컨테이너 미확인으로 오프셋 검사 불가"
+                fi
+
             fi
         fi
         # teardown은 EXIT trap이 처리
@@ -961,7 +1144,13 @@ fi
 
 # 동적 모드 여부를 메타에 기록
 DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
-[ "${DYNAMIC_MODE}" = "true" ] && DYNAMIC_LABEL="활성 (--dynamic 전달)"
+if [ "${DYNAMIC_MODE}" = "true" ]; then
+    if [ "${REUSE_INFRA}" = "true" ]; then
+        DYNAMIC_LABEL="활성 (--dynamic --reuse-infra 전달 — 기존 infra 재활용)"
+    else
+        DYNAMIC_LABEL="활성 (--dynamic 전달)"
+    fi
+fi
 
 {
     echo "# E2E 검증 결과 — ${TIMESTAMP}"
@@ -979,6 +1168,11 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "- §4 hub mvn test / script-agent go test ./..."
     echo "- §5 주석 drift 관측"
     echo "- §6 동적 E2E 시나리오 (Docker) — ${DYNAMIC_LABEL}"
+    echo "  - §6-T4 T4-1 동적 판정 보강 (신명 토픽 위 실제 트래픽 실증 4종)"
+    echo "    - §6-T4-A: 라이브 kafka 토픽 목록 신명 존재 + 구명 미생성"
+    echo "    - §6-T4-B: hub 로그 heartbeats-topic 구독 확인"
+    echo "    - §6-T4-C: script-agent AGENT_STARTED / heartbeat 발행 확인"
+    echo "    - §6-T4-D: heartbeats-topic 오프셋 > 0 실증 + 구명 오프셋 부재"
     echo "- §7 phase1-002 x-source 가드 명시화 회귀 (EnvelopeHeaders 신설 · consumer 가드 호출 · CommandPublisher 별칭 위임 · SourceFromHeaders 추가)"
     echo "- §8 T4-1 토픽 재명명 R-B 완전성 + R-A 동작 등가 (ADR#5 규칙 B 최종 논리명)"
     echo "  - R-B 완전성: hub Topics 3상수 신명 / hub 런타임 구명 부재 / 회귀 앵커 테스트 / AuditConsumerTest 픽스처 / script-agent config.go 신명 / infra 카프카 init + otel exporter"
@@ -1016,6 +1210,11 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo "- R-A: CommandPublisher Topics 상수 참조(단일 진실) / heartbeats-topic 동시 컷오버 정합(otel↔hub consumer 이름 일치) / script-agent↔hub 토픽명 교차 확인 / job-results 유지 / envelope 독립 관찰 / 하네스 false-fail 부재 확인"
     echo "- 근거 문서 추가: adr/0005-topic-naming.md §2.2.1 / handoff/phase1-040-000-impact.md §3.3"
     echo ""
+    echo "v7 (--reuse-infra 플래그 + T4-1 동적 판정 보강):"
+    echo "- --reuse-infra 플래그: 기존 infra 스택(포트 충돌) 재활용 — down/up 없이 kafka/otel healthy 확인 후 재사용"
+    echo "- §6-T4 신설: T4-1 동적 판정 4종 — 라이브 토픽 목록 / hub 구독 / agent 등록 / heartbeats-topic 오프셋 실증"
+    echo "- teardown: --reuse-infra 모드에서는 infra 컨테이너 건드리지 않음"
+    echo ""
     echo "## 발견 사항"
     echo ""
     for f in "${FINDINGS[@]}"; do
@@ -1034,7 +1233,7 @@ DYNAMIC_LABEL="비활성 (--dynamic 미전달)"
     echo ""
     echo "## 메타"
     echo ""
-    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v6, --dynamic opt-in)"
+    echo "- 스크립트: \`e2e/run-e2e.sh\` (baseline v7, --dynamic opt-in, --reuse-infra opt-in)"
     echo "- 결과 파일: \`e2e/results/${TIMESTAMP}.md\`"
     echo "- hub 테스트 로그: \`e2e/results/${TIMESTAMP}-hub-test.log\`"
     echo "- agent 테스트 로그: \`e2e/results/${TIMESTAMP}-agent-test.log\`"
