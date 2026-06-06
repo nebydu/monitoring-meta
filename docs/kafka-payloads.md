@@ -1,20 +1,20 @@
 # Kafka Payload 스키마 — 8 토픽
 
-이 파일은 **본 시스템 8 Kafka 토픽의 메시지 본문(payload) 구조**. envelope(헤더 메타데이터)는 별도 정본 `docs/envelope.md`가 정의한다(상위 근거: `docs/통합본_v0_9.md` 6.8). 구현 분배(shared-libs/envelope)는 `docs/envelope.md` §7 참조.
+이 파일은 **본 시스템 8 Kafka 토픽의 메시지 본문(payload) 구조**. envelope(헤더 메타데이터)는 별도 기준 문서 `docs/envelope.md`가 정의한다(상위 근거: `docs/통합본_v0_9.md` 6.8). 구현 분배(shared-libs/envelope)는 `docs/envelope.md` §7 참조.
 
 JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 Protobuf로 전환 — 그때 이 파일이 IDL 입력 (ADR #1).
 
 ## 토픽 명명 규칙 (ADR #5 / `adr/0005-topic-naming.md` — D-4(1) 2026-06-06 Accepted)
 
-- **규칙(후보 B 비준)**: `<domain>-topic[-{subtype}][-{zone}]` — 의미 기반 일반 규칙. 환경 prefix 없음(통합본 §8.3 ADR#5). 아래 8토픽은 모두 이 규칙의 사례이며, 신규 토픽(Phase 2 metric ingest·rule-engine 계열 등)도 이 규칙으로 강제한다.
-- **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 비준). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건 + §13_open §A(zone topology) 해소 후 도입한다 — 지금 동결/추측하지 않는다.
+- **규칙(후보 B 승인)**: `<domain>-topic[-{subtype}][-{zone}]` — 의미 기반 일반 규칙. 환경 prefix 없음(통합본 §8.3 ADR#5). 아래 8토픽은 모두 이 규칙의 사례이며, 신규 토픽(Phase 2 metric ingest·rule-engine 계열 등)도 이 규칙으로 강제한다.
+- **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 승인). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건 + §13_open §A(zone topology) 해소 후 도입한다 — 지금 고정/추측하지 않는다.
 - **명시 예외**: `heartbeats-topic`의 복수형 domain은 baseline 호환을 위해 유지(규칙 예외로 기록).
 - **물리명 → 최종 논리명 매핑**: 아래 표의 물리명은 T4-1(토픽 재명명) 전 현행 Phase 0 이름이며, **논리명이 최종**이다. 실제 재명명은 Track 4 T4-1(별도 handoff).
 
 | 현행 물리명 (Phase 0) | 최종 논리명 (규칙 B) | 비고 |
 |---|---|---|
 | `commands` | `command-topic` | 단일(다중 zone 진입 시 `-{zone}`) |
-| `job-results` | `result-topic-job` / `result-topic-log` | Phase 1 분리(§6.9.2 항목1), ADR 귀속=D-5 |
+| `job-results` | `result-topic-job` / `result-topic-log` | Phase 1 분리(§6.9.2 항목1), ADR 소속=D-5 |
 | `audit-events` | `audit-topic` | — |
 | `heartbeats` | `heartbeats-topic` | 복수형 명시 예외 |
 | (신규) | `alert-topic` / `notification-topic` | Phase 1 신설(§6.9.3·§6.9.5) |
@@ -202,7 +202,7 @@ Incident 상태 변경 → 통보 트리거. event-service → notification-serv
 
 OTel Collector → metric-ingest-service + rule-engine-metrics. OTLP MetricsData protobuf 표준. Phase 1에선 미사용.
 
-> 최종 논리명 = `metrics-topic` (규칙 B 사례, 복수형 metric domain). Phase 2 신규 토픽도 규칙 B로 강제(D-4(1) (3) 비준).
+> 최종 논리명 = `metrics-topic` (규칙 B 사례, 복수형 metric domain). Phase 2 신규 토픽도 규칙 B로 강제(D-4(1) (3) 승인).
 
 ---
 
@@ -213,6 +213,6 @@ OTel Collector → metric-ingest-service + rule-engine-metrics. OTLP MetricsData
 - 호환 깨짐 (필드 제거/타입 변경) → major bump + `x-message-version` 증가
 - Schema Registry 도입 시 (Phase 2/3 ADR #1) — 이 파일이 IDL 입력
 
-## 데모 정합성
+## 데모 일관성
 
-데모 spec v0.2.1과의 정합성은 `v0_9/04_데이터흐름.md` 6.9 매트릭스 참조. Phase 0 → Phase 1 전환 시 정정 항목 11개.
+데모 spec v0.2.1과의 일관성은 `v0_9/04_데이터흐름.md` 6.9 매트릭스 참조. Phase 0 → Phase 1 전환 시 정정 항목 11개.
