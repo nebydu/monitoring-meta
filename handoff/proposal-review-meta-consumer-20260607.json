@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-06-07T20:47:56.988291+09:00",
+  "context": "profile: C:/workspace/monitoring/monitoring-meta/.claude/proposal-review.profile",
+  "context_docs": [
+    "C:/workspace/monitoring/monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md",
+    "C:/workspace/monitoring/monitoring-meta/docs/kafka-payloads.md",
+    "C:/workspace/monitoring/monitoring-meta/docs/envelope.md",
+    "C:/workspace/monitoring/monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md",
+    "C:/workspace/monitoring/monitoring-meta/adr/0002-heartbeat-otlp-proto.md",
+    "C:/workspace/monitoring/monitoring-meta/adr/0005-topic-naming.md"
+  ],
+  "proposal": "context: monitoring-harness plugin H6에서 /proposal-review(결정 전 제안 교차 리뷰 command)가 추가됐다. meta는 polyrepo 오케스트레이터로서 운영/설계/spec 결정이 가장 많이 발생하는 repo다. H4 결정(meta는 runtime codex-gate 범위 밖, 자체 gate 유지)은 그대로 유효하다.\nproposal: meta에 .claude/proposal-review.profile을 두어 proposal-review 소비자로 등록한다. 주입 문맥 = 데모 spec v0.2.1(회귀 기준), kafka-payloads.md, envelope.md, ROADMAP_PHASE1_v0_3.md, ADR 0002/0005. 통합본 v0.9는 크기(170KB) 때문에 상시 주입에서 제외하고, 통합본이 직접 쟁점인 제안은 본문에 관련 절을 발췌해 넣는 원칙으로 한다. meta의 자체 codex-gate(Stop hook)는 변경 없이 유지한다.\nalternatives: (a) 통합본 포함 상시 주입 — 기각: 매 리뷰 약 45k 토큰 고정 비용, 대부분의 결정 리뷰에 불필요. (b) profile 없이 degraded로 사용 — 기각: meta 결정 리뷰의 핵심이 '데모 spec=회귀 기준 vs 통합본=목표 spec' 구분 정책 주입이라 degraded면 가치가 반감.\nassumptions: runner는 git rev-parse --show-toplevel fallback으로 profile을 찾는다(harness a455246, 차기 /plugin update 반영 예정). profile 내 경로는 meta 루트 기준 절대경로로 파생되어 호출 cwd에 무관하다.\nrisks: 새 기준 문서가 추가될 때 profile 문맥 목록이 drift할 수 있음(완화: 기준 문서 추가 작업의 DoD에 profile 갱신 포함). rollback은 profile 파일 1개 삭제로 즉시 가능.\ndecision_needed: 이 profile 구성(문맥 6개 + 통합본 발췌 원칙)으로 meta를 proposal-review 소비자로 등록할지.",
+  "review": {
+    "verdict": "revise",
+    "critical_issues": [
+      "profile 탐색이 `harness a455246` 및 차기 `/plugin update` 반영 예정이라는 가정에 의존하지만, 적용 조건이나 최소 harness/plugin 버전 게이트가 없다. 현재 runner가 해당 profile을 실제로 발견하지 못하면 meta를 소비자로 등록했다는 결정이 문서상으로만 성립하고 운영 효과가 없다."
+    ],
+    "missing_context": [
+      "H6 `/proposal-review`가 요구하는 `.claude/proposal-review.profile`의 정확한 스키마와 필수 필드.",
+      "현재 meta 환경에서 사용 중인 monitoring-harness/plugin 버전이 `git rev-parse --show-toplevel` fallback을 포함하는지 여부.",
+      "H4 결정의 원문 또는 요약 근거. 입력에는 '유효하다'는 설명만 있고 결정 기록 자체는 없다."
+    ],
+    "recommended_changes": [
+      "profile 적용 조건에 'monitoring-harness a455246 이상 또는 해당 변경이 포함된 `/plugin update` 완료 후 활성화'를 명시하고, 미충족 시 degraded가 아니라 비활성/실패로 처리하도록 적는다.",
+      "profile 파일에 주입 문맥 목록뿐 아니라 '통합본 v0.9가 직접 쟁점이면 관련 절 발췌 없이는 low-confidence 또는 missing_context로 판정' 규칙을 명시적으로 포함한다.",
+      "기준 문서 추가 시 profile 갱신을 DoD에 넣는 완화책을 ROADMAP/HANDOFF 템플릿 또는 profile 관리 규칙 중 한 곳에 고정해 drift 방지를 실행 가능하게 만든다.",
+      "profile 스키마 검증 또는 dry-run 절차를 acceptance criteria에 추가한다."
+    ],
+    "confidence": "medium",
+    "summary": "방향은 맞다. meta는 결정 리뷰가 잦고, 데모 spec과 Phase 1+ 목표 spec의 기준 차이를 profile로 주입하는 선택은 입력 정책과도 잘 맞는다. 다만 profile 탐색 기능이 아직 배포 예정인 runner 동작에 의존하므로, 최소 버전/업데이트 완료 조건과 profile 스키마 검증 없이 바로 등록하기에는 적용 공백이 있다."
+  }
+}
