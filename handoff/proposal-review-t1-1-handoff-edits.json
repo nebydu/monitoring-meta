@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-06-09T22:36:16.598806+09:00",
+  "context": "profile: C:/workspace/monitoring/monitoring-meta/.claude/proposal-review.profile",
+  "context_docs": [
+    "C:/workspace/monitoring/monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/kafka-payloads.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/envelope.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0002-heartbeat-otlp-proto.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0005-topic-naming.md"
+  ],
+  "proposal": "context: |\n  monitoring-meta 오케스트레이터 세션. 직전 proposal-review(verdict=approve, confidence=medium)에서\n  나온 recommended_changes 2~4를 T1-1 D-2-무관 슬라이스의 두 handoff\n  (phase1-050-infra.md, phase1-050-hub.md)에 반영했다. 이번 리뷰는 그 \"반영 결과\"가\n  권고를 충실히·정확히 담았고 슬라이스 경계/통합본 Open을 침범하지 않는지 확인하기 위한 것.\n  지난번 medium 확신의 원인이 handoff 원문 미포함이었으므로 이번엔 편집된 절 원문을 그대로 첨부한다.\n\nproposal: |\n  두 handoff에 아래를 추가/수정했다. 이 편집 결과를 승인하고 각 repo로 분배해도 되는가.\n\n  [infra handoff — §0 OUT-OF-SCOPE 신설 (권고 2)]\n  \"아래는 D-2(β/γ 모듈 분리, 통합본 §13_open §C 미결 Open) 또는 다른 미결 Open에 의존하므로\n   이번 슬라이스에서 절대 만들지 않는다.\n   - 도메인 테이블/인덱스 DDL — 빈 DB/빈 버킷/일반 인덱스 템플릿까지만. 도메인 엔티티 DDL 금지.\n   - repository / DAO 배치, 모듈 경계 — 앱 계층(D-2 의존).\n   - β/γ 배치 결정 — 어느 deployment가 어느 도메인 영속을 소유하는가(D-2 → D-6).\n   - PG 스키마 분리(단일 prefix vs 도메인별) — 통합본 §4.2.4 [Open, 7장] 미결(M-1) → 추측 금지.\n   - site sizing / topology 추정 — D-8/통합본 §A 미결 → 단일 노드 기본 구성으로만.\"\n\n  [infra handoff — §3.4 기존 compose 스택 충돌 사전확인 신설 (권고 3)]\n  \"현 docker-compose.yml에는 zookeeper/kafka/kafka-init/otel-collector가 이미 있다. 4종 추가가\n   이들과 충돌하지 않는지 변경 전 확인한다.\n   - 포트: 신규 매핑(PG 5432/OpenSearch 9200/Redis 6379/MinIO 9000·9001)이 기존(9092 kafka,\n     14318 otel)·호스트 점유와 겹치지 않는지. Windows Hyper-V 예약 범위(otel 4318→14318 우회 선례) 유의.\n   - 네트워크: 기존 단일 compose network 공유하되 서비스명 충돌 회피.\n   - 볼륨: 신규 named volume이 기존 볼륨명과 겹치지 않게.\n   - 확인 명령: docker compose config(머지 검사) → up -d(증분 기동, 기존 kafka 재기동 영향 확인).\"\n\n  [infra handoff — §5 Rollback 경로 추가 (권고 3)]\n  \"이 슬라이스는 스토어 추가/운영골격만이므로 원복 단순. docker compose down -v(신규 볼륨 포함 정리,\n   단 기존 kafka 볼륨 보존 주의 — 신규 볼륨만 선별 제거 가능)로 스토어 내리고, compose/config 변경분을\n   git revert(또는 해당 커밋 reset)하면 기존 kafka 스택 상태로 완전 복귀.\"\n\n  [hub handoff — §0 OUT-OF-SCOPE 신설 (권고 2+4)]\n  \"- 도메인 repository/DAO/엔티티(JPA 등) 매핑 — DataSource·클라이언트 빈 + 연결 풀까지만.\n   - 도메인 스키마 DDL — 빈 DB 연결·임시 테이블 왕복까지만. M-1(통합본 §4.2.4 [Open,7장]) 미결 → 추측 금지.\n   - 트랜잭션 경계 — in-process(β) vs 분산/saga(γ)는 D-2 결정.\n   - β/γ 배치 결정 / 모듈 경계 — 어느 도메인 영속을 어디서 소유하는가(D-2 → D-6).\n   - 🔴 Phase 0 in-memory 흐름의 영속 저장소 전환 금지 — 기존 Ring Buffer·AgentRegistry 등 in-memory\n     동작을 PG/Redis로 바꾸지 않는다. 이번 슬라이스는 스토어 연결만 추가하고 메시지 흐름 불변(회귀 앵커).\"\n\n  [hub handoff — §6 회귀 가드 한 줄 추가 (권고 4)]\n  \"연결 smoke는 '클라이언트 설정 + 빈 상태 접속/왕복 확인'에 한정. 기존 Phase 0 in-memory 동작\n   (Ring Buffer/AgentRegistry 등)을 영속 저장소로 옮기지 않는다. 영속 전환은 도메인 영속 작업\n   (D-2 후 별도 handoff) 몫.\"\n\nalternatives: |\n  - 권고를 반영하지 않고 기존 handoff 그대로 분배: 기각. 직전 리뷰가 out-of-scope 첫머리 고정·\n    충돌 사전확인·rollback·in-memory 회귀가드를 명시적으로 권고했고 비용이 작다.\n  - 별도 신규 문서로 가드를 분리: 기각. 실행 세션이 handoff 한 파일만 보면 되도록 인라인이 낫다.\n\nassumptions: |\n  - hub의 Phase 0 in-memory 컴포넌트가 실제로 Ring Buffer·AgentRegistry이며(pom.xml 주석·기존 분석\n    근거), 이를 영속 전환하지 않는 것이 Phase 0 회귀 앵커 유지에 맞다.\n  - 기존 infra docker-compose가 단일 network·named volume 패턴이라 신규 4종도 같은 패턴으로 무충돌 추가 가능.\n  - 포트 5432/9200/6379/9000·9001이 표준 기본값이며 매핑은 충돌 시 조정 가능.\n  - 이 편집은 meta 문서(handoff)만 바꾼 것이라 형제 repo 코드/데모 spec v0.2.1에 영향 없음.\n\nrisks: |\n  - out-of-scope 목록이 과도하게 넓어 실제 필요한 연결 계층 작업까지 위축시킬 위험 → 각 항목에 \"~까지만\"\n    하한을 명시해 완화. 되돌리기: 문구 수정.\n  - rollback에서 down -v가 기존 kafka 볼륨까지 지울 오해 위험 → \"기존 kafka 볼륨 보존 주의, 신규 볼륨만\n    선별 제거\" 문구로 완화.\n  - 되돌리기 경로: handoff 문서 편집이므로 git revert로 즉시 원복.\n\ndecision_needed: |\n  두 handoff에 반영한 권고 2~4 편집이 (a) 직전 리뷰 권고를 정확히 담았는지, (b) 슬라이스 경계·통합본\n  Open(M-1/D-2/§A)을 침범하지 않는지, (c) 문구가 실행 세션을 과도 위축시키거나 오해를 부르지 않는지.\n  이대로 커밋·분배해도 되는가.",
+  "review": {
+    "verdict": "revise",
+    "critical_issues": [
+      "infra handoff의 rollback 문구가 `docker compose down -v`를 기본 원복 경로처럼 제시해 기존 Kafka/ZooKeeper 볼륨까지 삭제할 수 있다. 바로 뒤에 보존 주의를 달았지만 실행자가 전역 `down -v`를 먼저 실행할 여지가 있어, 기존 Phase 0 스택 보존이라는 슬라이스 목적과 충돌한다."
+    ],
+    "missing_context": [
+      "M-1로 인용한 `통합본 §4.2.4 [Open, 7장]` 원문 발췌가 없어 PG 스키마 분리 Open의 정확한 범위는 입력만으로 검증할 수 없다.",
+      "편집된 `phase1-050-infra.md`, `phase1-050-hub.md` 전체 문맥이 없어 신설 §0/§3.4/§5/§6이 기존 섹션과 중복·충돌 없이 배치됐는지는 확인하지 못했다."
+    ],
+    "recommended_changes": [
+      "infra rollback 문구를 `docker compose down -v` 일반 명령이 아니라 신규 서비스만 중지/제거하는 절차로 바꿔라. 예: `docker compose stop postgres opensearch redis minio ...` 후 신규 named volume만 명시적으로 `docker volume rm <project>_pgdata ...`처럼 제거하고, Kafka/ZooKeeper 기존 볼륨은 제거 대상에서 제외한다고 적는다.",
+      "`git revert(또는 해당 커밋 reset)`에서 `reset`을 제거하고 `git revert` 또는 문서/compose 변경 커밋 되돌리기로 한정하라. handoff 실행자가 다른 변경이 섞인 작업트리를 강제로 되감는 해석을 피해야 한다.",
+      "포트 충돌 확인 절차에 충돌 시 기본값을 고집하지 않고 override/env로 조정한다는 문구를 추가하라. 특히 Windows Hyper-V 예약 범위 선례를 이미 언급했으므로 `5432/9200/6379/9000/9001은 기본 후보일 뿐 고정값 아님`을 명시하면 실행 오해가 줄어든다.",
+      "M-1 인용은 가능하면 handoff에 정확한 source_ref를 보강하라. 현재처럼 `통합본 §4.2.4 [Open,7장]`만 쓰면 입력 문맥만 보는 리뷰어/실행자가 Open 범위를 재검증하기 어렵다."
+    ],
+    "confidence": "medium",
+    "summary": "방향은 맞다. D-2/§A/M-1 같은 미결 Open을 침범하지 않도록 out-of-scope를 앞에 고정하고, Phase 0 in-memory 회귀 가드를 추가한 것은 슬라이스 경계에 부합한다. 다만 rollback 절차의 `down -v`와 `reset` 표현은 실행 시 기존 Kafka 스택이나 작업트리를 훼손할 수 있어 분배 전 문구 수정이 필요하다."
+  }
+}

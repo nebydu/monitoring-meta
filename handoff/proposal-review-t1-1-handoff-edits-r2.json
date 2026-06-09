@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-06-09T22:41:44.658107+09:00",
+  "context": "profile: C:/workspace/monitoring/monitoring-meta/.claude/proposal-review.profile",
+  "context_docs": [
+    "C:/workspace/monitoring/monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/kafka-payloads.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/envelope.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0002-heartbeat-otlp-proto.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0005-topic-naming.md"
+  ],
+  "proposal": "context: |\n  monitoring-meta 오케스트레이터 세션. 직전 proposal-review(verdict=revise)에서 나온 critical 1건 +\n  recommended 4건을 phase1-050-infra.md에 반영했다(rollback 재작성, git reset 제거, 포트 고정값 아님\n  명시, M-1 source_ref 보강). 이번 리뷰는 그 수정이 revise 지적을 충실히 해소했는지 최종 확인용.\n  revise 지적의 핵심은 \"전역 docker compose down -v가 기존 Kafka/ZooKeeper 볼륨까지 삭제할 위험\"이었다.\n  편집된 최종 원문을 그대로 첨부한다.\n\nproposal: |\n  phase1-050-infra.md의 최종 문구(아래)를 승인하고 분배해도 되는가. hub handoff는 이번 변경 없음.\n\n  [§5 Rollback 경로 — 재작성 (critical 해소)]\n  \"Rollback 경로(기존 Kafka 스택 보존 — 전역 down -v 금지): 이 슬라이스는 스토어 추가/운영골격만이므로\n   신규분만 선별 원복한다.\n   1. 신규 서비스만 중지/제거: docker compose -f infra/docker-compose.yml stop postgres opensearch redis minio\n      → docker compose ... rm -f postgres opensearch redis minio. 전역 docker compose down -v는 쓰지 마라\n      — 기존 kafka/zookeeper 볼륨까지 지운다.\n   2. 신규 볼륨만 명시 제거: docker volume rm <project>_pgdata <project>_osdata ... 처럼 이번에 추가한\n      named volume만 지정 제거. Kafka/ZooKeeper 기존 볼륨은 제거 대상에서 제외.\n   3. 문서/compose 변경분 되돌리기: compose/config 변경 커밋을 git revert(또는 해당 커밋만 되돌리기).\n      git reset처럼 작업트리를 강제로 되감는 방식은 다른 변경이 섞일 수 있어 쓰지 않는다.\"\n\n  [§3.4 포트 — 고정값 아님 명시 (권고 3)]\n  \"포트: 신규 매핑(PG 5432/OpenSearch 9200/Redis 6379/MinIO 9000·9001)이 기존(9092 kafka, 14318 otel)·\n   호스트 점유와 겹치지 않는지. Windows Hyper-V 예약 범위(otel 4318→14318 우회 선례)도 유의. 이 값들은\n   기본 후보일 뿐 고정값이 아니다 — 충돌 시 compose 포트 매핑/env override로 호스트 측 포트만 조정하라.\"\n\n  [§0 M-1 — source_ref 보강 (권고 4)]\n  \"PG 스키마 분리(단일 prefix vs 도메인별) — 통합본 §4.2.4(line 610) 원문 '단일 prefix 또는 도메인별\n   스키마 분리 [Open, 7장]', 관련 §4.2.2(line 596) '서비스별 스키마 분리'. [Open, 7장] 미결(M-1, 슬라이스\n   정의 §3 M-1) → 추측 금지. 스키마를 도메인별로 분리하면 그 경계가 D-2(모듈 경계)와 정렬될 수 있어 지금\n   박으면 D-2 결과와 어긋날 위험.\"\n\nalternatives: |\n  - critical(1·2)만 고치고 3·4 생략: 기각. 사용자가 4건 전부 반영 선택. 비용 작고 명료성 향상.\n  - rollback에 down(볼륨 미삭제, -v 없이)을 허용: 검토했으나 전역 down도 기존 kafka 컨테이너를 내려\n    Phase 0 스택을 흔들 수 있어, 신규 서비스만 stop/rm하는 선별 방식으로 한정.\n\nassumptions: |\n  - infra docker-compose가 named volume 패턴이고 신규 볼륨명이 <project>_ prefix로 생성된다(실제 프로젝트명은\n    실행 세션이 docker compose config로 확인).\n  - 기존 kafka/zookeeper 볼륨과 신규 4종 볼륨명이 겹치지 않는다.\n  - 이 편집은 meta handoff 문서만 바꾼 것이라 형제 repo 코드·데모 spec v0.2.1 영향 없음.\n\nrisks: |\n  - <project>_pgdata 등 볼륨명이 실제와 다를 수 있음 → 문구를 \"처럼\"으로 예시화하고 실행 세션이 config로\n    실제명 확인하게 둠. 되돌리기: 문구 수정.\n  - 선별 rm 절차가 길어 실행자가 단축 명령을 임의 사용할 위험 → \"전역 down -v 금지\"를 굵게 못박음.\n  - 되돌리기 경로: handoff 문서 편집이라 git revert로 즉시 원복.\n\ndecision_needed: |\n  phase1-050-infra.md 최종 문구가 (a) 직전 revise의 critical(전역 down -v 볼륨 삭제 위험)을 해소했는지,\n  (b) reset 제거·포트 고정값 아님·M-1 source_ref 보강이 정확한지, (c) 이대로 커밋·분배해도 되는지.",
+  "review": {
+    "verdict": "approve",
+    "critical_issues": [],
+    "missing_context": [
+      "편집된 `phase1-050-infra.md` 전체 문서와 실제 `infra/docker-compose.yml` 서비스명/볼륨명은 입력에 포함되지 않아, 인용된 최종 문구 기준으로만 판단했다."
+    ],
+    "recommended_changes": [
+      "실행 handoff에는 `docker compose -f infra/docker-compose.yml config --volumes` 또는 동등한 확인 절차로 실제 신규 named volume명을 먼저 확인하라는 한 줄을 추가하면 좋다.",
+      "rollback 명령 예시는 실제 서비스명이 확정된 뒤 `postgres opensearch redis minio`가 compose 서비스명과 일치하는지 재확인하라."
+    ],
+    "confidence": "medium",
+    "summary": "제안은 직전 revise의 핵심 결함인 전역 `docker compose down -v` 위험을 선별 `stop/rm` 및 신규 named volume 명시 제거로 바꿔 해소했다. `git reset` 제거, 포트 후보값 명시, M-1 Open 추측 금지 보강도 입력 정책과 충돌하지 않는다. 실제 compose 이름 검증은 실행 단계 확인 사항이므로 적용을 막을 결함은 아니다."
+  }
+}
