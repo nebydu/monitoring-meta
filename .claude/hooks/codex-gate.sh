@@ -107,10 +107,12 @@ CHANGED="$( { git -c core.quotepath=false diff --name-only "$BASE"; \
 
 SPEC_TRIGGERED=""
 HARNESS_TRIGGERED=""
+FEATURE_TRIGGERED=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
     docs/phase0-snapshot/*) ;;                 # 참조 스냅샷 → 트리거 제외
+    docs/features/*.md) FEATURE_TRIGGERED="${FEATURE_TRIGGERED}${f}"$'\n' ;;  # descriptive 레이어 → 전용 프롬프트(docs/*.md 보다 먼저 매치돼야 함)
     adr/*.md)  SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;
     docs/*.md) SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;   # 통합본/envelope/kafka-payloads 등 docs/ 신규·변경 spec
     handoff/adr-*.md) SPEC_TRIGGERED="${SPEC_TRIGGERED}${f}"$'\n' ;;
@@ -122,18 +124,19 @@ done <<EOF
 $CHANGED
 EOF
 
-TRIGGERED="${SPEC_TRIGGERED}${HARNESS_TRIGGERED}"
+TRIGGERED="${SPEC_TRIGGERED}${HARNESS_TRIGGERED}${FEATURE_TRIGGERED}"
 
 # pipefail+set -e 환경: TRIGGERED가 비면 grep이 exit 1을 내므로 || true로 방어
 TRIG_CSV="$(printf '%s' "$TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
 SPEC_CSV="$(printf '%s' "$SPEC_TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
 HARNESS_CSV="$(printf '%s' "$HARNESS_TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
+FEATURE_CSV="$(printf '%s' "$FEATURE_TRIGGERED" | grep -v '^$' | sort -u | tr '\n' ',' | sed 's/,$//' || true)"
 
 if [ -z "$TRIG_CSV" ]; then
-  # 게이트 트리거 = spec(docs/·adr/·handoff/adr-*.md) 또는 harness(.claude/hooks/*.sh·*.cmd·settings.json·codex-schema.json).
+  # 게이트 트리거 = spec(docs/·adr/·handoff/adr-*.md) 또는 harness(.claude/hooks/*.sh·*.cmd·settings.json·codex-schema.json) 또는 feature(docs/features/*.md).
   # 그 외(e2e/, 일반 handoff/, 기타 .claude/ 산출물 등)만 바뀐 경우 → 매번 검토 비용이 크므로 스킵.
   log_line "skipped" 0 0 "(no gate-triggering change)"
-  emit_system_message "[codex-gate] SKIP: Codex 검증 트리거 대상(spec docs/adr/handoff-adr · harness hooks/settings/schema) 변경 없음."
+  emit_system_message "[codex-gate] SKIP: Codex 검증 트리거 대상(spec docs/adr/handoff-adr · harness hooks/settings/schema · feature docs/features) 변경 없음."
   exit 0
 fi
 
@@ -157,10 +160,13 @@ EOF
 # ── 검토 프롬프트 구성 — spec/harness 모드를 합산(둘 다면 병합, 어느 한쪽 지시도 누락되지 않게) ──
 SPEC_PROMPT="통합본 v0.9 내부 일관성 + 8토픽 spec(kafka-payloads, envelope) 정합성 + ADR 결정과 spec 정의의 불일치 + Open question으로 남겨야 할 사항을 무심코 결정한 흔적이 있는지 검토. handoff/adr-*.md가 포함되면 ADR/최종 handoff/사전 분석 문서 간 위상 충돌도 검토."
 HARNESS_PROMPT="Claude Code Stop hook/harness 변경 리뷰. Bash/Windows Git Bash 호환성, 상태 파일/캐시 로직, trigger 범위, fail/pass/escalation 흐름, 로그와 systemMessage가 오해를 만들 가능성을 중점 검토."
+FEATURE_PROMPT="docs/features/ 경로의 파일은 기술(descriptive) 문서 레이어다 — 코드의 현재 구현 흐름을 서술하며 규범(spec)이 아니다. 이 경로의 파일에 한해 다음만 검토: (1) 통합본 v0.9·ADR을 새로 결정하거나 8토픽 payload/envelope 규범을 변경한 흔적, (2) 통합본·ADR과 충돌하는 서술, (3) 미구현 spec을 구현된 것처럼 단정한 곳, (4) 코드 앵커로 라인번호·commit hash를 쓴 곳(금지), (5) 사전 분석/계획 문구가 규칙 문서 위상에 잔존. docs/features/ 파일에는 통합본 자체의 내부 일관성·8토픽 payload 정합성을 적용하지 않는다(이 레이어는 포인터만 단다). diff에 docs/features/ 외 파일(통합본·adr·handoff 등)이 함께 있으면 그 파일에는 이 제한을 적용하지 말고 해당 파일용 spec 검토 지시를 따른다."
 PROMPT=""
 [ -n "$SPEC_CSV" ] && PROMPT="$SPEC_PROMPT"
 [ -n "$HARNESS_CSV" ] && PROMPT="${PROMPT:+$PROMPT
 }$HARNESS_PROMPT"
+[ -n "$FEATURE_CSV" ] && PROMPT="${PROMPT:+$PROMPT
+}$FEATURE_PROMPT"
 PROMPT="$PROMPT
 아래 diff를 read-only로만 검토하고 codex-schema.json 형식의 JSON으로만 응답."
 

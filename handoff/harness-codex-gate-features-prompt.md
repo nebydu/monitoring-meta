@@ -1,6 +1,8 @@
 # 작업 spec — harness-codex-gate-features-prompt
 
-> **harness 작업(meta 자신의 Stop hook 수정).** 형제 repo 무관. 코드 수정 대상 = `.claude/hooks/codex-gate.sh` 1개.
+> **상태: ✅ 적용 완료** — codex-gate.sh에 (c) 분리 프롬프트 반영(이 핸드오프와 같은 커밋). 아래는 적용 spec 원문(이력 보존).
+>
+> **harness 작업(meta 자신의 Stop hook 수정).** 형제 repo 무관. 코드 수정 대상 = monitoring-meta repo 로컬 `.claude/hooks/codex-gate.sh` 1개 — 여기서 "harness"는 **harness repo가 아니라 meta 자신의 hook(운영 스크립트) 영역**을 뜻한다. meta `.claude/settings.json`의 Stop hook이 이 로컬 파일을 직접 호출한다(harness 글로벌 plugin 미사용).
 > 이 핸드오프는 "기능 문서 레이어 신설" 작업의 **Step 4 결정((c) 분리 프롬프트)**에 따른 분리 산출물이다.
 > 결정 근거: descriptive 문서(`docs/features/`)를 normative spec 프롬프트로 검증하면 무익한 "8토픽 payload 정합 검증 불가" 항목이 반복된다(실증). 위상에 맞는 전용 프롬프트로 분리한다.
 
