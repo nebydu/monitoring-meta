@@ -16,6 +16,7 @@
 > - **§16-5**(모듈 분리)=D-2 후 / **D-6**(owner_repo β/γ 의존분)=D-2 후.
 >
 > **최근 완료**
+> - **docs/features 기능 문서 레이어 신설 + 파이프라인**(2026-06-10, 거버넌스 · Track 무관) — 사용자 가시 시나리오의 cross-repo 흐름 안내(descriptive, 규범=통합본/adr와 분리). 산출: `docs/features/`(README 헌장+`_template.md`), `feature-doc-writer` sub-agent, analyzer `affected_feature_docs` 필수 필드, codex-gate descriptive 전용 프롬프트 분기(Step 4 결정 (c)). 파일럿 `docs/features/heartbeat-collection.md`(ADR#2 heartbeat 흐름, 검증기준 e2e `20260610-152424`). 커밋 `c967fad`·`b591f29`·`4fafa5b`. 후속 = script-agent 구 토픽명 주석 drift(`handoff/heartbeat-topic-comment-drift-script-agent.md`).
 > - **T1-1 영속(D-2-무관 슬라이스) DONE**(2026-06-10) — infra 4종(PG/OS/Redis/MinIO) self-host(infra `aae124f`)+hub 연결·smoke(hub `618cd83`). **실기동 검증 3종 PASS**: infra 헬스 green/yellow+init exit0(버킷·템플릿·ISM), hub `SMOKE_INFRA=1` 4종 왕복(mvn 0), **Phase 0 e2e 회귀 0=58/0/0**(`e2e/results/20260610-152424.md`). DONE 범위=인프라·연결·smoke(P-1~P-4); 도메인 영속(X-1~X-4)=D-2 후·VM=Phase 2 잔여. CP-1 뿌리 풀림. → §10
 > - **D-5** 데모 정정 ADR 소속 3건 승인(2026-06-07) — job-results 분리=**ADR#5 간접** / Quartz JobStore=**ADR 바깥** / audit actor.type=**ADR 바깥**. DoD-2 추적 닫힘, T4-2 잠금 해제. `handoff/d5-classification-packet.md`. → §17
 > - **T4-1** 토픽 재명명 구현 완료(2026-06-07) — 3토픽 `commands`/`audit-events`/`heartbeats` → `*-topic`(infra `d732de3`·hub·script-agent). **e2e 종단 PASS 58/0/0**(`e2e/results/20260607-080703.md`, 하네스 v9): R-A 동작 등가(command-topic 발행 라이브·audit/heartbeat 라이브)+R-B 완전성(신명 3종/구명 0)+회귀 0. `job-results`는 T4-2. → §9
