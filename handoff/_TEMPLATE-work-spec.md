@@ -61,6 +61,14 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 ### 하지 말 것 (out of scope)
 - <범위 밖 명시 — scope creep 방지>
 
+### 영향받는 기능 문서 (`docs/features/`) — 필수
+이 작업이 기능 단위 문서(사용자 가시 시나리오의 cross-repo 흐름, descriptive)에 미치는 영향.
+analyzer 산출(`affected_feature_docs`)을 그대로 옮긴다. 다음 중 하나로 명시(누락 금지):
+- **<신규 작성 대상 `<name>` | 보완 대상 `docs/features/<name>.md` | 해당 없음>**
+- 근거: <왜 그렇게 판단했는지>
+- 판단 불가면 추측하지 말고 §7 미결정 사안으로 넘긴다(사람 결정).
+- 실제 작성·보완은 meta의 `feature-doc-writer`가 **이 지정만 받아** 수행한다(그 agent는 영향 문서를 스스로 판단하지 않는다).
+
 ## 6. Phase 0 회귀 방지 기준
 
 <이 작업이 데모 spec v0.2.1의 어떤 동작을 깨면 안 되는지. 깨질 위험이 있는 지점 명시. 없으면 "해당 없음".>

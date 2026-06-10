@@ -34,14 +34,26 @@ model: opus
 이 파일의 frontmatter `model: opus`는 환경변수 `CLAUDE_CODE_SUBAGENT_MODEL`이 설정돼 있어도 **그보다 우선**한다.
 
 ## 출력 — 분석 본문 + 마지막 결과 스키마
-구조화된 markdown으로 ① 현황(데모 동작) ② 목표 spec 요구 ③ 후보안(각 trade-off) ④ 양쪽 repo 코드 영향 ⑤ **결정 필요 사안(사람 입력 대기)**을 정리한 뒤, 마지막에 아래 JSON을 출력한다:
+구조화된 markdown으로 ① 현황(데모 동작) ② 목표 spec 요구 ③ 후보안(각 trade-off) ④ 양쪽 repo 코드 영향 ⑤ **결정 필요 사안(사람 입력 대기)** ⑥ **영향받는 기능 문서(`docs/features/`)**를 정리한 뒤, 마지막에 아래 JSON을 출력한다:
 ```json
 {
   "status": "ok | blocked | failed",
   "outputs": ["생성/수정한 파일 경로"],
   "findings": ["발견 사항"],
   "blockers": ["사람 결정이 필요한 항목 — Open question/미결정 ADR 포함"],
+  "affected_feature_docs": "신규 작성 대상 <name> | 보완 대상 <name> | 해당 없음 | 판단 불가(blockers 참조)",
   "next_action": "다음에 할 일 한 줄"
 }
 ```
 미결정 사안을 만나 멈춘 경우 `status: "blocked"`로 반환한다.
+
+### ⑥ 영향받는 기능 문서 (필수 필드 — 누락 금지)
+모든 작업 분석은 이 작업이 `docs/features/` 기능 단위 문서에 미치는 영향을 **반드시** 다음 중 하나로 명시한다(본문 ⑥ + 위 JSON `affected_feature_docs` 둘 다):
+- **신규 작성 대상**: 이 작업으로 새 사용자 가시 시나리오 흐름이 **구현 완료**되어 새 기능 문서가 필요함 → 대상 시나리오명·근거 기재.
+- **보완 대상**: 기존 기능 문서(`docs/features/<name>.md`)에 서술된 흐름이 이 작업으로 바뀜 → 대상 문서·바뀌는 hop 기재.
+- **해당 없음**: 구현 완료된 사용자 가시 흐름에 변화 없음(내부 리팩터, 또는 **미구현 spec 작업** 등) → 근거 기재.
+
+규칙:
+- **판단 불가 시 추측하지 않는다.** 어느 쪽인지 모호하면 Open question으로 `blockers`에 남기고 `affected_feature_docs`는 `판단 불가`로 두어 **사람 결정에 넘긴다**(analyzer는 결정하지 않는다 — 기존 위상과 동일).
+- 이 레이어는 descriptive이며 **구현 완료된 기능만** 다룬다 — 미구현 spec 작업은 원칙적으로 "해당 없음"(통합본의 영역)이다.
+- 실제 문서 작성·보완은 `feature-doc-writer`가 이 지정을 받아 수행한다(그 agent는 영향 문서를 스스로 판단하지 않는다).

@@ -59,11 +59,13 @@
 | `analyzer` | opus | Read, Grep, Glob, Write | `docs/`, `adr/`, `handoff/` | 통합본+spec+양쪽 코드+데모 spec 종합 분석 |
 | `spec-sync` | sonnet | Read, Grep, Glob, Write | `handoff/` | 기준 문서↔사본 spec drift 검출(보고만) |
 | `e2e-tester` | sonnet | Read, Write, Bash, Grep, Glob | `e2e/` | polyrepo 종단 검증 실행 |
+| `feature-doc-writer` | sonnet | Read, Grep, Glob, Write | `docs/features/` | work spec 지정 기능 문서 작성·보완(descriptive) |
 
 frontmatter의 `model`은 환경변수 `CLAUDE_CODE_SUBAGENT_MODEL`보다 **우선**한다.
 
 ## 7. 디렉터리 약속
 - `docs/` — 기준 문서 spec·문서 (통합본, kafka-payloads, envelope 등).
+- `docs/features/` — 기능 단위 문서(사용자 가시 시나리오의 cross-repo 흐름, **descriptive** — 규범은 통합본/adr). 작성은 `feature-doc-writer`, 헌장은 `docs/features/README.md`.
 - `adr/` — ADR 결정 기록.
 - `handoff/` — 각 repo로 넘기는 작업 spec, drift 보고, 통합본 수정 제안서.
 - `e2e/` — 종단 검증 스크립트(`run-e2e.sh`)와 결과(`results/<timestamp>.md`).
