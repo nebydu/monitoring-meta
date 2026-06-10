@@ -3,7 +3,7 @@
 > **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 기준 문서는 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
 
 > 이 문서는 analyzer가 작성한 **영향 분석 노트**다. 결정 문서가 아니라 현황 판정 + repo별 작업 윤곽 + 결정 필요 사안 정리다.
-> phase1-001(`handoff/phase1-001-envelope-scope.md`)이 envelope 적용 **범위**(공통 6 ● / OTLP 2 ✕)를 확정했고, 본 분석은 그 범위 안에서 **지금 실제로 무엇을 구현할지**를 코드 실재 기준으로 한정한다.
+> phase1-001(`handoff/phase1-001/phase1-001-envelope-scope.md`)이 envelope 적용 **범위**(공통 6 ● / OTLP 2 ✕)를 확정했고, 본 분석은 그 범위 안에서 **지금 실제로 무엇을 구현할지**를 코드 실재 기준으로 한정한다.
 
 - 작성일: 2026-06-05
 - 분석 대상 코드: `../hub`(Java/Spring), `../script-agent`(Go), `../infra`(read-only)

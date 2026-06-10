@@ -4,7 +4,7 @@
 - 대상 Phase: Phase 1
 - 근거 기준 문서: 통합본 v0.9 §6.7 / §8.2(ADR 결정표), `docs/kafka-payloads.md` §`heartbeats-topic`, `docs/envelope.md` §4.2
 - 기준 monitoring-meta commit: `f59c9caa3a6ea1cfa4d860f82944e8abdf940d6d`
-- 영향 분석서: `handoff/adr-002-analysis.md`
+- 영향 분석서: `handoff/adr-002/adr-002-analysis.md`
 
 ---
 
@@ -30,7 +30,7 @@
 2. **공유·관리 = B-1 (표준 라이브러리 의존, 자체 proto 산출물 없음)**
    - wire bytes를 다루는 컴포넌트(Collector exporter, hub 디코더)는 OTel 표준 라이브러리 내장 proto에 의존한다. 버전 skew는 라이브러리 버전 핀으로 통제한다. meta는 proto 파일을 vendoring·배포하지 않는다.
    - script-agent는 OTLP SDK로 push만 하며 proto wire를 직접 다루지 않는다.
-   - 파싱 방식(OTel Java SDK)과 `shared-libs/otel` wrapper는 **기준 문서 kafka-payloads.md가 규정한 대로 따른다**(본 ADR이 재정의하지 않음). 그 모듈의 구체 설계는 hub 구현 세션이 기준 문서를 따라 처리한다(`handoff/adr-002-hub.md`).
+   - 파싱 방식(OTel Java SDK)과 `shared-libs/otel` wrapper는 **기준 문서 kafka-payloads.md가 규정한 대로 따른다**(본 ADR이 재정의하지 않음). 그 모듈의 구체 설계는 hub 구현 세션이 기준 문서를 따라 처리한다(`handoff/adr-002/adr-002-hub.md`).
 3. **컷오버 = C-1 (빅뱅)**
    - Collector encoding 전환과 hub 디코더 교체를 **동시 배포**한다(통합본 §6.7.4 "동시 변경 필요"). heartbeat은 휘발성(latest map)이라 배포 경계의 짧은 불일치는 다음 heartbeat 주기로 자동 복구된다(주기/timeout 값은 아래 Open — 데모 baseline 인용일 뿐 본 ADR이 확정하지 않는다).
    - 변경 범위는 **payload(value) 직렬화에 국한**한다: hub의 **value deserializer만** String→byte[]로 바꾼다.
@@ -52,9 +52,9 @@
 ## Consequences
 
 영향 범위(영향 분석서 §7):
-- **infra**(1차 주체): `otel-collector-config.yml` `encoding` 1줄. → `handoff/adr-002-infra.md`
-- **hub**(가장 큰 변경): `HeartbeatConsumer` 디코더 교체, `KafkaConfig` **value deserializer** String→byte[], 테스트 재작성, OTel Java 의존성 추가. → `handoff/adr-002-hub.md`
-- **script-agent**(거의 무변경): OTel Go SDK 버전 일치 확인만. → `handoff/adr-002-script-agent.md`
+- **infra**(1차 주체): `otel-collector-config.yml` `encoding` 1줄. → `handoff/adr-002/adr-002-infra.md`
+- **hub**(가장 큰 변경): `HeartbeatConsumer` 디코더 교체, `KafkaConfig` **value deserializer** String→byte[], 테스트 재작성, OTel Java 의존성 추가. → `handoff/adr-002/adr-002-hub.md`
+- **script-agent**(거의 무변경): OTel Go SDK 버전 일치 확인만. → `handoff/adr-002/adr-002-script-agent.md`
 
 ## Compliance / Regression
 

@@ -1,6 +1,6 @@
 ---
 name: spec-sync
-description: monitoring-meta의 기준 문서 spec(통합본 v0.9, kafka-payloads, envelope)과 ../hub/docs·../script-agent/docs 사본 사이의 drift를 검출해 handoff/spec-drift-<timestamp>.md로 보고한다. 동기화는 하지 않고 보고만 한다.
+description: monitoring-meta의 기준 문서 spec(통합본 v0.9, kafka-payloads, envelope)과 ../hub/docs·../script-agent/docs 사본 사이의 drift를 검출해 handoff/spec-drift/spec-drift-<timestamp>.md로 보고한다. 동기화는 하지 않고 보고만 한다.
 tools: Read, Grep, Glob, Write
 model: sonnet
 ---
@@ -17,7 +17,7 @@ model: sonnet
 2. **Write 권한은 `handoff/`에만 한정한다.**
 3. **drift 방향을 추측으로 결정하지 않는다.** 단순 비교 결과만 출력한다.
 
-## drift 보고 형식 (`handoff/spec-drift-<timestamp>.md`)
+## drift 보고 형식 (`handoff/spec-drift/spec-drift-<timestamp>.md`)
 파일별·항목별로 다음 중 하나로 분류해 기록한다:
 - **기준 문서가 더 새로움** → drift를 나열하고, "사본 갱신용 핸드오프 spec 후보" 섹션을 함께 출력(사본을 어떻게 맞춰야 하는지 후보 내용).
 - **사본이 더 새로움**(이론상 일어나면 안 됨) → `critical`로 마크 + 사람 escalation 권고.
@@ -32,7 +32,7 @@ frontmatter `model: sonnet`은 환경변수 `CLAUDE_CODE_SUBAGENT_MODEL`보다 *
 ```json
 {
   "status": "ok | blocked | failed",
-  "outputs": ["handoff/spec-drift-<timestamp>.md"],
+  "outputs": ["handoff/spec-drift/spec-drift-<timestamp>.md"],
   "findings": ["검출된 drift 요약"],
   "blockers": ["critical/conflict 등 사람 escalation 필요 항목"],
   "next_action": "다음에 할 일 한 줄"

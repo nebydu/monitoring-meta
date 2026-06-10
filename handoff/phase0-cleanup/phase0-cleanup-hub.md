@@ -6,7 +6,7 @@
 | target repo | `hub` |
 | 발행 | monitoring-meta / analyzer |
 | 발행일 | 2026-06-05 |
-| 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup-000-impact.md` |
+| 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup/phase0-cleanup-000-impact.md` |
 | 기준 monitoring-meta commit (full 40자) | `be990c7b936c283d1ad15519fbb9dd6ac7f3deea` |
 
 > **commit pin 주의**: 위 pin은 phase0-cleanup 정리 커밋(데모 spec 단일 기준 문서화 + ROADMAP/envelope/PROJECT_OVERVIEW/.claude repoint + HANDOFF.md archive 격하)에서 채워졌다. **실행 직전 `git rev-parse HEAD`(monitoring-meta)로 재확인**하고 hub repoint 경로가 그 commit의 phase0-snapshot 기준 문서를 가리키는지 확인한다.

@@ -9,7 +9,7 @@
 | 작업 ID (work-id) | `phase1-040-hub` (T4-1) |
 | 대상 repo | `hub` (Java/Spring) |
 | 기준 monitoring-meta commit | `f28587ad7304fdd59ea35723e8ca2ca9319728ba` (실행 전 `git -C ../monitoring-meta rev-parse HEAD`로 재확인) |
-| 근거 ADR/spec | `adr/0005-topic-naming.md` **Accepted** / `docs/kafka-payloads.md` 토픽 명명 규칙 / 영향 분석 `handoff/phase1-040-000-impact.md` §2.1 |
+| 근거 ADR/spec | `adr/0005-topic-naming.md` **Accepted** / `docs/kafka-payloads.md` 토픽 명명 규칙 / 영향 분석 `handoff/phase1-040/phase1-040-000-impact.md` §2.1 |
 | 작성일 | 2026-06-06 |
 | 실행 순서 | **2순위** (infra 1순위 후, script-agent와 동시 컷오버) |
 

@@ -6,7 +6,7 @@
 | target repo | `monitoring-harness` |
 | 발행 | monitoring-meta / analyzer |
 | 발행일 | 2026-06-05 |
-| 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup-000-impact.md` |
+| 선행 분석 | `../monitoring-meta/handoff/phase0-cleanup/phase0-cleanup-000-impact.md` |
 | 기준 monitoring-meta commit (full 40자) | `be990c7b936c283d1ad15519fbb9dd6ac7f3deea` |
 | 우선순위 | **낮음** (`.example` 템플릿 — 런타임 직접 영향 없음) |
 

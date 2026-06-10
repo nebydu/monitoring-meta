@@ -47,7 +47,7 @@
 ## dry-run C 보충
 - spec-sync agent 정의: frontmatter 정상(name=spec-sync, model=sonnet, tools=Read,Grep,Glob,Write). `/agents`에 표시될 것.
 - 입력 파일 존재 확인: `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` (데모 spec 단일 기준 문서 — phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 통합), `handoff/` 쓰기 가능.
-- **사람 수행 절차**: 인터랙티브 Claude Code 세션에서 spec-sync를 호출하여 두 사본을 비교, `handoff/spec-drift-<timestamp>.md` 생성 확인.
+- **사람 수행 절차**: 인터랙티브 Claude Code 세션에서 spec-sync를 호출하여 두 사본을 비교, `handoff/spec-drift/spec-drift-<timestamp>.md` 생성 확인.
 - 참고: 셋업을 수행한 자동화 하니스의 Agent 도구는 빌트인 타입만 노출하여 커스텀 agent를 직접 호출하지 못함(정상). 이는 agent 정의 결함이 아니며, 실제 Claude Code 세션에서는 정상 호출됨.
 
 ## 검증 중 발견·수정한 문제 (모두 해소)

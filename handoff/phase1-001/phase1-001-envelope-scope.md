@@ -2,7 +2,7 @@
 
 > **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 승인 대기" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 기준 문서는 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
 
-> 이 handoff는 ROADMAP §9 Track 0의 T0-1(envelope 적용 범위 + 제외 사유)·T0-2(envelope/재명명 순서)를 확정하는 **범위 결정 문서**다. owner_repo = monitoring-meta(spec/contract 소유). 실제 envelope 구현은 후속 `handoff/phase1-002-{hub,script-agent,infra}.md`(T0-3/T0-4)에서 hub/script-agent로 분배한다.
+> 이 handoff는 ROADMAP §9 Track 0의 T0-1(envelope 적용 범위 + 제외 사유)·T0-2(envelope/재명명 순서)를 확정하는 **범위 결정 문서**다. owner_repo = monitoring-meta(spec/contract 소유). 실제 envelope 구현은 후속 `handoff/phase1-002/phase1-002-{hub,script-agent,infra}.md`(T0-3/T0-4)에서 hub/script-agent로 분배한다.
 
 ## 1. 필수 헤더
 
@@ -67,7 +67,7 @@ Phase 0 데모는 `command-topic`(hub→script-agent)에 envelope 4종을 발행
 
 ## 7. repo별 작업 분해 (후속 phase1-002에서 실제 실행)
 
-> 본 문서는 범위 확정 문서다. 아래는 후속 `handoff/phase1-002-{hub,script-agent,infra}.md`로 넘길 repo별 작업 윤곽이며, 각 repo 세션이 그 handoff를 받아 구현한다.
+> 본 문서는 범위 확정 문서다. 아래는 후속 `handoff/phase1-002/phase1-002-{hub,script-agent,infra}.md`로 넘길 repo별 작업 윤곽이며, 각 repo 세션이 그 handoff를 받아 구현한다.
 
 ### hub (Java)
 - producer: `command-topic` 외 신규/기존 공통 토픽 발행 경로에 envelope 4종 주입. 현재 `producer/CommandPublisher.java`에 인라인된 헤더 빌드 로직을 공통 토픽 producer 전반으로 확장(envelope.md §7 — envelope 모듈 추출 후보).

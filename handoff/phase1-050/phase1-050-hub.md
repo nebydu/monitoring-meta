@@ -19,7 +19,7 @@
 | 작업 ID (work-id) | `phase1-050-hub` (T1-1 슬라이스) |
 | 대상 repo | `hub` (Java/Spring) |
 | 기준 monitoring-meta commit | `ec408a8` (실행 전 `git -C ../monitoring-meta rev-parse HEAD`로 재확인) |
-| 근거 | `통합본 §8.3 ADR#12`·§4.2.2(line 688 "JDBC 표준 + 다중 DB 지원") / 슬라이스 정의 `handoff/phase1-050-t1-1-datastore-slice.md` §1 |
+| 근거 | `통합본 §8.3 ADR#12`·§4.2.2(line 688 "JDBC 표준 + 다중 DB 지원") / 슬라이스 정의 `handoff/phase1-050/phase1-050-t1-1-datastore-slice.md` §1 |
 | 작성일 | 2026-06-07 |
 | 실행 순서 | **2순위** (infra `phase1-050-infra.md`로 스토어가 뜬 뒤) |
 

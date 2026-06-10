@@ -9,7 +9,7 @@
 | 작업 ID (work-id) | `phase1-040-infra` (T4-1) |
 | 대상 repo | `infra` |
 | 기준 monitoring-meta commit | `f28587ad7304fdd59ea35723e8ca2ca9319728ba` (실행 전 `git -C ../monitoring-meta rev-parse HEAD`로 재확인) |
-| 근거 ADR/spec | `adr/0005-topic-naming.md` **Accepted** / `docs/kafka-payloads.md` 토픽 명명 규칙 / 영향 분석 `handoff/phase1-040-000-impact.md` §2.3 |
+| 근거 ADR/spec | `adr/0005-topic-naming.md` **Accepted** / `docs/kafka-payloads.md` 토픽 명명 규칙 / 영향 분석 `handoff/phase1-040/phase1-040-000-impact.md` §2.3 |
 | 작성일 | 2026-06-06 |
 | 실행 순서 | **1순위** (hub/script-agent보다 먼저 — 토픽 생성·heartbeat 발행 기반) |
 

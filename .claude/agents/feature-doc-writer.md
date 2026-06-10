@@ -15,7 +15,7 @@ model: sonnet
 - 작성 규칙 전문은 `docs/features/README.md` §2를 따른다. 새 문서는 `docs/features/_template.md`를 복사해 시작한다.
 
 ## 입력으로 보는 것 (모두 읽기 전용)
-- 작업 지시: work spec(`handoff/<work-id>-*.md` 등)의 **"영향받는 기능 문서"** 항목.
+- 작업 지시: work spec(`handoff/<work-id>/<work-id>-*.md` 등)의 **"영향받는 기능 문서"** 항목.
 - 레이어 헌장·템플릿: `docs/features/README.md`, `docs/features/_template.md`.
 - 규범 포인터(서술 근거): `docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`, `adr/*.md`.
 - 검증 근거: `e2e/results/<timestamp>.md`(최종 검증 기준으로 인용).

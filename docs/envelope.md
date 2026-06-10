@@ -10,8 +10,8 @@
 >   - `docs/통합본_v0_9.md` 6.8(메시지 envelope 및 ID 컨벤션) / 6.9(데모 일관성 매트릭스) / 4.4.1(토픽 표) / 8.2(ADR 결정표)
 >   - `docs/kafka-payloads.md` (별첨 payload spec — "envelope는 별도 — shared-libs/envelope")
 >   - `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` §2.2 (Phase 0 회귀 기준 헤더 정의)
->   - `handoff/envelope-draft-analysis.md` (1라운드 분석 §1~§9)
-> - 확정 결정 출처: 사람 confirm된 Q1~Q5 (**2026-05-27 확정**; `handoff/envelope-draft-analysis.md` §7 확정 기록 참조).
+>   - `handoff/envelope-draft/envelope-draft-analysis.md` (1라운드 분석 §1~§9)
+> - 확정 결정 출처: 사람 confirm된 Q1~Q5 (**2026-05-27 확정**; `handoff/envelope-draft/envelope-draft-analysis.md` §7 확정 기록 참조).
 
 ---
 

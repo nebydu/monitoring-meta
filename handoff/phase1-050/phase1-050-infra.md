@@ -19,7 +19,7 @@
 | 작업 ID (work-id) | `phase1-050-infra` (T1-1 슬라이스) |
 | 대상 repo | `infra` |
 | 기준 monitoring-meta commit | `ec408a8` (실행 전 `git -C ../monitoring-meta rev-parse HEAD`로 재확인) |
-| 근거 | `adr/0005`와 무관 / `통합본 §8.3 ADR#12`(영속 저장소)·§4.2.2 / 슬라이스 정의 `handoff/phase1-050-t1-1-datastore-slice.md` §1 / critical-path 분석 |
+| 근거 | `adr/0005`와 무관 / `통합본 §8.3 ADR#12`(영속 저장소)·§4.2.2 / 슬라이스 정의 `handoff/phase1-050/phase1-050-t1-1-datastore-slice.md` §1 / critical-path 분석 |
 | 작성일 | 2026-06-07 |
 | 실행 순서 | **1순위** (hub 연결/smoke의 선행 — 스토어가 떠야 hub가 붙는다) |
 

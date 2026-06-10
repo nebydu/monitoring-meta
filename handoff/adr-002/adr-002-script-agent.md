@@ -17,7 +17,7 @@ ground truth 우선순위: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지) 
 ## 3. ground truth 참조 경로
 
 - `../monitoring-meta/adr/0002-heartbeat-otlp-proto.md` — 본 작업 결정
-- `../monitoring-meta/handoff/adr-002-analysis.md` — 영향 분석서(§7.3 script-agent)
+- `../monitoring-meta/handoff/adr-002/adr-002-analysis.md` — 영향 분석서(§7.3 script-agent)
 - `docs/monitoring-demo-message-spec-v0.2.1.md` — Phase 0 회귀 방지 기준(각 repo 사본)
 
 ## 4. 배경 / 목표

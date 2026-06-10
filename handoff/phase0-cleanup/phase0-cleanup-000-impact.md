@@ -50,7 +50,7 @@ LIVE dangling 검증 비대상).
 | meta | `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` | LIVE | analyzer | (신규 단일기준 문서) | **완료(이전 호출)** — 본문 verbatim + 성격 헤더 |
 | meta | `docs/envelope.md` | LIVE | analyzer | `docs/phase0-snapshot/...` (2곳) | **완료(이전 호출)** |
 | meta | `handoff/_TEMPLATE-work-spec.md` | LIVE | analyzer | `../monitoring-meta/docs/phase0-snapshot/...` | **완료(이전 호출)** |
-| meta | `handoff/phase1-001-envelope-scope.md` | LIVE | analyzer | `../monitoring-meta/docs/phase0-snapshot/...` | **완료(이전 호출)** |
+| meta | `handoff/phase1-001/phase1-001-envelope-scope.md` | LIVE | analyzer | `../monitoring-meta/docs/phase0-snapshot/...` | **완료(이전 호출)** |
 
 ### 2.2 meta 내부 — 본 작업에서 analyzer 처리 (이번 호출)
 
@@ -58,14 +58,14 @@ LIVE dangling 검증 비대상).
 |---|---|---|---|---|---|
 | meta | `docs/phase0-snapshot/PROJECT_OVERVIEW.md` | LIVE | analyzer | 데모 spec 경로 5곳 정정 + §3.1/§8.1 superseded 표시 | **완료(이번)** — 본문 보존, 표시만 |
 | meta | `docs/phase1/ROADMAP_PHASE1_v0_3.md` | LIVE | analyzer→meta메인 | **D-C1 재배선 적용(be990c7)** | 작성 시점엔 [결정 필요]였으나, 사용자 D-C1 결정 후 메인이 루트 `HANDOFF.md §5/§7` source_ref 15곳을 ROADMAP §9~§14/§17·통합본 §8.3/§13_open으로 부분 재배선. §4·§16 "HANDOFF"(handoff/ 역할)는 보존. 무결성 보존(§5) |
-| meta | `handoff/adr-002-analysis.md` (라인7) | HIST | analyzer | **본문 비수정** | (a)repoint 후보였으나 303줄 전면 Write 무결성 위험 → 본 표에 "경로는 당시 기준" 집약. LIVE 검증 비대상 |
-| meta | `handoff/adr-002-hub.md` (라인23) | HIST | analyzer | **본문 비수정** | 당시 repo 사본을 가리킨 시점 사실. 본 표 집약 |
-| meta | `handoff/adr-002-script-agent.md` (라인21) | HIST | analyzer | **본문 비수정** | 동일 |
-| meta | `handoff/envelope-draft-analysis.md` (라인5) | HIST | analyzer | **본문 비수정** | (a)repoint 후보였으나 216줄 전면 Write 무결성 위험 → 본 표 집약 |
-| meta | `handoff/spec-drift-20260527-000000.md` | HIST | analyzer | **본문 비수정** | 기준 문서/사본 위치 비교가 본문 논지(repoint 시 의미 붕괴) → (b)취지의 집약 |
-| meta | `handoff/spec-drift-envelope-20260527-143000.md` | HIST | analyzer | **본문 비수정** | 동일 |
-| meta | `handoff/phase1-000-roadmap-normalization.md` | HIST | (없음) | 변경 불필요 | 데모 spec 직접 경로 없음. HANDOFF.md 언급만(메인 몫) |
-| meta | `handoff/phase1-000b-consistency-checklist.md` | HIST | (없음) | 변경 불필요 | 데모 spec 직접 경로 없음. HANDOFF.md 언급만(메인 몫) |
+| meta | `handoff/adr-002/adr-002-analysis.md` (라인7) | HIST | analyzer | **본문 비수정** | (a)repoint 후보였으나 303줄 전면 Write 무결성 위험 → 본 표에 "경로는 당시 기준" 집약. LIVE 검증 비대상 |
+| meta | `handoff/adr-002/adr-002-hub.md` (라인23) | HIST | analyzer | **본문 비수정** | 당시 repo 사본을 가리킨 시점 사실. 본 표 집약 |
+| meta | `handoff/adr-002/adr-002-script-agent.md` (라인21) | HIST | analyzer | **본문 비수정** | 동일 |
+| meta | `handoff/envelope-draft/envelope-draft-analysis.md` (라인5) | HIST | analyzer | **본문 비수정** | (a)repoint 후보였으나 216줄 전면 Write 무결성 위험 → 본 표 집약 |
+| meta | `handoff/spec-drift/spec-drift-20260527-000000.md` | HIST | analyzer | **본문 비수정** | 기준 문서/사본 위치 비교가 본문 논지(repoint 시 의미 붕괴) → (b)취지의 집약 |
+| meta | `handoff/spec-drift/spec-drift-envelope-20260527-143000.md` | HIST | analyzer | **본문 비수정** | 동일 |
+| meta | `handoff/phase1-000/phase1-000-roadmap-normalization.md` | HIST | (없음) | 변경 불필요 | 데모 spec 직접 경로 없음. HANDOFF.md 언급만(메인 몫) |
+| meta | `handoff/phase1-000/phase1-000b-consistency-checklist.md` | HIST | (없음) | 변경 불필요 | 데모 spec 직접 경로 없음. HANDOFF.md 언급만(메인 몫) |
 
 > **HISTORICAL 처리 방침 (G 산출물 — 최종)**: 6개 HISTORICAL handoff
 > (`adr-002-analysis`, `adr-002-hub`, `adr-002-script-agent`, `envelope-draft-analysis`,

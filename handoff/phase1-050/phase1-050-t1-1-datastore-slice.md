@@ -2,7 +2,7 @@
 
 > **성격**: 이 문서는 **scoping/정의 문서**다 — 실제 repo handoff(`phase1-050-{repo}.md`)가 아니다. T1-1(영속 저장소, critical path CP-1 뿌리, fan-out 1위, READY) 중 **D-2(β 모듈러 모놀리스 vs γ 풀 MSA)가 바꾸지 않는 부분만** 잘라, 지금 분배 가능한 슬라이스를 확정한다. 슬라이스 확정 후 repo별 handoff는 사람이 별도 작성(또는 후속).
 >
-> **입력 source of truth**: `docs/phase1/ROADMAP_PHASE1_v0_3.md` §10 T1-1(line 281) / §17 D-2(line 429)·D-3 / `docs/통합본_v0_9.md` §4.2.2 저장소(line 596~598)·§4.2.4(line 610)·§6.x 데이터스토어 언급·§7.2 모듈 분리 정책(line 1976~1995) / `handoff/phase1-critical-path-analysis.md` §3.2·§4·§6.
+> **입력 source of truth**: `docs/phase1/ROADMAP_PHASE1_v0_3.md` §10 T1-1(line 281) / §17 D-2(line 429)·D-3 / `docs/통합본_v0_9.md` §4.2.2 저장소(line 596~598)·§4.2.4(line 610)·§6.x 데이터스토어 언급·§7.2 모듈 분리 정책(line 1976~1995) / `handoff/decisions/phase1-critical-path-analysis.md` §3.2·§4·§6.
 >
 > **기준 monitoring-meta commit**: `4940e1a115b911e452f96f0083f1c4dc6ede879f`
 > **작성일**: 2026-06-07 · **근거 ADR**: `통합본 §8.3 ADR#12`(영속 저장소)
@@ -81,7 +81,7 @@
 ```json
 {
   "status": "blocked",
-  "outputs": ["handoff/phase1-050-t1-1-datastore-slice.md"],
+  "outputs": ["handoff/phase1-050/phase1-050-t1-1-datastore-slice.md"],
   "findings": [
     "D-2 무관 슬라이스 = PG/OpenSearch/Redis/MinIO 프로비저닝·연결 계층(P-1~P-4). 데이터스토어 엔진은 β/γ 공통 self-host(통합본 line 165/244)라 모듈 분리와 독립",
     "D-2 의존 보류분 = repository/DAO 배치·모듈 경계·트랜잭션 경계·도메인 영속 매핑(X-1~X-4) + owner_repo는 D-6(D-2 후)",

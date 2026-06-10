@@ -1,7 +1,7 @@
 # 작업 spec — &lt;work-id&gt;
 
 > **이 파일은 작성 템플릿이다.** 실제 작업 spec은 이 파일을 복사해
-> `handoff/<work-id>-hub.md`, `handoff/<work-id>-script-agent.md`로 만든다(한 파일 = 한 repo).
+> `handoff/<work-id>/<work-id>-hub.md`, `handoff/<work-id>/<work-id>-script-agent.md`로 만든다(한 작업 단위 = 한 디렉터리, 한 파일 = 한 repo).
 > (Windows 파일명에 `<` `>`를 못 쓰므로 템플릿 자체는 `_TEMPLATE-work-spec.md`로 둔다.
 > `<work-id>`는 실제 파일에서 작업 식별자로 치환되는 자리표시자다.)
 >

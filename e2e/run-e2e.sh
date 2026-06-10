@@ -100,8 +100,8 @@
 # 근거 문서:
 #   adr/0002-heartbeat-otlp-proto.md  (결정 A-1/B-1/C-1)
 #   adr/0005-topic-naming.md          (D-4(1)/D-4(2) Accepted — T4-1 근거)
-#   handoff/adr-002-{infra,hub,script-agent}.md
-#   handoff/phase1-040-000-impact.md  (T4-1 영향 분석)
+#   handoff/adr-002/adr-002-{infra,hub,script-agent}.md
+#   handoff/phase1-040/phase1-040-000-impact.md  (T4-1 영향 분석)
 #   docs/kafka-payloads.md (heartbeats-topic)
 #   docs/envelope.md §2.2·§2.3·§4.2·§6 (OTLP 위임군 예외, x-source 가드)
 #   데모 spec v0.2.1 §5.4 (Phase 0 ground truth)
@@ -1354,7 +1354,7 @@ fi
     echo "- docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md §2.2·§5.4 (Phase 0 ground truth)"
     echo "- adr/0002-heartbeat-otlp-proto.md (A-1/B-1/C-1)"
     echo "- adr/0005-topic-naming.md §2.2.1 (D-4(1) Accepted — 최종 논리명 표)"
-    echo "- handoff/phase1-040-000-impact.md §3.3 (R-A/R-B 회귀 기준 정의)"
+    echo "- handoff/phase1-040/phase1-040-000-impact.md §3.3 (R-A/R-B 회귀 기준 정의)"
     echo ""
     echo "## 하네스 수정 이력"
     echo ""

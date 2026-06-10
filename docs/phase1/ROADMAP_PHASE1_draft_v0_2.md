@@ -22,7 +22,7 @@ docs/phase1/ROADMAP_PHASE1_draft_v0_2.md   (입력 draft, 이 문서)
   ↓ verify (analyzer + codex-gate)
 docs/phase1/ROADMAP_PHASE1_v0_3.md         (정본 후보)
   ↓ slice
-handoff/phase1-xxx-*.md
+handoff/phase1-xxx/phase1-xxx-*.md
   ↓ execute
 hub / script-agent / infra / monitoring-meta
   ↓ verify
@@ -146,11 +146,11 @@ ROADMAP의 `status`는 아래 값만 사용한다.
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T0-1 | 나머지 토픽 envelope 적용 범위 확정 | `HANDOFF`, `통합본 §8.3 ADR#2`, `통합본 §8.3 ADR#5` | monitoring-meta | DECISION_REQUIRED | envelope 후속 handoff | ADR#5와의 선후 결정 | `handoff/phase1-001-envelope-scope.md` | 적용 대상 토픽 목록과 제외 사유 |
-| T0-2 | ADR#5 토픽 재명명/분리와 envelope 적용 선후 결정 | `통합본 §8.3 ADR#5`, `통합본 §6.9(나)` | monitoring-meta | DECISION_REQUIRED | topic producer/consumer 변경 | analyzer/codex-gate 결정 | `handoff/phase1-001-envelope-scope.md` | "envelope 먼저" 또는 "ADR#5와 묶음" 결정 기록 |
-| T0-3 | envelope 적용 handoff 생성 | `HANDOFF` | monitoring-meta | TODO | hub/script-agent 후속 작업 | T0-1, T0-2 | `handoff/phase1-002-envelope-remaining-topics.md` | repo별 수정 범위와 테스트 명시 |
-| T0-4 | envelope 적용 구현 | `handoff/phase1-002-envelope-remaining-topics.md` | hub, script-agent | TODO | Phase 1 message contract 정합성 | T0-3 | repo별 handoff | unit/integration/e2e PASS |
-| T0-5 | envelope 결과 ROADMAP 반영 | ROADMAP | monitoring-meta | TODO | Track 1~4 정확도 | T0-4 | `handoff/phase1-002-envelope-remaining-topics.md` | ROADMAP status와 evidence 갱신 |
+| T0-1 | 나머지 토픽 envelope 적용 범위 확정 | `HANDOFF`, `통합본 §8.3 ADR#2`, `통합본 §8.3 ADR#5` | monitoring-meta | DECISION_REQUIRED | envelope 후속 handoff | ADR#5와의 선후 결정 | `handoff/phase1-001/phase1-001-envelope-scope.md` | 적용 대상 토픽 목록과 제외 사유 |
+| T0-2 | ADR#5 토픽 재명명/분리와 envelope 적용 선후 결정 | `통합본 §8.3 ADR#5`, `통합본 §6.9(나)` | monitoring-meta | DECISION_REQUIRED | topic producer/consumer 변경 | analyzer/codex-gate 결정 | `handoff/phase1-001/phase1-001-envelope-scope.md` | "envelope 먼저" 또는 "ADR#5와 묶음" 결정 기록 |
+| T0-3 | envelope 적용 handoff 생성 | `HANDOFF` | monitoring-meta | TODO | hub/script-agent 후속 작업 | T0-1, T0-2 | `handoff/phase1-002/phase1-002-envelope-remaining-topics.md` | repo별 수정 범위와 테스트 명시 |
+| T0-4 | envelope 적용 구현 | `handoff/phase1-002/phase1-002-envelope-remaining-topics.md` | hub, script-agent | TODO | Phase 1 message contract 정합성 | T0-3 | repo별 handoff | unit/integration/e2e PASS |
+| T0-5 | envelope 결과 ROADMAP 반영 | ROADMAP | monitoring-meta | TODO | Track 1~4 정확도 | T0-4 | `handoff/phase1-002/phase1-002-envelope-remaining-topics.md` | ROADMAP status와 evidence 갱신 |
 
 ---
 
@@ -160,11 +160,11 @@ ROADMAP의 `status`는 아래 값만 사용한다.
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T1-1 | 영속 저장소: PostgreSQL + OpenSearch + Redis + MinIO (VM은 Phase 2) | `통합본 §8.3 ADR#12`, `통합본 §6.9(나)` | infra, hub, monitoring-meta | TODO | Alert, Incident, dedup, log, script storage | site 정보 일부, infra 결정 | `handoff/phase1-010-persistence-foundation.md` | docker/infra config, hub connection config, smoke/e2e |
-| T1-2 | 인증/인가: JWT + OIDC + Knox 어댑터 | `통합본 §8.3 ADR#7`, `통합본 §6.9(나)` | hub | TODO | user-facing API, UI 권한, Knox 연동 | T1-1 중 PG user domain | `handoff/phase1-011-auth-oidc-knox.md` | auth flow test, role/permission test |
-| T1-3 | 모듈러 모놀리스 → deployment 분리(β) | `통합본 05 §7.2` (β/γ=`05 §7.2.6`, 경계↔데모=`05 §7.2.4`), `HANDOFF` | hub, script-agent, infra | DECISION_REQUIRED | owner_repo 배치, 도메인 경계, 배포 단위 | G-2 | `handoff/phase1-012-module-split-decision.md` | β/γ 결정 기록, deployment map |
-| T1-4 | Quartz JobStore DB-backed clustered | `통합본 §6.9(나)` | hub, infra | TODO | scheduler 신뢰성, job execution | T1-1 PG | `handoff/phase1-013-quartz-jobstore.md` | clustered JobStore 설정, failover/misfire test |
-| T1-5 | 사이트별 운영 정보 정리 | `통합본 §13_open §A` | monitoring-meta, infra | IN_PROGRESS | topology/security/node sizing | 외부 정보 | `handoff/phase1-014-site-ops-inputs.md` | site별 운영정보 matrix |
+| T1-1 | 영속 저장소: PostgreSQL + OpenSearch + Redis + MinIO (VM은 Phase 2) | `통합본 §8.3 ADR#12`, `통합본 §6.9(나)` | infra, hub, monitoring-meta | TODO | Alert, Incident, dedup, log, script storage | site 정보 일부, infra 결정 | `handoff/phase1-010/phase1-010-persistence-foundation.md` | docker/infra config, hub connection config, smoke/e2e |
+| T1-2 | 인증/인가: JWT + OIDC + Knox 어댑터 | `통합본 §8.3 ADR#7`, `통합본 §6.9(나)` | hub | TODO | user-facing API, UI 권한, Knox 연동 | T1-1 중 PG user domain | `handoff/phase1-011/phase1-011-auth-oidc-knox.md` | auth flow test, role/permission test |
+| T1-3 | 모듈러 모놀리스 → deployment 분리(β) | `통합본 05 §7.2` (β/γ=`05 §7.2.6`, 경계↔데모=`05 §7.2.4`), `HANDOFF` | hub, script-agent, infra | DECISION_REQUIRED | owner_repo 배치, 도메인 경계, 배포 단위 | G-2 | `handoff/phase1-012/phase1-012-module-split-decision.md` | β/γ 결정 기록, deployment map |
+| T1-4 | Quartz JobStore DB-backed clustered | `통합본 §6.9(나)` | hub, infra | TODO | scheduler 신뢰성, job execution | T1-1 PG | `handoff/phase1-013/phase1-013-quartz-jobstore.md` | clustered JobStore 설정, failover/misfire test |
+| T1-5 | 사이트별 운영 정보 정리 | `통합본 §13_open §A` | monitoring-meta, infra | IN_PROGRESS | topology/security/node sizing | 외부 정보 | `handoff/phase1-014/phase1-014-site-ops-inputs.md` | site별 운영정보 matrix |
 
 ---
 
@@ -174,15 +174,15 @@ ROADMAP의 `status`는 아래 값만 사용한다.
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T2-1 | Rule Engine: `rule-engine-script`, `rule-engine-log` | `통합본 §6.9(다)` | hub | TODO | Alert, validation, rule-based processing | T1-3 일부, job/log pipeline | `handoff/phase1-020-rule-engine.md` | rule execution test, sample rule e2e |
-| T2-2 | Alert Processor + Dedup | `통합본 §6.9(다)`, `통합본 §8.3 ADR#15` | hub | TODO | Incident, Notification | T1-1 Redis/PG, T2-1 | `handoff/phase1-021-alert-processor.md` | duplicate suppression test, alert persistence |
-| T2-3 | Incident Service + 그룹핑/상태 전환 | `통합본 §6.9(다)` | hub | TODO | UI incident view, notification context | T2-2 | `handoff/phase1-022-incident-service.md` | incident lifecycle test |
-| T2-4 | `alert-topic` / `notification-topic` 추가 | `통합본 §6.9(다)` | hub, infra, monitoring-meta | TODO | Alert → Notification pipeline | topic strategy decision 일부 | `handoff/phase1-023-alert-notification-topics.md` | topic contract, producer/consumer test |
-| T2-5 | Agent State Service 승격 | `통합본 §6.9(다)` | hub | TODO | Agent OFFLINE alert, UI state | heartbeat infra | `handoff/phase1-024-agent-state-service.md` | agent state transition test |
-| T2-6 | Agent OFFLINE → Alert 발화 | `통합본 §6.9(다)`, `통합본 §8.3 ADR#18` | hub | TODO | 운영 알림 | T2-2, T2-5, T2-4 | `handoff/phase1-025-agent-offline-alert.md` | offline detection e2e |
-| T2-7 | SQL_JOB 지원 | `통합본 §8.3 ADR#9` | hub, script-agent | TODO | DB query job execution | job pipeline, auth/security 정책 | `handoff/phase1-026-sql-job.md` | SQL_JOB execution test |
-| T2-8 | `x-message-id` 중복 검사 | `통합본 §8.3 ADR#15`, `통합본 §6.9(나)` | hub, script-agent | TODO | idempotency | T1-1 Redis | `handoff/phase1-027-message-id-dedup.md` | Redis TTL 5분 dedup test |
-| T2-9 | Agent 자가 등록 | `통합본 §8.3 ADR#11`, `통합본 §6.9(나)` | hub, script-agent | TODO | agent onboarding | T1-2 auth, 운영 정책 | `handoff/phase1-028-agent-self-registration.md` | pre-token/admin approval flow test |
+| T2-1 | Rule Engine: `rule-engine-script`, `rule-engine-log` | `통합본 §6.9(다)` | hub | TODO | Alert, validation, rule-based processing | T1-3 일부, job/log pipeline | `handoff/phase1-020/phase1-020-rule-engine.md` | rule execution test, sample rule e2e |
+| T2-2 | Alert Processor + Dedup | `통합본 §6.9(다)`, `통합본 §8.3 ADR#15` | hub | TODO | Incident, Notification | T1-1 Redis/PG, T2-1 | `handoff/phase1-021/phase1-021-alert-processor.md` | duplicate suppression test, alert persistence |
+| T2-3 | Incident Service + 그룹핑/상태 전환 | `통합본 §6.9(다)` | hub | TODO | UI incident view, notification context | T2-2 | `handoff/phase1-022/phase1-022-incident-service.md` | incident lifecycle test |
+| T2-4 | `alert-topic` / `notification-topic` 추가 | `통합본 §6.9(다)` | hub, infra, monitoring-meta | TODO | Alert → Notification pipeline | topic strategy decision 일부 | `handoff/phase1-023/phase1-023-alert-notification-topics.md` | topic contract, producer/consumer test |
+| T2-5 | Agent State Service 승격 | `통합본 §6.9(다)` | hub | TODO | Agent OFFLINE alert, UI state | heartbeat infra | `handoff/phase1-024/phase1-024-agent-state-service.md` | agent state transition test |
+| T2-6 | Agent OFFLINE → Alert 발화 | `통합본 §6.9(다)`, `통합본 §8.3 ADR#18` | hub | TODO | 운영 알림 | T2-2, T2-5, T2-4 | `handoff/phase1-025/phase1-025-agent-offline-alert.md` | offline detection e2e |
+| T2-7 | SQL_JOB 지원 | `통합본 §8.3 ADR#9` | hub, script-agent | TODO | DB query job execution | job pipeline, auth/security 정책 | `handoff/phase1-026/phase1-026-sql-job.md` | SQL_JOB execution test |
+| T2-8 | `x-message-id` 중복 검사 | `통합본 §8.3 ADR#15`, `통합본 §6.9(나)` | hub, script-agent | TODO | idempotency | T1-1 Redis | `handoff/phase1-027/phase1-027-message-id-dedup.md` | Redis TTL 5분 dedup test |
+| T2-9 | Agent 자가 등록 | `통합본 §8.3 ADR#11`, `통합본 §6.9(나)` | hub, script-agent | TODO | agent onboarding | T1-2 auth, 운영 정책 | `handoff/phase1-028/phase1-028-agent-self-registration.md` | pre-token/admin approval flow test |
 
 ---
 
@@ -192,15 +192,15 @@ ROADMAP의 `status`는 아래 값만 사용한다.
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T3-1 | Notification Service + 채널 어댑터 4종 | `통합본 §6.9(다)` | hub | TODO | 실제 알림 송신 | T2-3, T2-4 | `handoff/phase1-030-notification-service.md` | SMS/Email/Messenger/Teams adapter contract test |
-| T3-2 | 통보 그룹: Knox 어댑터 + 자체 통합 | `통합본 §6.9(다)` | hub | TODO | recipient resolution | T1-2, T3-1 | `handoff/phase1-031-notification-groups.md` | group resolution test |
-| T3-3 | Validation Service + sandbox mode | `통합본 §6.9(다)` | hub, script-agent | TODO | script/rule 검증 | T2-1, job pipeline | `handoff/phase1-032-validation-service.md` | sandbox execution test |
-| T3-4 | 결재 어댑터: webhook 비동기 + HMAC | `통합본 §6.9(다)` | hub | TODO | approval integration | 외부 결재 시스템 정보 | `handoff/phase1-033-approval-adapter.md` | HMAC verification, async webhook test |
-| T3-5 | Script 파일 보관 + Object Storage | `통합본 §6.9(다)`, `통합본 §8.3 ADR#12` | hub, infra | TODO | script lifecycle | T1-1 MinIO | `handoff/phase1-034-script-object-storage.md` | upload/download/versioning test |
-| T3-6 | Frontend LEGO + WebSocket + Gateway + 권한 필터링 | `통합본 §8.3 ADR#8`, `통합본 §6.9(다)` | hub | TODO | UI/실시간 상태 | T1-2, T2/T3 domain APIs | `handoff/phase1-035-frontend-websocket.md` | permission-filtered websocket e2e |
-| T3-7 | LOG_JOB `sample_lines[].occurred_at` | `통합본 §8.3 ADR#10`, `통합본 §6.9(나)` | hub, script-agent | TODO | log timeline accuracy | log pipeline | `handoff/phase1-036-logjob-occurred-at.md` | payload contract test |
-| T3-8 | 명령 만료 audit | `통합본 §8.3 ADR#16` | hub, script-agent | TODO | audit completeness | command pipeline | `handoff/phase1-037-command-expiry-audit.md` | `valid_until` expiry audit test |
-| T3-9 | audit actor.type 확장 | `통합본 §6.9(나)` | hub | DECISION_REQUIRED | audit normalization | ADR 귀속 결정 | `handoff/phase1-038-audit-actor-type.md` | AGENT/USER/SYSTEM audit event test |
+| T3-1 | Notification Service + 채널 어댑터 4종 | `통합본 §6.9(다)` | hub | TODO | 실제 알림 송신 | T2-3, T2-4 | `handoff/phase1-030/phase1-030-notification-service.md` | SMS/Email/Messenger/Teams adapter contract test |
+| T3-2 | 통보 그룹: Knox 어댑터 + 자체 통합 | `통합본 §6.9(다)` | hub | TODO | recipient resolution | T1-2, T3-1 | `handoff/phase1-031/phase1-031-notification-groups.md` | group resolution test |
+| T3-3 | Validation Service + sandbox mode | `통합본 §6.9(다)` | hub, script-agent | TODO | script/rule 검증 | T2-1, job pipeline | `handoff/phase1-032/phase1-032-validation-service.md` | sandbox execution test |
+| T3-4 | 결재 어댑터: webhook 비동기 + HMAC | `통합본 §6.9(다)` | hub | TODO | approval integration | 외부 결재 시스템 정보 | `handoff/phase1-033/phase1-033-approval-adapter.md` | HMAC verification, async webhook test |
+| T3-5 | Script 파일 보관 + Object Storage | `통합본 §6.9(다)`, `통합본 §8.3 ADR#12` | hub, infra | TODO | script lifecycle | T1-1 MinIO | `handoff/phase1-034/phase1-034-script-object-storage.md` | upload/download/versioning test |
+| T3-6 | Frontend LEGO + WebSocket + Gateway + 권한 필터링 | `통합본 §8.3 ADR#8`, `통합본 §6.9(다)` | hub | TODO | UI/실시간 상태 | T1-2, T2/T3 domain APIs | `handoff/phase1-035/phase1-035-frontend-websocket.md` | permission-filtered websocket e2e |
+| T3-7 | LOG_JOB `sample_lines[].occurred_at` | `통합본 §8.3 ADR#10`, `통합본 §6.9(나)` | hub, script-agent | TODO | log timeline accuracy | log pipeline | `handoff/phase1-036/phase1-036-logjob-occurred-at.md` | payload contract test |
+| T3-8 | 명령 만료 audit | `통합본 §8.3 ADR#16` | hub, script-agent | TODO | audit completeness | command pipeline | `handoff/phase1-037/phase1-037-command-expiry-audit.md` | `valid_until` expiry audit test |
+| T3-9 | audit actor.type 확장 | `통합본 §6.9(나)` | hub | DECISION_REQUIRED | audit normalization | ADR 귀속 결정 | `handoff/phase1-038/phase1-038-audit-actor-type.md` | AGENT/USER/SYSTEM audit event test |
 
 ---
 
@@ -210,11 +210,11 @@ Track 4는 cross-cutting 리스크가 높으므로 Track 0에서 선후 결정�
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T4-1 | 토픽 명명: zone 단위 + 의미 기반 | `통합본 §8.3 ADR#5` | hub, script-agent, infra, monitoring-meta | DECISION_REQUIRED | producer/consumer 전체 | T0-2 | `handoff/phase1-040-topic-naming.md` | topic contract matrix |
-| T4-2 | `job-results` → `result-topic-job/log` 분리 | `통합본 §6.9(나)`, `통합본 §8.3 ADR#5 (간접 귀속 [결정 필요])` | hub, script-agent, infra | DECISION_REQUIRED | result pipeline | T4-1 또는 T0 선후 결정 | `handoff/phase1-041-result-topic-split.md` | job/log result e2e |
-| T4-3 | zone 단위 topic routing / `command-topic` zone routing | `통합본 §8.3 ADR#4`, `통합본 §6.9(나)` | hub, script-agent, infra | DECISION_REQUIRED | multi-zone command routing | zone topology 정보 | `handoff/phase1-042-zone-topic-routing.md` | zone routing integration test |
-| T4-4 | 메시지 키 토픽별 정의 | `통합본 §8.3 ADR#6` | hub, script-agent, monitoring-meta | TODO | ordering/partitioning semantics | topic contract decision | `handoff/phase1-043-message-key-policy.md` | topic별 key rule + test |
-| T4-5 | envelope/topic contract 문서 갱신 | `monitoring-meta/docs/kafka-payloads.md`, `monitoring-meta/docs/envelope.md` | monitoring-meta | TODO | repo 구현 일관성 | T0/T4 decisions | `handoff/phase1-044-contract-doc-update.md` | docs updated + drift check |
+| T4-1 | 토픽 명명: zone 단위 + 의미 기반 | `통합본 §8.3 ADR#5` | hub, script-agent, infra, monitoring-meta | DECISION_REQUIRED | producer/consumer 전체 | T0-2 | `handoff/phase1-040/phase1-040-topic-naming.md` | topic contract matrix |
+| T4-2 | `job-results` → `result-topic-job/log` 분리 | `통합본 §6.9(나)`, `통합본 §8.3 ADR#5 (간접 귀속 [결정 필요])` | hub, script-agent, infra | DECISION_REQUIRED | result pipeline | T4-1 또는 T0 선후 결정 | `handoff/phase1-041/phase1-041-result-topic-split.md` | job/log result e2e |
+| T4-3 | zone 단위 topic routing / `command-topic` zone routing | `통합본 §8.3 ADR#4`, `통합본 §6.9(나)` | hub, script-agent, infra | DECISION_REQUIRED | multi-zone command routing | zone topology 정보 | `handoff/phase1-042/phase1-042-zone-topic-routing.md` | zone routing integration test |
+| T4-4 | 메시지 키 토픽별 정의 | `통합본 §8.3 ADR#6` | hub, script-agent, monitoring-meta | TODO | ordering/partitioning semantics | topic contract decision | `handoff/phase1-043/phase1-043-message-key-policy.md` | topic별 key rule + test |
+| T4-5 | envelope/topic contract 문서 갱신 | `monitoring-meta/docs/kafka-payloads.md`, `monitoring-meta/docs/envelope.md` | monitoring-meta | TODO | repo 구현 일관성 | T0/T4 decisions | `handoff/phase1-044/phase1-044-contract-doc-update.md` | docs updated + drift check |
 
 ---
 
@@ -261,17 +261,17 @@ ROADMAP은 기준 문서로 두고, 아래와 같이 HANDOFF를 생성해 실행
 
 | 순서 | handoff 파일 후보 | 목적 | 대상 repo |
 |---|---|---|---|
-| 0 | `handoff/phase1-000-roadmap-normalization.md` | ROADMAP 검증, source_ref 보강, [결정 필요] 정리 | monitoring-meta |
-| 1 | `handoff/phase1-001-envelope-scope.md` | 나머지 topic envelope 적용 범위와 ADR#5 선후 결정 | monitoring-meta |
-| 2 | `handoff/phase1-002-envelope-remaining-topics.md` | envelope 미적용 topic 구현 | hub, script-agent |
-| 3 | `handoff/phase1-010-persistence-foundation.md` | PG/OS/Redis/MinIO 기반 | infra, hub |
-| 4 | `handoff/phase1-011-auth-oidc-knox.md` | JWT/OIDC/Knox | hub |
-| 5 | `handoff/phase1-012-module-split-decision.md` | β/γ 및 deployment map 결정 | monitoring-meta, hub, infra |
-| 6 | `handoff/phase1-020-rule-engine.md` | Rule Engine 1차 | hub |
-| 7 | `handoff/phase1-021-alert-processor.md` | Alert + dedup | hub |
-| 8 | `handoff/phase1-022-incident-service.md` | Incident lifecycle | hub |
-| 9 | `handoff/phase1-030-notification-service.md` | Notification pipeline | hub |
-| 10 | `handoff/phase1-040-topic-naming.md` | ADR#5 topic contract | monitoring-meta, hub, script-agent, infra |
+| 0 | `handoff/phase1-000/phase1-000-roadmap-normalization.md` | ROADMAP 검증, source_ref 보강, [결정 필요] 정리 | monitoring-meta |
+| 1 | `handoff/phase1-001/phase1-001-envelope-scope.md` | 나머지 topic envelope 적용 범위와 ADR#5 선후 결정 | monitoring-meta |
+| 2 | `handoff/phase1-002/phase1-002-envelope-remaining-topics.md` | envelope 미적용 topic 구현 | hub, script-agent |
+| 3 | `handoff/phase1-010/phase1-010-persistence-foundation.md` | PG/OS/Redis/MinIO 기반 | infra, hub |
+| 4 | `handoff/phase1-011/phase1-011-auth-oidc-knox.md` | JWT/OIDC/Knox | hub |
+| 5 | `handoff/phase1-012/phase1-012-module-split-decision.md` | β/γ 및 deployment map 결정 | monitoring-meta, hub, infra |
+| 6 | `handoff/phase1-020/phase1-020-rule-engine.md` | Rule Engine 1차 | hub |
+| 7 | `handoff/phase1-021/phase1-021-alert-processor.md` | Alert + dedup | hub |
+| 8 | `handoff/phase1-022/phase1-022-incident-service.md` | Incident lifecycle | hub |
+| 9 | `handoff/phase1-030/phase1-030-notification-service.md` | Notification pipeline | hub |
+| 10 | `handoff/phase1-040/phase1-040-topic-naming.md` | ADR#5 topic contract | monitoring-meta, hub, script-agent, infra |
 
 각 HANDOFF는 아래 섹션을 반드시 포함한다. 또한 §1 헤더에 **기준 monitoring-meta commit full hash**를 박는다(작성↔실행 drift 방지).
 
@@ -319,7 +319,7 @@ ROADMAP은 기준 문서로 두고, 아래와 같이 HANDOFF를 생성해 실행
 
 - 입력 draft 위치: `monitoring-meta/docs/phase1/ROADMAP_PHASE1_draft_v0_2.md` (이 문서)
 - Claude Code 검증 후 생성할 정본 후보: `monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md`
-- normalization handoff: `monitoring-meta/handoff/phase1-000-roadmap-normalization.md`
+- normalization handoff: `monitoring-meta/handoff/phase1-000/phase1-000-roadmap-normalization.md`
 
 > 실행 지시문(Claude Code 프롬프트)은 이 정본 문서에 포함하지 않는다. 문서 안에 다음 지시문을 넣으면 버전마다 자기 자신을 재생성하라는 재귀가 생긴다. 지시문은 채팅 또는 normalization handoff로 분리해 전달한다.
 

@@ -172,9 +172,9 @@ T4-1은 현행 Phase 0 물리 토픽명을 ADR#5 규칙 B 최종 논리명으로
 ### 6.1 분할안 (repo별 3 + meta e2e 별도)
 | handoff 파일 | 대상 | 단위 | 실행 순서 |
 |---|---|---|---|
-| `handoff/phase1-040-infra.md` | infra | kafka-init 루프(`command-topic`/`audit-topic`/`heartbeats-topic`, job-results 유지) + otel-collector exporter topic | **1순위** (토픽 생성·heartbeat 발행 기반) |
-| `handoff/phase1-040-hub.md` | hub | `KafkaConfig.Topics` 상수 3개 값 교체 + 영향 테스트(AuditConsumerTest 등) | 2순위 (infra와 사실상 동시 컷오버) |
-| `handoff/phase1-040-script-agent.md` | script-agent | `config.go` env default 2개(command/audit) 교체 + 주석 정리 | 2순위 (hub와 동시) |
+| `handoff/phase1-040/phase1-040-infra.md` | infra | kafka-init 루프(`command-topic`/`audit-topic`/`heartbeats-topic`, job-results 유지) + otel-collector exporter topic | **1순위** (토픽 생성·heartbeat 발행 기반) |
+| `handoff/phase1-040/phase1-040-hub.md` | hub | `KafkaConfig.Topics` 상수 3개 값 교체 + 영향 테스트(AuditConsumerTest 등) | 2순위 (infra와 사실상 동시 컷오버) |
+| `handoff/phase1-040/phase1-040-script-agent.md` | script-agent | `config.go` env default 2개(command/audit) 교체 + 주석 정리 | 2순위 (hub와 동시) |
 | (meta) e2e 재검증 | monitoring-meta | §3.3 R-A/R-B 회귀 기준으로 e2e-tester 단독 실행, 결과 `e2e/results/<ts>.md` | **3순위** (전 repo 컷오버 후) |
 
 - **실행 순서 요지**: infra(토픽 존재) → hub+script-agent(동시 컷오버) → meta e2e 종단 재검증. heartbeats는 infra(otel exporter)+hub(consumer)가 같은 컷오버 윈도우에 들어가야 단절 없음(§4-4).
@@ -191,7 +191,7 @@ T4-1은 현행 Phase 0 물리 토픽명을 ADR#5 규칙 B 최종 논리명으로
 ```json
 {
   "status": "ok",
-  "outputs": ["handoff/phase1-040-000-impact.md"],
+  "outputs": ["handoff/phase1-040/phase1-040-000-impact.md"],
   "findings": [
     "T4-1 3토픽은 adr/0005 Accepted로 최종 논리명 확정 — 통합본 Open/미결 ADR에 걸리는 항목 없음(blocker 없음)",
     "hub: 변경 단일 진실 = KafkaConfig.Topics 상수 3개 값(command-topic/audit-topic/heartbeats-topic). producer/consumer/가드는 상수 참조라 자동 추종. NewTopic 빈 없음, group.id는 토픽 독립",

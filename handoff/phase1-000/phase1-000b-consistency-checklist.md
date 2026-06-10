@@ -17,7 +17,7 @@
 - `docs/phase1/checklist.md` (commit edd892c) — 이 파일의 원본(이관 대상)
 - `docs/phase1/ROADMAP_PHASE1_v0_3.md` — 해소 반영 대상(§3.1·§17·§18·§19)
 - `adr/0005-topic-naming.md` — decision status 표 추가 대상
-- `handoff/phase1-000-roadmap-normalization.md` — Pass 1(pin 8d7a076 요구 line 192 / command-topic 간접소속 line 122)
+- `handoff/phase1-000/phase1-000-roadmap-normalization.md` — Pass 1(pin 8d7a076 요구 line 192 / command-topic 간접소속 line 122)
 - `docs/통합본_v0_9.md` §8.3 ADR#4(결정 컬럼 "동일 + zone 단위 토픽 routing")
 
 ## 3. 배경 / 목표
@@ -33,8 +33,8 @@
 대상 문서(원본 §대상 문서 목록):
 - `docs/phase1/ROADMAP_PHASE1_v0_3.md`
 - `docs/phase1/ROADMAP_PHASE1_draft_v0_2.md`
-- `handoff/phase1-000-roadmap-normalization.md`
-- `handoff/phase1-001-envelope-scope.md`
+- `handoff/phase1-000/phase1-000-roadmap-normalization.md`
+- `handoff/phase1-001/phase1-001-envelope-scope.md`
 - `adr/0005-topic-naming.md`
 - `docs/통합본_v0_9.md`
 - `docs/kafka-payloads.md`
@@ -66,10 +66,10 @@
 ### 4.2 문서 구조 개선 항목
 
 - [x] **2.1 v0.3 변경 이력 축약**
-  - **처리 결과**: v0.3 §18/§19를 "버전별 현재 상태 1줄 요약 + pin/승인 이력 주"로 축약. 과거 gate-round 상세(gate-1~9, round-2 CRITICAL·sweep·SPEC 3~5, D-9·gate 3차/4차·D-4 결정 매핑 표)는 삭제하지 않고 본 handoff §5 부록으로 이관(원문 보존). v0.3 본문에는 "상세는 `handoff/phase1-000b-consistency-checklist.md` 부록 참조" 포인터 1줄만 남김. 본문 stale grep-bait(과거 `[결정 필요](D-9)` 회고, 나열식 회고 매핑) 정리, 단 현재 유효한 미결(D-1/D-2/D-4(1)/D-5/D-8)·통합본 Open(§A/§C/§J) 표기는 보존. 원 `docs/phase1/checklist.md`는 기준 문서 트리 밖(본 handoff)으로 이동(meta가 git rm 처리).
+  - **처리 결과**: v0.3 §18/§19를 "버전별 현재 상태 1줄 요약 + pin/승인 이력 주"로 축약. 과거 gate-round 상세(gate-1~9, round-2 CRITICAL·sweep·SPEC 3~5, D-9·gate 3차/4차·D-4 결정 매핑 표)는 삭제하지 않고 본 handoff §5 부록으로 이관(원문 보존). v0.3 본문에는 "상세는 `handoff/phase1-000/phase1-000b-consistency-checklist.md` 부록 참조" 포인터 1줄만 남김. 본문 stale grep-bait(과거 `[결정 필요](D-9)` 회고, 나열식 회고 매핑) 정리, 단 현재 유효한 미결(D-1/D-2/D-4(1)/D-5/D-8)·통합본 Open(§A/§C/§J) 표기는 보존. 원 `docs/phase1/checklist.md`는 기준 문서 트리 밖(본 handoff)으로 이동(meta가 git rm 처리).
 
 - [~] **2.2 D-목록 번호 정책 확인**
-  - **처리 결과(확인)**: v0.3 §17 유지(D-목록=§17, §14=Track 5의 자기참조 정정은 v0.3에 이미 반영). `handoff/phase1-000`의 "§14" 언급은 draft 스캔 맥락(draft v0.2의 자기참조 오류를 가리키는 회고)이라 비이슈 — 정정 자체는 v0.3 §0/§17에 반영됨.
+  - **처리 결과(확인)**: v0.3 §17 유지(D-목록=§17, §14=Track 5의 자기참조 정정은 v0.3에 이미 반영). `handoff/phase1-000/phase1-000`의 "§14" 언급은 draft 스캔 맥락(draft v0.2의 자기참조 오류를 가리키는 회고)이라 비이슈 — 정정 자체는 v0.3 §0/§17에 반영됨.
 
 - [x] **2.3 `통합본 우선`과 `코드 우선` 성격 문구 분리**
   - **처리 결과(확인)**: v0.3 line 5("문서 성격 우선순위" 주)에 "통합본 우선=사실 주장에만, 계획 레이어는 ROADMAP 고유 판단"으로 성격 분리가 이미 반영됨. Phase 0 회귀=코드/데모 spec 우선, Phase 1 목표 사실 충돌=통합본 우선.

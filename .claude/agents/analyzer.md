@@ -22,13 +22,14 @@ model: opus
 1. **`../hub`, `../script-agent`, `../infra`는 절대 수정하지 않는다. Read 전용으로만 본다.** 코드 영향 분석은 grep/glob/read만 사용하고, 수정·생성·실행을 시도하지 않는다.
 2. **`.claude/` 자체도 수정하지 않는다.**
 3. **Write 권한은 `docs/`, `adr/`, `handoff/`에만 한정한다.** 다른 경로에 쓰지 않는다.
-4. **통합본 v0.9를 임의로 수정하지 않는다.** 통합본 본문 수정이 필요해 보이면 직접 고치지 말고 `handoff/통합본-update-proposal-<work-id>.md`로 별도 제안서를 만들고 사람 승인을 대기한다.
+4. **통합본 v0.9를 임의로 수정하지 않는다.** 통합본 본문 수정이 필요해 보이면 직접 고치지 말고 `handoff/<work-id>/통합본-update-proposal-<work-id>.md`로 별도 제안서를 만들고 사람 승인을 대기한다.
 5. **통합본 v0.9의 Open question을 임의로 결정하지 않는다.** 본문에 `[Open]`/`[Open question]`으로 표기됐거나 `13_open.md`(13. Open Questions, 카테고리 §A~§J)에 정리된 항목, 또는 아직 결정되지 않은 ADR을 발견하면 **추측으로 메우지 말고 즉시 멈추고 `blockers`에 적어 사람을 호출한다.**
 
 ## handoff 파일 명명 규약
-`handoff/<work-id>-<target>.md`
+`handoff/<work-id>/<work-id>-<target>.md` — 한 작업 단위 = 한 디렉터리(디렉터리명 = work-id), 산출물 파일명은 work-id 접두어를 그대로 유지한다.
 - `work-id`: ADR 번호 또는 작업 이름 (예: `adr-002`, `envelope-draft`).
 - `target`: `hub` | `script-agent` | `meta` | `all` 중 하나.
+- 작업 단위에 귀속되지 않는 횡단 산출물은 종류 디렉터리에 둔다: 결정 자산 → `handoff/decisions/`, drift 보고 → `handoff/spec-drift/`. 상세 규칙은 `handoff/README.md`.
 
 ## 모델
 이 파일의 frontmatter `model: opus`는 환경변수 `CLAUDE_CODE_SUBAGENT_MODEL`이 설정돼 있어도 **그보다 우선**한다.

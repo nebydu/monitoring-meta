@@ -89,7 +89,7 @@ C:\workspace\monitoring\
 - [x] 4단계: hub `.claude/` 셋업 (sub-agent 6개)  ※ 실제 구조는 §8 / hub/.claude 대조 확인 권장
 - [x] 5단계: script-agent `.claude/` 셋업 (sub-agent 6개)  ※ 실제 구조는 §8 / script-agent/.claude 대조 확인 권장
 - [x] 6단계: 첫 코드 ADR — ADR #2 heartbeat protobuf 전환 (envelope을 코드에 반영하는 첫 양쪽 걸친 작업) — **결정·구현·종단검증 완료(2026-06-02)**
-  - [x] ADR 결정(A-1 OTLP 표준 protobuf / B-1 표준 라이브러리 / C-1 빅뱅 컷오버 / 토픽명 분리) + 3개 repo 분배(`adr/0002-heartbeat-otlp-proto.md`, `handoff/adr-002-{infra,hub,script-agent}.md`)
+  - [x] ADR 결정(A-1 OTLP 표준 protobuf / B-1 표준 라이브러리 / C-1 빅뱅 컷오버 / 토픽명 분리) + 3개 repo 분배(`adr/0002-heartbeat-otlp-proto.md`, `handoff/adr-002/adr-002-{infra,hub,script-agent}.md`)
   - [x] 3개 repo 구현(infra `encoding: otlp_proto`, hub `HeartbeatOtlpDecoder`+`ByteArrayDeserializer`+opentelemetry-proto 1.7.0-alpha, script-agent OTel Go SDK 정합)
   - [x] polyrepo 종단 검증 **PASS 16/0/0** — `e2e/run-e2e.sh --dynamic`, 결과 `e2e/results/20260602-060809.md`. 정적 정합 + hub 63 유닛 + script-agent go test + **실 기동(agent→collector `otlp_proto`→kafka→hub 디코드 성공)** 확인, Phase 0 §5.4 회귀 0.
   - 잔여(범위 밖): 물리 토픽명 `heartbeats`↔논리 `heartbeats-topic` 정정은 ADR #2가 결정 안 함(별도 사안). script-agent heartbeat.go 패키지 주석 `otlp_json` 구식(동작 무관, script-agent 세션 몫).
@@ -127,7 +127,7 @@ C:\workspace\monitoring\
   - `../monitoring-meta/docs/통합본_v0_9.md`, `../monitoring-meta/docs/envelope.md`, `../monitoring-meta/docs/kafka-payloads.md`
   - `docs/monitoring-demo-message-spec-v0.2.1.md` (Phase 0 회귀 방지 기준)
 - **형제 디렉터리 읽기**: hub·script-agent는 `../monitoring-meta/docs/`, `../monitoring-meta/handoff/`를 상대 경로로 **참조만** 한다(작업 입력과 정본). 별도 `settings.json` 읽기 권한 등록은 불필요하며(필요 시 승인 프롬프트로 처리), 실제 두 repo `settings.json`에도 Stop hook 설정만 있다.
-- **작업 입력**: `../monitoring-meta/handoff/<work-id>-hub.md` / `<work-id>-script-agent.md`를 입력으로 받음(복사 아님, 참조).
+- **작업 입력**: `../monitoring-meta/handoff/<work-id>/<work-id>-hub.md` / `<work-id>/<work-id>-script-agent.md`를 입력으로 받음(복사 아님, 참조).
 - **spec-guardian**: Phase 0 데모 spec과 Phase 1 목표 spec의 위상 차이를 인지하며 현재 코드가 어느 위상에 있는지 판단하고 정합성 검토. envelope.md가 박혀도 코드가 자동으로 따르는 게 아님을 반영.
 - **reviewer**: 통합본 v0.9 §7.2 β 구조 모듈 경계를 가로지르는 의존이 생기면 critical. 메인 BE(Auth/Job/Approval/Knox/Validation/Agent State) vs 분리 대상(rule-engine, Script Result, Alert/Incident, Notification, Metric Ingest) 경계 의식.
 - **셸/hook**: Git Bash. Codex hook은 monitoring-meta codex-gate.sh와 동일 구조이되 발화 대상은 각 repo 코드 경로(hub: `src/main/**`,`src/test/**`,`pom.xml` / script-agent: `**/*.go`,`go.mod`).
@@ -139,5 +139,5 @@ C:\workspace\monitoring\
 - Codex hook이 fail 경로를 무한히 돌지 않도록 retry 카운터 + 강제 통과 가드 항상 유지.
 - 한 번의 명령으로 단계를 뛰어넘지 않는다. 각 단계 사이에 사람 확인 게이트 필수. **양쪽 repo에 걸친 작업은 세션 경계를 넘으므로(monitoring-meta 분석/분배 → hub 세션 → script-agent 세션 → monitoring-meta e2e) 한 명령으로 완전 자동화되지 않는다. 세션 전환은 사람이 한다.**
 - **spec 정의 완료와 코드 구현 완료를 절대 동일시하지 않는다**.
-- **spec-drift 보고서 정리**: 동기화/확인이 끝난 `handoff/spec-drift-*.md`는 archive 또는 삭제. 검출 시점의 사진이지 영속 자산이 아니므로 `.gitignore`에 `handoff/spec-drift-*.md` 등록 권장.
+- **spec-drift 보고서 정리**: 동기화/확인이 끝난 `handoff/spec-drift/spec-drift-*.md`는 archive 또는 삭제. 검출 시점의 사진이지 영속 자산이 아니므로 `.gitignore`에 `handoff/spec-drift/spec-drift-*.md` 등록 권장.
 - HANDOFF.md(이 문서)는 각 단계 종료 시마다 §5 체크리스트 + §7 미결정 사안을 **사람이 수동**으로 갱신. Project Knowledge 사본도 함께 교체 업로드(monitoring-meta 루트가 정본, Knowledge는 복제).

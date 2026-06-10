@@ -2,7 +2,7 @@
 
 > **성격**: 이 메모는 D-2(β 모듈러모놀리스 유지 vs γ MSA 분리)를 *결정*하지 않는다. D-2가 통합본 §13_open §C 미결 Open이라 추측 금지(CLAUDE.md §2)다. 이 메모가 답하는 것은 **"D-2를 *언제* 사람에게 escalation해야 하는가"** 라는 *타이밍*뿐이다.
 >
-> **근거**: `handoff/phase1-critical-path-analysis.md`(§2 의존 그래프·§4 critical path·§5 레버리지) + ROADMAP §10~§17.
+> **근거**: `handoff/decisions/phase1-critical-path-analysis.md`(§2 의존 그래프·§4 critical path·§5 레버리지) + ROADMAP §10~§17.
 > **작성**: meta(오케스트레이터), 2026-06-07.
 
 ---

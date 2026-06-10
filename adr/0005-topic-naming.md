@@ -119,8 +119,8 @@
 
 ## 5. Consequences
 
-- **D-4(2) RESOLVED** 효과: Track 0(envelope 나머지 토픽 적용)을 D-4(1)과 무관하게 즉시 착수 가능 → `handoff/phase1-001-envelope-scope.md`로 분배(완료).
-- **D-4(1) RESOLVED (2026-06-06)** 효과: 본 ADR이 Accepted로 전환되어 **Track 4 T4-1(토픽 재명명)의 BLOCKED가 해제**된다. T4-1은 실행 순서(D-4(2) RESOLVED, envelope 먼저)에 따라 Track 0 완료 이후 착수하며, 별도 handoff(`handoff/phase1-040-topic-naming.md`)로 분배 대기다(실제 재명명은 본 ADR 밖 후속 작업).
+- **D-4(2) RESOLVED** 효과: Track 0(envelope 나머지 토픽 적용)을 D-4(1)과 무관하게 즉시 착수 가능 → `handoff/phase1-001/phase1-001-envelope-scope.md`로 분배(완료).
+- **D-4(1) RESOLVED (2026-06-06)** 효과: 본 ADR이 Accepted로 전환되어 **Track 4 T4-1(토픽 재명명)의 BLOCKED가 해제**된다. T4-1은 실행 순서(D-4(2) RESOLVED, envelope 먼저)에 따라 Track 0 완료 이후 착수하며, 별도 handoff(`handoff/phase1-040/phase1-040-topic-naming.md`)로 분배 대기다(실제 재명명은 본 ADR 밖 후속 작업).
 - ROADMAP §7 매트릭스의 "(토픽명/zone suffix 명명 규칙 = ADR#5/D-4 의존, 현재 kafka-payloads 이름은 잠정)" 마커는 **확정 규칙(B)·최종 논리명**으로 갱신된다(이 승인 작업에서 ROADMAP §7 동시 갱신).
 - `docs/kafka-payloads.md`의 잠정 토픽명(`command-topic-{zone}` placeholder 등)은 **최종 논리명**으로 정정된다(`command-topic` 단일 + 다중 zone 진입 시 `-{zone}` 미래 주석).
 

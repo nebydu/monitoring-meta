@@ -103,7 +103,7 @@ hub UI(/): last_seen + heartbeatTimeoutSeconds 로 생존 표시
 - **heartbeat 주기·timeout 운영 baseline**: ADR-0002 Open — 운영값 미확정. 데모 baseline(10초 주기 / 30초 timeout)은 참조값이며 본 ADR 미확정(통합본 §6.7 도달 목표).
 - **생존 판정(ONLINE/OFFLINE 자동 전이) 정책**: `last_seen`만으로 timeout 기반 자동 OFFLINE 전이를 수행하는 서버측 sweeper는 **데모 단계 미구현**(`AppProperties` 주석 — "데모 단계에서는 별도 sweeper를" 두지 않음). 현재 `OFFLINE`은 `AGENT_STOPPED` 명시 수신으로만 설정된다. `heartbeatTimeoutSeconds` 운영값·자동 전이 도입은 ADR-0002 Open(주기·timeout baseline)에 연동.
 - **`shared-libs/otel` wrapper 모듈**: ADR-0002 **B-1(표준 라이브러리 의존)은 결정됨**. 단 `HeartbeatOtlpDecoder`는 현재 hub 내부 클래스이며 별도 Maven 모듈(`shared-libs/otel`)로 **추출되지 않은 상태**다 — 그 wrapper의 구체 설계·배포·소유는 ADR-0002가 확정하지 않은 별도 범위(Open).
-- **script-agent 주석·문서의 구 토픽명 `heartbeats` 잔존**: `heartbeat.go`·`README.md`·`types.go`가 heartbeat 토픽을 구명 `heartbeats`로 지칭(최종 논리명 `heartbeats-topic` — ADR-0005). 동작 무관(코드 토픽 상수는 이미 신명, e2e §8 PASS). 정정 작업 = `handoff/heartbeat-topic-comment-drift-script-agent.md`. heartbeat.go의 `otlp_json` 문구는 Phase 0→Phase 1 전환을 정확히 기술한 것이라 보존 대상.
+- **script-agent 주석·문서의 구 토픽명 `heartbeats` 잔존**: `heartbeat.go`·`README.md`·`types.go`가 heartbeat 토픽을 구명 `heartbeats`로 지칭(최종 논리명 `heartbeats-topic` — ADR-0005). 동작 무관(코드 토픽 상수는 이미 신명, e2e §8 PASS). 정정 작업 = `handoff/heartbeat-topic-comment-drift/heartbeat-topic-comment-drift-script-agent.md`. heartbeat.go의 `otlp_json` 문구는 Phase 0→Phase 1 전환을 정확히 기술한 것이라 보존 대상.
 
 ## 9. 최종 검증 기준 (필수)
 

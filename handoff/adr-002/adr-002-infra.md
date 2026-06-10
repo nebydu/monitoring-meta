@@ -19,7 +19,7 @@ ground truth 우선순위: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지) 
 
 - `../monitoring-meta/adr/0002-heartbeat-otlp-proto.md` — 본 작업 결정
 - `../monitoring-meta/docs/kafka-payloads.md` — heartbeats-topic payload 기준 문서
-- `../monitoring-meta/handoff/adr-002-analysis.md` — 영향 분석서(§7.1 infra)
+- `../monitoring-meta/handoff/adr-002/adr-002-analysis.md` — 영향 분석서(§7.1 infra)
 
 ## 4. 배경 / 목표
 

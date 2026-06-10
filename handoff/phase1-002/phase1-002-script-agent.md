@@ -2,7 +2,7 @@
 
 > **[상태 갱신 — 2026-06-06]** 본문은 **작성 당시 기준**이다. D-4(1) 토픽 명명 컨벤션은 **2026-06-06 Accepted**(`adr/0005-topic-naming.md`: 후보 B / `command-topic` 단일 토픽 / 신규까지). 본문의 "토픽명 잠정 / D-4(1) 승인 대기" 표현은 작성 시점 상태이며, 토픽 최종 논리명·명명 규칙의 현행 기준 문서는 `docs/kafka-payloads.md`("토픽 명명 규칙" 절)다. 실제 재명명은 Track 4 T4-1.
 
-> 이 handoff는 script-agent(Go) 세션이 받아 구현한다. envelope 적용 **범위**는 phase1-001에서 확정됐고(`handoff/phase1-001-envelope-scope.md`), 본 문서는 script-agent repo에서 **실제 구현할 것만** 한정한다. 코드 작업은 script-agent 세션에서 한다 — meta는 지시서만 쓴다.
+> 이 handoff는 script-agent(Go) 세션이 받아 구현한다. envelope 적용 **범위**는 phase1-001에서 확정됐고(`handoff/phase1-001/phase1-001-envelope-scope.md`), 본 문서는 script-agent repo에서 **실제 구현할 것만** 한정한다. 코드 작업은 script-agent 세션에서 한다 — meta는 지시서만 쓴다.
 
 ## 1. 필수 헤더
 
@@ -28,8 +28,8 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 - `../monitoring-meta/docs/kafka-payloads.md` — 8토픽 payload 기준 문서(잠정 토픽명)
 - `../monitoring-meta/docs/통합본_v0_9.md` §4.4.1 / §6.8
 - `../monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` §2.2 — Phase 0 회귀 기준
-- `../monitoring-meta/handoff/phase1-001-envelope-scope.md` — 범위/순서 확정
-- `../monitoring-meta/handoff/phase1-002-000-impact.md` — 토픽별 현황 판정(왜 작업이 이것뿐인지)
+- `../monitoring-meta/handoff/phase1-001/phase1-001-envelope-scope.md` — 범위/순서 확정
+- `../monitoring-meta/handoff/phase1-002/phase1-002-000-impact.md` — 토픽별 현황 판정(왜 작업이 이것뿐인지)
 
 ## 4. 배경 — script-agent 현황 (분석 결과)
 
