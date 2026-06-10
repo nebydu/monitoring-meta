@@ -40,7 +40,7 @@ monitoring-meta의 `handoff/`가 **작업 단위 디렉터리 구조**로 재구
 없음.
 
 ## 8. 완료 기준 / 검증
-- [ ] `grep -rn 'monitoring-meta/handoff/' .` 결과가 전부 새 규약 경로
+- [x] `grep -rn 'monitoring-meta/handoff/' .` 결과가 전부 새 규약 경로
 
 ## 9. 결과 보고 스키마 (실행 세션이 마지막에 반환)
 
@@ -51,5 +51,17 @@ monitoring-meta의 `handoff/`가 **작업 단위 디렉터리 구조**로 재구
   "findings": ["발견 사항"],
   "blockers": ["사람 결정이 필요한 항목"],
   "next_action": "다음에 할 일 한 줄"
+}
+```
+
+## 결과 보고 (2026-06-10, harness 실행 세션)
+
+```json
+{
+  "status": "ok",
+  "outputs": ["monitoring-harness/docs/decisions/codex-gate-graceful-skip.md"],
+  "findings": ["구 평면 경로 표기는 spec대로 정확히 1곳뿐이었음 (docs/decisions/codex-gate-graceful-skip.md:9). grep 재확인 결과 monitoring-harness 내 모든 monitoring-meta/handoff/ 참조가 새 디렉터리 규약 경로"],
+  "blockers": [],
+  "next_action": "monitoring-harness 문서 수정 커밋 (사용자 확인 후)"
 }
 ```
