@@ -35,3 +35,6 @@
 | 기능 문서 | 사용자 시나리오 | 관여 repo | 최종 검증 기준 | 상태 |
 |---|---|---|---|---|
 | [heartbeat-collection.md](heartbeat-collection.md) | script-agent가 살아있음을 hub가 주기적으로 인지 | script-agent, infra, hub | `e2e/results/20260610-152424.md` PASS 58/0/0 | 검증됨 |
+| [script-job-execution.md](script-job-execution.md) | 스케줄 등록 → Quartz 트리거 → command-topic → SCRIPT_JOB 실행 → job-results → hub 수신·표시 | hub, script-agent, infra | `e2e/results/20260610-152424.md` PASS 58/0/0 | 검증됨 |
+| [log-job-collection.md](log-job-collection.md) | 스케줄 등록 → command-topic → LOG_JOB 실행(offset 추적·tail-f 스타일) → job-results → hub 수신·표시 | hub, script-agent, infra | `e2e/results/20260610-152424.md` PASS 58/0/0 | 검증됨 |
+| [agent-lifecycle-audit.md](agent-lifecycle-audit.md) | agent 기동 → AGENT_STARTED(audit-topic) → hub AgentRegistry 등록 / job 실행 → JOB_EXECUTED / agent 종료 → AGENT_STOPPED → OFFLINE 마킹 | script-agent, hub, infra | `e2e/results/20260610-152424.md` PASS 58/0/0 | 검증됨 |
