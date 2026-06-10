@@ -1,9 +1,9 @@
 # Phase 1 ROADMAP — v0.3 (기준 문서 후보)
 
-> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-07)
+> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-10)
 >
 > **지금 가능 (실행 — pull, critical-path 기준 `handoff/phase1-critical-path-analysis.md`)**
-> - [작업] **T1-1 영속(D-2-무관 슬라이스)** PG/OS/Redis/MinIO 프로비저닝·연결 — CP-1 뿌리·fan-out 1위. 슬라이스 정의 `handoff/phase1-050-t1-1-datastore-slice.md`(승인됨), handoff `phase1-050-{infra,hub}.md`. → §10
+> - [작업] **T1-1 영속(D-2-무관 슬라이스)** — **IN_PROGRESS, 코드 양쪽 완료·실기동 검증만 잔여**. infra 몫(P-1/P-2) config 완료(infra `aae124f`) + hub 몫(P-3/P-4) 코드·단위 완료(hub `618cd83`, mvn 100/0/0). OUT-OF-SCOPE 양 repo 미침범. **잔여(Docker 실기동만): infra `up -d`·헬스체크 + hub 실연결 smoke(`SMOKE_INFRA=1`) + meta e2e 회귀 0(기대 58/0/0).** 다음=Docker 데몬 기동→infra up→hub smoke→meta e2e-tester(§3.3). → §10
 > - [작업] **T4-2** result-topic 분리 / **T4-4** 메시지 키 / **T4-5** contract 문서 — 선행 결정 전부 RESOLVED(T4-2: D-5 RESOLVED로 ADR#5 간접 라벨 확정 → 잔여 결정 0). → §9/§13
 >
 > **결정 (push — 사람 입력)**
@@ -283,7 +283,7 @@ Phase 1 완료는 다음을 모두 만족해야 한다.
 
 | ID | 항목 | source_ref | owner_repo | status | blocks | blocked_by | handoff | acceptance_evidence |
 |---|---|---|---|---|---|---|---|---|
-| T1-1 | 영속 저장소: PG + OpenSearch + Redis + MinIO (VM은 Phase 2) | `통합본 §8.3 ADR#12`, `통합본 §6.9(나)` | infra, hub, monitoring-meta | TODO | Alert, Incident, dedup, log, script storage | site 정보 일부(G-3), infra 결정 | `handoff/phase1-010-persistence-foundation.md` | docker/infra config, hub connection config, smoke/e2e |
+| T1-1 | 영속 저장소: PG + OpenSearch + Redis + MinIO (VM은 Phase 2) | `통합본 §8.3 ADR#12`, `통합본 §6.9(나)` | infra, hub, monitoring-meta | IN_PROGRESS | Alert, Incident, dedup, log, script storage | site 정보 일부(G-3), infra 결정 | `handoff/phase1-050-t1-1-datastore-slice.md`(슬라이스 정의·승인), `phase1-050-infra.md`(완료보고 ok), `phase1-050-hub.md`(완료보고 ok) | **infra P-1/P-2 config 단계 완료**(infra `aae124f`): PG/OS/Redis/MinIO 4종+init 2종(opensearch-init/minio-init) docker-compose 추가, 도메인-무관 운영골격(OS `app-*` 인덱스템플릿+ISM, MinIO `app-objects` 비공개 버킷), host port 127.0.0.1 바인딩·credential env `${VAR:?}` 강제. `docker compose config` 무오류(10서비스/3볼륨), 기존 kafka/otel 무영향. **hub P-3/P-4 코드·단위 완료**(hub `618cd83`, push됨): PG(jdbc/Hikari)·Redis(Lettuce)·OpenSearch(opensearch-java 2.25.0)·MinIO(8.5.17) 클라이언트 연결 설정+`DatastoreConnectionSmokeTest`(SMOKE_INFRA gate)+`DatastoreContextBootTest`(인프라 없이 빈 로드 PASS), mvn 100/0/0(smoke 4 skip)·기존 회귀 0. **OUT-OF-SCOPE 양 repo 미침범**(도메인 DDL·repository·@Entity·β/γ·PG 스키마 M-1·site sizing·VM 없음, Phase 0 in-memory(Ring Buffer/AgentRegistry)·envelope 불변, grep 증거). **미완(deferred — Docker 실기동 검증만 잔여): 실기동 `up -d`·헬스체크·init 멱등성 / hub 실연결 smoke 왕복(`SMOKE_INFRA=1`) / e2e 회귀 0(기대 58/0/0) 미실측.** hub config↔infra .env(변수명/포트/버킷 `app-objects`) 1:1 의존=변경 시 동기화 필요. 보안 하드닝(OS transport TLS·PKI)=G-3/T1-2 트리거 시 승격, dev-local 한정 |
 | T1-2 | 인증/인가: JWT + OIDC + Knox 어댑터 | `통합본 §8.3 ADR#7`, `통합본 §6.9(나)` | hub | TODO | user-facing API, UI 권한, Knox 연동 | T1-1 중 PG user domain | `handoff/phase1-011-auth-oidc-knox.md` | auth flow test, role/permission test |
 | T1-3 | 모듈러 모놀리스 → deployment 분리(β) | `본문 05 §7.2 "모듈 분리 정책" 단락`, `통합본 §13_open §C (05 §7.2.6 cross-ref / 경계↔데모 05 §7.2.4 cross-ref)`, `ROADMAP §17 D-2` | hub, script-agent, infra (provisional — β/γ 미결, blocked_by D-2) | DECISION_REQUIRED | owner_repo 배치, 도메인 경계, 배포 단위 | G-2 / D-2 | `handoff/phase1-012-module-split-decision.md` | β/γ 결정 기록, deployment map |
 | T1-4 | Quartz JobStore DB-backed clustered | `통합본 §6.9(나)` (ADR 바깥 정정 — Phase 1 확정 정정, ADR 소속 = ADR 바깥 D-5 RESOLVED) | hub, infra | **TODO** | scheduler 신뢰성, job execution | T1-1 PG. ADR 소속 = **ADR 바깥(D-5 RESOLVED 2026-06-07)** | `handoff/phase1-013-quartz-jobstore.md` | clustered JobStore 설정, failover/misfire test. 비고: 구현 필요성은 Phase 1 확정(§6.9(나)), ADR 소속 ADR 바깥 확정 |
