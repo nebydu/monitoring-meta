@@ -1,6 +1,6 @@
 # Phase 1 ROADMAP — v0.3 (기준 문서 후보)
 
-> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-10)
+> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-11)
 >
 > **지금 가능 (실행 — pull, critical-path 기준 `handoff/decisions/phase1-critical-path-analysis.md`)**
 > - [작업] **T4-2** result-topic 분리 / **T4-4** 메시지 키 / **T4-5** contract 문서 — 선행 결정 전부 RESOLVED(잔여 결정 0). T1-1 영속 슬라이스 DONE으로 CP-1 뿌리 풀림. → §9/§13
@@ -16,6 +16,7 @@
 > - **§16-5**(모듈 분리)=D-2 후 / **D-6**(owner_repo β/γ 의존분)=D-2 후.
 >
 > **최근 완료**
+> - **e2e baseline v15 = 60/0/0 + 기능 문서 전수 검증**(2026-06-11, 거버넌스 · Track 무관) — 하네스 v9→v15: 동적 검사 2종 추가(**§6-LOG** LOG_JOB 전체 사이클 `JOB_RESULT SUCCESS` 수신 / **§6-STOP** agent graceful shutdown → hub `AGENT_STOPPED received reason=interrupt` 수신) + setup·teardown 잔존 프로세스 위생 검사. **전체 PASS 60/0/0**(`e2e/results/20260611-095734.md`) — **이후 회귀 기준은 이 baseline**(구 58/0/0 표기는 당시 기록). 신호 교훈: Windows에서 CTRL_C(0,0) 콘솔 브로드캐스트 미배달 → **CTRL_BREAK_EVENT(1,0)** 사용(v10~v14 FAIL 원인, 격리 실험으로 확정). `docs/features/` 3건 신규(`script-job-execution`/`log-job-collection`/`agent-lifecycle-audit`)로 구현 완료 시나리오 4건 전부 문서화·미실증 주의 0. 커밋 `a162c76`·`4102ed0`·`b6a35ee`·`d3e41fd`(push됨).
 > - **docs/features 기능 문서 레이어 신설 + 파이프라인**(2026-06-10, 거버넌스 · Track 무관) — 사용자 가시 시나리오의 cross-repo 흐름 안내(descriptive, 규범=통합본/adr와 분리). 산출: `docs/features/`(README 헌장+`_template.md`), `feature-doc-writer` sub-agent, analyzer `affected_feature_docs` 필수 필드, codex-gate descriptive 전용 프롬프트 분기(Step 4 결정 (c)). 파일럿 `docs/features/heartbeat-collection.md`(ADR#2 heartbeat 흐름, 검증기준 e2e `20260610-152424`). 커밋 `c967fad`·`b591f29`·`4fafa5b`. 후속 = script-agent 구 토픽명 주석 drift(`handoff/heartbeat-topic-comment-drift/heartbeat-topic-comment-drift-script-agent.md`).
 > - **T1-1 영속(D-2-무관 슬라이스) DONE**(2026-06-10) — infra 4종(PG/OS/Redis/MinIO) self-host(infra `aae124f`)+hub 연결·smoke(hub `618cd83`). **실기동 검증 3종 PASS**: infra 헬스 green/yellow+init exit0(버킷·템플릿·ISM), hub `SMOKE_INFRA=1` 4종 왕복(mvn 0), **Phase 0 e2e 회귀 0=58/0/0**(`e2e/results/20260610-152424.md`). DONE 범위=인프라·연결·smoke(P-1~P-4); 도메인 영속(X-1~X-4)=D-2 후·VM=Phase 2 잔여. CP-1 뿌리 풀림. → §10
 > - **D-5** 데모 정정 ADR 소속 3건 승인(2026-06-07) — job-results 분리=**ADR#5 간접** / Quartz JobStore=**ADR 바깥** / audit actor.type=**ADR 바깥**. DoD-2 추적 닫힘, T4-2 잠금 해제. `handoff/decisions/d5-classification-packet.md`. → §17
