@@ -1,0 +1,30 @@
+{
+  "_note": "통합본 v0.10 표기 전용 릴리스(커밋 70d6a7c) 적용 직후 사후 교차 리뷰 verdict. revise 권고 4건은 같은 날 증거 보강으로 반영 — impact 문서 검증 표(36라인 1:1 대조), 통합본 머리 파일명 안내, spec-drift 보고 §7 owner/트리거 표. '28라인'은 analyzer 요약 숫자 오기였고 열거는 처음부터 36라인으로 완전함이 기계 대조로 확정됨.",
+  "context": "profile: C:/workspace/monitoring/monitoring-meta/.claude/proposal-review.profile",
+  "context_docs": [
+    "C:/workspace/monitoring/monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/kafka-payloads.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/envelope.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0002-heartbeat-otlp-proto.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0005-topic-naming.md"
+  ],
+  "verdict": "revise",
+  "critical_issues": [
+    "통합본 자체가 직접 변경 대상인데 실제 diff 또는 변경 후 핵심 발췌가 입력에 없다. 정책상 통합본이 직접 쟁점이면 발췌 부재를 누락 문맥으로 보아야 하며, 현재 정보만으로는 '내용·결정 변경 0'과 앵커 불변을 독립 검증할 수 없다."
+  ],
+  "missing_context": [
+    "커밋 70d6a7c의 실제 diff 또는 최소한 변경 파일별 diffstat와 통합본 변경 hunks.",
+    "36개 [Open] 치환 라인의 전체 목록과 analyzer가 열거한 28라인 대비 추가 8라인의 분류 근거.",
+    "spec-sync/codex-gate 실행 결과 원문 또는 요약 로그.",
+    "형제 repo 및 meta 내부에서 '통합본 v0.9' 호칭이 남은 위치 목록과 각 위치를 기능 drift가 아니라고 판단한 기준."
+  ],
+  "recommended_changes": [
+    "impact 문서에 36개 치환 라인 전체를 표로 고정하고, 추가 8라인은 '동일 패턴 4종에 속함'을 라인별로 증명한다.",
+    "커밋 70d6a7c 기준으로 '표기 전용 변경' 검증 섹션을 추가한다: 변경 파일, 변경 라인 수, 절 헤더 변경 여부, §13_open A~J 앵커 불변 여부, ADR 번호/상태 문구 무변경 여부를 체크리스트로 남긴다.",
+    "파일명 v0_9.md와 내부 v0.10 불일치에 대해 문서 상단에 '파일명은 안정 앵커로 유지' 문구가 실제로 들어갔는지 확인하고, 신규 독자용 안내를 한 곳에서 명확히 한다.",
+    "형제 repo의 v0.9 호칭 잔존은 선택 갱신으로 미루더라도 spec-drift 보고서에 owner, 영향 없음 사유, 후속 갱신 트리거를 명시한다."
+  ],
+  "confidence": "low",
+  "summary": "제안 방향은 표기 전용 릴리스로 타당해 보이고, Open 사안을 결정하지 않으며 파일명 유지도 안정 앵커 관점에서 납득 가능하다. 다만 리뷰 입력에 통합본 실제 diff가 없어 핵심 주장인 '내용 변경 0', '[Open] 치환 범위 적정', '앵커 무손상'을 검증할 수 없다. 적용 전 차단 사안이라기보다 적용 후 승인 기록을 닫기 전에 증거 보강이 필요한 상태다."
+}
