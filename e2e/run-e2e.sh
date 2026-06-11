@@ -459,7 +459,14 @@ else
 
             echo "[INFO] §6-1: infra docker compose up -d (${E2E_PROJECT})..."
             DYNAMIC_STARTED=true
-            dc up -d 2>&1
+            set +e
+            DC_UP_OUT=$(dc up -d 2>&1)
+            DC_UP_EXIT=$?
+            set -e
+            echo "${DC_UP_OUT}"
+            if [ ${DC_UP_EXIT} -ne 0 ]; then
+                log_fail "§6-1: docker compose up -d 실패 (exit=${DC_UP_EXIT}) — .env 파일 없거나 Docker 오류. 출력: $(echo ${DC_UP_OUT} | head -c 200)"
+            else
 
             echo "[INFO] kafka healthy 대기 (최대 90s)..."
             KAFKA_WAIT=0
@@ -490,6 +497,7 @@ else
                 else
                     log_info "kafka __consumer_offsets 토픽 미감지 (첫 consumer group 연결 전에는 없을 수 있음 — 정상)"
                 fi
+            fi
             fi
         fi
 
@@ -623,8 +631,12 @@ exit 0
                     done
 
                     if [ "${HEARTBEAT_RECEIVED}" = "true" ]; then
-                        DECODE_FAIL=$(( $(grep -c "failed to decode heartbeat payload" "${HUB_RUN_LOG}" 2>/dev/null || echo 0) + 0 ))
-                        NO_DATAPOINTS=$(( $(grep -c "no agent.heartbeat data points" "${HUB_RUN_LOG}" 2>/dev/null || echo 0) + 0 ))
+                        DECODE_FAIL=$(( $(grep -c "failed to decode heartbeat payload" "${HUB_RUN_LOG}" 2>/dev/null | tr -d '
+
+' || echo 0) + 0 ))
+                        NO_DATAPOINTS=$(( $(grep -c "no agent.heartbeat data points" "${HUB_RUN_LOG}" 2>/dev/null | tr -d '
+
+' || echo 0) + 0 ))
 
                         if [ "${DECODE_FAIL}" -eq 0 ] && [ "${NO_DATAPOINTS}" -eq 0 ]; then
                             log_pass "§6 동적 E2E: heartbeat 수신 + 디코드 성공 확인. 수신 라인: [${RECV_LINE}]"
@@ -914,7 +926,7 @@ exit 0
                             LOG_CMD_WAIT=0
                             LOG_FIRST_CMD=""
                             while [ ${LOG_CMD_WAIT} -lt 30 ]; do
-                                LOG_FIRST_CMD=$(grep -E "COMMAND sent.*job_type=LOG_JOB.*target_agent=${LIVE_AGENT_ID}" \
+                                LOG_FIRST_CMD=$(grep -E "COMMAND sent.*target_agent=${LIVE_AGENT_ID}.*job_type=LOG_JOB" \
                                     "${HUB_RUN_LOG}" 2>/dev/null | head -1 || true)
                                 if [ -n "${LOG_FIRST_CMD}" ]; then break; fi
                                 sleep 3

@@ -2,3 +2,5 @@
 *-test.log
 # 동적 E2E 런타임 로그(hub/agent 프로세스 stdout) — 결과 요약 md에 핵심 라인만 기록됨
 *-run.log
+# v11+ agent stderr 분리 캡처 로그 — 동일 정책(md만 커밋)
+*-run-err.log
