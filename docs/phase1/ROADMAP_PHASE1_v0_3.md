@@ -1,33 +1,33 @@
 # Phase 1 ROADMAP — v0.3 (기준 문서 후보)
 
-> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-11)
+> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-11 · 표기는 항상 **이름(ID)** 꼴, ID 읽는 법: `docs/phase1/ID-GLOSSARY.md`)
 >
-> **지금 가능 (실행 — pull, critical-path 기준 `handoff/decisions/phase1-critical-path-analysis.md`)**
-> - [작업] **T4-2** result-topic 분리 / **T4-4** 메시지 키 / **T4-5** contract 문서 — 선행 결정 전부 RESOLVED(잔여 결정 0). T1-1 영속 슬라이스 DONE으로 CP-1 뿌리 풀림. → §9/§13
-> - [작업] **T2-1 Rule Engine 등 CP-1 후속** — T1-1(영속) DONE으로 선행 인프라 충족. 단 일부는 D-2 의존(§17 D-2). → §11
-> - [작업] **T4-2** result-topic 분리 / **T4-4** 메시지 키 / **T4-5** contract 문서 — 선행 결정 전부 RESOLVED(T4-2: D-5 RESOLVED로 ADR#5 간접 라벨 확정 → 잔여 결정 0). → §9/§13
+> **지금 바로 할 수 있는 작업** (우선순위 근거: `handoff/decisions/phase1-critical-path-analysis.md`)
+> - **result-topic 분리**(T4-2) — `job-results` 토픽을 job/log 둘로 나눈다. 막던 결정이 전부 풀려(ADR 소속 확정 포함, D-5) 잔여 결정 0 — 구현만 남음. → §13
+> - **메시지 키 정의**(T4-4) · **계약 문서 갱신**(T4-5) — 신규 토픽의 Kafka 키 규칙 구현 / envelope·topic 계약 문서 정리. 잔여 결정 0. → §13
+> - **Rule Engine 등 임계 경로 후속**(T2-1 등) — 영속 저장소 기반(T1-1) 완료로 선행 인프라가 충족됐다. 단 일부는 모듈 분리 결정(D-2)에 걸림. → §11
 >
-> **결정 (push — 사람 입력)**
-> - **D-2** β(모듈러 모놀리스)/γ(풀 MSA) 모듈 분리 — 최고 레버리지(§5 완료 조건 4 게이트). **타이밍: §C 협의 입력 8개 수집은 지금 요청, β/γ 결정은 T2-1 게이트까지 유보**(`handoff/decisions/d2-escalation-timing.md`). 통합본 §C Open — 추측 금지.
-> - **D-3** 영속·인증 실행순서 / **D-6**(비의존분) — 계획 레이어, T1-1 병행 확정 가능.
+> **사람이 정해야 풀리는 것**
+> - **모듈을 어떻게 쪼갤지**(D-2) — 모듈러 모놀리스(β) 유지냐 풀 MSA(γ) 전환이냐. 가장 레버리지 큰 결정(§5 완료 조건 4의 게이트). **협의 입력 8개 수집은 지금, 결정 자체는 Rule Engine(T2-1) 착수 전까지 유보**(`handoff/decisions/d2-escalation-timing.md`). 통합본 §C Open — 추측 금지.
+> - **영속·인증 작업의 실행 순서**(D-3) · **owner_repo 확정 중 D-2와 무관한 부분**(D-6) — 계획 레이어라 지금 병행 확정 가능.
 >
-> **막힘 (외부/선행 대기)**
-> - **D-1·D-8·D-4(1)-future** — 통합본 Open(§J/§A). 외부 정보 필요 — 추측 금지.
-> - **§16-5**(모듈 분리)=D-2 후 / **D-6**(owner_repo β/γ 의존분)=D-2 후.
+> **외부 정보·선행 결정 대기**
+> - **AMS 분석 가정 검증**(D-1) · **site별 최소 운영 정보**(D-8) · **다중 zone 진입 시 토픽 전개**(D-4(1)-future) — 통합본 Open(§J/§A)이라 외부 정보가 와야 풀린다. 추측 금지.
+> - **모듈 분리 handoff**(§16 순서 5) · **owner_repo 확정 중 D-2 의존분**(D-6) — 모듈 분리 결정(D-2) 후.
 >
 > **최근 완료**
-> - **식별자 체계 3종 단순화**(2026-06-11, 거버넌스 · Track 무관) — 운영 ID를 **T(작업)/D(결정)/ADR(결정 기록) 3종**으로 정리. G 폐지(→D 흡수: G-1→D-1/G-2→D-2/G-3→D-8/G-4→D-7/G-5→§5 완료 조건 7), DoD→"§5 완료 조건 N" 격하, 리뷰 잔재(N/C/S/drift/Pass 1)·일회성(P/X/M) 본문 제거. 범례 신설 `docs/phase1/ID-GLOSSARY.md`(신구 매핑 부록). **Open 무결정·통합본 v0.9 무수정**(v0.10 표기 개선은 후속 분리). 형제 repo 변경 0(공지 `handoff/id-cleanup/`). 근거: `handoff/id-cleanup/id-cleanup-000-impact.md`.
+> - **식별자 체계 단순화 + 이름 우선 표기**(2026-06-11, 거버넌스 · Track 무관) — 운영 ID를 **작업(T)/결정(D)/결정 기록(ADR) 3종**으로 정리. 게이트(G)는 결정(D)에 흡수(G-1→D-1/G-2→D-2/G-3→D-8/G-4→D-7/G-5→§5 완료 조건 7), 완료 조건(DoD)은 "§5 완료 조건 N"으로 격하, 리뷰 잔재(N/C/S/drift/Pass 1)·일회성(P/X/M) 본문 제거. 본 액티브 큐는 **이름(ID) 표기**로 전환. 범례 신설 `docs/phase1/ID-GLOSSARY.md`(신구 매핑 부록). **Open 무결정·통합본 v0.9 무수정**(v0.10 표기 개선은 후속 분리). 형제 repo 변경 0(공지 `handoff/id-cleanup/`). 근거: `handoff/id-cleanup/id-cleanup-000-impact.md`.
 > - **e2e baseline v15 = 60/0/0 + 기능 문서 전수 검증**(2026-06-11, 거버넌스 · Track 무관) — 하네스 v9→v15: 동적 검사 2종 추가(**§6-LOG** LOG_JOB 전체 사이클 `JOB_RESULT SUCCESS` 수신 / **§6-STOP** agent graceful shutdown → hub `AGENT_STOPPED received reason=interrupt` 수신) + setup·teardown 잔존 프로세스 위생 검사. **전체 PASS 60/0/0**(`e2e/results/20260611-095734.md`) — **이후 회귀 기준은 이 baseline**(구 58/0/0 표기는 당시 기록). 신호 교훈: Windows에서 CTRL_C(0,0) 콘솔 브로드캐스트 미배달 → **CTRL_BREAK_EVENT(1,0)** 사용(v10~v14 FAIL 원인, 격리 실험으로 확정). `docs/features/` 3건 신규(`script-job-execution`/`log-job-collection`/`agent-lifecycle-audit`)로 구현 완료 시나리오 4건 전부 문서화·미실증 주의 0. 커밋 `a162c76`·`4102ed0`·`b6a35ee`·`d3e41fd`(push됨).
 > - **docs/features 기능 문서 레이어 신설 + 파이프라인**(2026-06-10, 거버넌스 · Track 무관) — 사용자 가시 시나리오의 cross-repo 흐름 안내(descriptive, 규범=통합본/adr와 분리). 산출: `docs/features/`(README 헌장+`_template.md`), `feature-doc-writer` sub-agent, analyzer `affected_feature_docs` 필수 필드, codex-gate descriptive 전용 프롬프트 분기(Step 4 결정 (c)). 파일럿 `docs/features/heartbeat-collection.md`(ADR#2 heartbeat 흐름, 검증기준 e2e `20260610-152424`). 커밋 `c967fad`·`b591f29`·`4fafa5b`. 후속 = script-agent 구 토픽명 주석 drift(`handoff/heartbeat-topic-comment-drift/heartbeat-topic-comment-drift-script-agent.md`).
-> - **T1-1 영속(D-2-무관 슬라이스) DONE**(2026-06-10) — infra 4종(PG/OS/Redis/MinIO) self-host(infra `aae124f`)+hub 연결·smoke(hub `618cd83`). **실기동 검증 3종 PASS**: infra 헬스 green/yellow+init exit0(버킷·템플릿·ISM), hub `SMOKE_INFRA=1` 4종 왕복(mvn 0), **Phase 0 e2e 회귀 0=58/0/0**(`e2e/results/20260610-152424.md`). DONE 범위=인프라·연결·smoke 슬라이스; 도메인 영속(repository·DDL·트랜잭션)=D-2 후·VM=Phase 2 잔여. CP-1 뿌리 풀림. → §10
-> - **D-5** 데모 정정 ADR 소속 3건 승인(2026-06-07) — job-results 분리=**ADR#5 간접** / Quartz JobStore=**ADR 바깥** / audit actor.type=**ADR 바깥**. §5 완료 조건 2 추적 닫힘, T4-2 잠금 해제. `handoff/decisions/d5-classification-packet.md`. → §17
-> - **T4-1** 토픽 재명명 구현 완료(2026-06-07) — 3토픽 `commands`/`audit-events`/`heartbeats` → `*-topic`(infra `d732de3`·hub·script-agent). **e2e 종단 PASS 58/0/0**(`e2e/results/20260607-080703.md`, 하네스 v9): R-A 동작 등가(command-topic 발행 라이브·audit/heartbeat 라이브)+R-B 완전성(신명 3종/구명 0)+회귀 0. `job-results`는 T4-2. → §9
-> - **D-4(1)** 토픽 구체 명명 컨벤션 승인 완료(2026-06-06, 후보 B / 단일 command-topic / 신규까지 적용). `adr/0005-topic-naming.md` **Accepted** 전환 → T4-1 BLOCKED 해제. §A 의존 풀림(단일 토픽). → §17
-> - **T0-3·T0-4·T0-5** envelope 구현 완료 — consumer `x-source` 가드 명시화(hub/script-agent), Phase 0 §2.2 회귀 0. **e2e PASS 28/0/0**(`e2e/results/20260605-214041.md`, 하네스 §7-D/§7-I 검사 결함 수정 후 재실행, 06-05)
-> - phase0-cleanup — 데모 spec 단일화·HANDOFF archive·source_ref 재배선 (e2e PASS 16/0/0, 06-05)
-> - D-9 Phase 1 확정(06-03) · D-4(2) envelope 먼저(06-04) · command-topic routing=ADR#4 승인(06-05) · D-4(1) 후보 B 승인(06-06)
+> - **영속 저장소 기반 구축**(T1-1, D-2-무관 슬라이스) **DONE**(2026-06-10) — infra 4종(PG/OS/Redis/MinIO) self-host(infra `aae124f`)+hub 연결·smoke(hub `618cd83`). **실기동 검증 3종 PASS**: infra 헬스 green/yellow+init exit0(버킷·템플릿·ISM), hub `SMOKE_INFRA=1` 4종 왕복(mvn 0), **Phase 0 e2e 회귀 0=58/0/0**(`e2e/results/20260610-152424.md`). DONE 범위=인프라·연결·smoke 슬라이스; 도메인 영속(repository·DDL·트랜잭션)=D-2 후·VM=Phase 2 잔여. CP-1 뿌리 풀림. → §10
+> - **데모 정정 3건의 ADR 소속 결정**(D-5) 승인(2026-06-07) — job-results 분리=**ADR#5 간접** / Quartz JobStore=**ADR 바깥** / audit actor.type=**ADR 바깥**. §5 완료 조건 2 추적 닫힘, T4-2 잠금 해제. `handoff/decisions/d5-classification-packet.md`. → §17
+> - **토픽 재명명 구현**(T4-1) 완료(2026-06-07) — 3토픽 `commands`/`audit-events`/`heartbeats` → `*-topic`(infra `d732de3`·hub·script-agent). **e2e 종단 PASS 58/0/0**(`e2e/results/20260607-080703.md`, 하네스 v9): R-A 동작 등가(command-topic 발행 라이브·audit/heartbeat 라이브)+R-B 완전성(신명 3종/구명 0)+회귀 0. `job-results`는 T4-2. → §9
+> - **토픽 구체 명명 컨벤션 승인**(D-4(1)) 완료(2026-06-06, 후보 B / 단일 command-topic / 신규까지 적용). `adr/0005-topic-naming.md` **Accepted** 전환 → T4-1 BLOCKED 해제. §A 의존 풀림(단일 토픽). → §17
+> - **envelope 적용 구현**(T0-3~T0-5) 완료 — consumer `x-source` 가드 명시화(hub/script-agent), Phase 0 §2.2 회귀 0. **e2e PASS 28/0/0**(`e2e/results/20260605-214041.md`, 하네스 §7-D/§7-I 검사 결함 수정 후 재실행, 06-05)
+> - **Phase 0 정리**(phase0-cleanup) — 데모 spec 단일화·HANDOFF archive·source_ref 재배선 (e2e PASS 16/0/0, 06-05)
+> - **그 외 결정**: alert/notification 토픽 Phase 1 확정(D-9, 06-03) · 실행 순서=envelope 먼저(D-4(2), 06-04) · command-topic routing=ADR#4 소속 승인(06-05)
 >
-> *갱신 규칙: 기준 문서(§17 D-목록 / §9~§14 Track)을 **먼저** 갱신 → 본 블록은 그 사본. 완료 기준 — 결정 항목=사람 승인 즉시 / 작업 항목=e2e PASS 후.*
+> *갱신 규칙: 기준 문서(§17 D-목록 / §9~§14 Track)을 **먼저** 갱신 → 본 블록은 그 사본. 완료 기준 — 결정 항목=사람 승인 즉시 / 작업 항목=e2e PASS 후. 표기 규칙 — 문장에서 ID 단독 인용 금지, 항상 이름(ID) 꼴.*
 
 ---
 
