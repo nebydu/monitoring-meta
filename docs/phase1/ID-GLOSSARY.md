@@ -8,8 +8,8 @@
 
 | 패밀리 | 뜻 | 정의 위치 | 현재성 | 수정 가능 | 신규 생성 | 예시 |
 |---|---|---|---|---|---|---|
-| **T-n** (T0~T5) | **해야 할 작업**(Track 작업 항목). 앞 숫자는 영역 묶음(Track 0=envelope, 1=기반, 2=코어 도메인, 3=통보·검증·UI, 4=토픽 재구조, 5=무작업)이고 별개 패밀리가 아니다. 상태는 TODO→DONE | ROADMAP §9~§14 | 운영 | 가능 | 가능 | `T4-2` = Track 4의 2번 작업 |
-| **D-n** | **사람이 정할 결정**. 상태는 OPEN→RESOLVED. 통합본 Open 연계 항목은 추측 금지 | ROADMAP §17 (D-목록) | 운영 | 가능 | 가능 | `D-2` = β/γ 모듈 분리 결정 |
+| **T-n** (T0~T5) | **해야 할 작업**(Track 작업 항목). 앞 숫자는 영역 묶음(Track 0=envelope, 1=기반, 2=코어 도메인, 3=통보·검증·UI, 4=토픽 재구조, 5=무작업)이고 별개 패밀리가 아니다. 상태값은 **ROADMAP §6 허용 8값**(TODO/IN_PROGRESS/DONE/NO-OP/PARTIAL/DEFERRED/BLOCKED/DECISION_REQUIRED)을 따른다 | ROADMAP §9~§14 | 운영 | 가능 | 가능 | `T4-2` = Track 4의 2번 작업 |
+| **D-n** | **사람이 정할 결정**. 미결로 시작해 사람 승인 시 본문에 **RESOLVED**로 기록(게이트 운영 status 열은 ROADMAP §6 값). 통합본 Open 연계 항목은 추측 금지 | ROADMAP §17 (D-목록) | 운영 | 가능 | 가능 | `D-2` = β/γ 모듈 분리 결정 |
 | **ADR#n / ADR-NNNN** | **확정 결정의 기록 파일**(업계 표준 Architecture Decision Record) | `adr/NNNN-*.md` + 통합본 §8.3 | 운영 | ADR 절차로만 | 가능 | `ADR#5` = `adr/0005-topic-naming.md` |
 | **CP-n** | 임계 경로(critical path) 분석 라벨 | `handoff/decisions/phase1-critical-path-analysis.md` | 운영(분석 자산) | 분석 갱신 시 | 분석 문서 안에서만 | `CP-1` |
 | ~~**G-n**~~ | (폐지) 게이트 → **D로 흡수**(2026-06-11). 게이트 운영 정보는 §17의 gate_type/status/next_action 열 | 구 ROADMAP §8 | 잔재(폐지) | 불가 | **금지** | `G-2` → `D-2` |
