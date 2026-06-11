@@ -5,6 +5,7 @@
 .claude/.codex-gate-state
 .claude/codex-gate.log
 .claude/codex-gate-escalation.log
+.claude/codex-gate-block.log
 .claude/.codex-last-message.json
 .claude/.codex-gate-issues.txt
 .claude/.codex-gate-stderr.txt
