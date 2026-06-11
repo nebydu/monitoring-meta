@@ -10,7 +10,7 @@
 | 시나리오 한 줄 | `스케줄 등록 → command-topic → script-agent LOG_JOB 실행(offset 추적·tail-f 스타일) → job-results → hub 수신·표시` | 인덱스 표와 동일 |
 | 관여 repo | `hub`, `script-agent`, `infra` | |
 | 기준 meta commit | `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` | 이 문서가 참조한 통합본/`adr/` 등 **spec의 시점**을 고정한다. **형제 repo 코드 시점이 아니다** — 코드가 실제 동작한 시점 증거는 §9의 e2e 결과. 본문 코드 앵커로 쓰지 않는다 |
-| 최종 갱신일 | `2026-06-10` | |
+| 최종 갱신일 | `2026-06-11` | |
 | 검증 상태 | `검증됨` | §9 최종 검증 기준과 연동 |
 
 ## 1. 기능 개요
@@ -109,8 +109,9 @@ hub: JobResultConsumer → JobResultRingBuffer → UI(/) job-results 패널
 
 > `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3).
 
-- **e2e**: `e2e/results/20260610-152424.md` — PASS 58/0/0
-  - §6-CMD: hub `/schedules` POST 성공 → `command-topic` 발행 확인. LOG_JOB는 동적 실행 확인 없으나 SCRIPT_JOB과 동일 발행·수신 경로가 검증됨.
+- **e2e**: `e2e/results/20260611-095734.md` — PASS 60/0/0
+  - §6-LOG: 임시 로그 파일 생성 → LOG_JOB 스케줄 등록(cron=0/5) → 첫 COMMAND 발행(파일 끝 offset 저장) → 매칭 라인 append → hub `JOB_RESULT received: execution_id=... agent_id=... job_type=LOG_JOB status=SUCCESS` 수신 실증 — LogRunner 동적 실행(log_path/pattern/offset 추적 사이클) 전체 경로 검증됨.
+  - §6-CMD: hub `/schedules` POST 성공 → `command-topic` 발행 확인. SCRIPT_JOB과 동일 발행·수신 경로 검증됨.
   - §8 R-B: `KafkaConfig.Topics.COMMANDS = "command-topic"` / `KafkaConfig.Topics.JOB_RESULTS = "job-results"` / script-agent config.go 신명 확인.
   - §7 x-source 가드 회귀: `JobResultConsumer.java: EnvelopeHeaders.inspectSource() 호출 확인`.
 - **단위 테스트**: `hub mvn test` PASS; `script-agent go test ./...` PASS — `internal/job` 패키지의 `LogRunner`, `FileState`, `decideReadFrom`, `scanForPattern` 단위 테스트 포함(`internal/job/log_test.go`, `internal/job/filestate_test.go`).
@@ -125,7 +126,6 @@ hub: JobResultConsumer → JobResultRingBuffer → UI(/) job-results 패널
 
 ## 9. 최종 검증 기준 (필수)
 
-- **기준 e2e 결과**: `e2e/results/20260610-152424.md` (PASS 58/0/0) — 형제 repo 코드가 실제 동작한 시점 증거. 동적 모드(`--dynamic --reuse-infra`) 활성, Docker 데몬 v29.4.3.
+- **기준 e2e 결과**: `e2e/results/20260611-095734.md` (PASS 60/0/0) — 형제 repo 코드가 실제 동작한 시점 증거. 동적 모드(`--dynamic --reuse-infra`) 활성, Docker 데몬 v29.4.3.
 - **spec 참조 시점**: §0 기준 meta commit `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` (통합본 v0.9 / `adr/0005-topic-naming.md` / `docs/kafka-payloads.md` / `docs/envelope.md`)
-- **Phase 0 회귀 기준(데모 spec v0.2.1 — 규범 아닌 회귀 근거)**: §6-CMD command-topic 경로 실증; §4 단위 테스트 PASS(LogRunner/FileState/decideReadFrom 포함).
-- **주의**: LOG_JOB executor 실행 자체(LogRunner 동적 실행)는 e2e §6 동적 시나리오에서 별도 검증되지 않음. 단위 테스트와 코드 확인에 근거한 서술.
+- **Phase 0 회귀 기준(데모 spec v0.2.1 — 규범 아닌 회귀 근거)**: §6-LOG LOG_JOB executor 동적 실행 실증(log_path/pattern/offset 추적 사이클, JOB_RESULT status=SUCCESS); §6-CMD command-topic 경로 실증; §4 단위 테스트 PASS(LogRunner/FileState/decideReadFrom 포함).

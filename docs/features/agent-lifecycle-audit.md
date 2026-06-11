@@ -10,7 +10,7 @@
 | 시나리오 한 줄 | `agent 기동 → AGENT_STARTED(audit-topic) → hub AgentRegistry 등록 / job 실행 → JOB_EXECUTED / agent 종료 → AGENT_STOPPED → OFFLINE 마킹` | 인덱스 표와 동일 |
 | 관여 repo | `script-agent`, `hub`, `infra` | |
 | 기준 meta commit | `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` | 이 문서가 참조한 통합본/`adr/` 등 **spec의 시점**을 고정한다. **형제 repo 코드 시점이 아니다** — 코드가 실제 동작한 시점 증거는 §9의 e2e 결과. 본문 코드 앵커로 쓰지 않는다 |
-| 최종 갱신일 | `2026-06-10` | |
+| 최종 갱신일 | `2026-06-11` | |
 | 검증 상태 | `검증됨` | §9 최종 검증 기준과 연동 |
 
 ## 1. 기능 개요
@@ -122,9 +122,10 @@ hub UI(/): agents 패널 state=OFFLINE 표시
 
 > `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3).
 
-- **e2e**: `e2e/results/20260610-152424.md` — PASS 58/0/0
-  - §6-AUDIT: `hub 로그에서 AGENT_STARTED 수신 확인 — audit-topic 경로(agent→kafka→hub) 정상 실증`; 로그 라인 `AGENT_STARTED received: agent_id=... hostname=... os=windows/amd64 agent_version=0.1.0`
-  - §6-T4-C: `script-agent 기동/등록 확인` — script-agent `"agent started"` 로그 실증
+- **e2e**: `e2e/results/20260611-095734.md` — PASS 60/0/0
+  - §6-AUDIT: hub 로그에서 AGENT_STARTED 수신 확인 — audit-topic 경로(agent→kafka→hub) 정상 실증; 로그 라인 `AGENT_STARTED received: agent_id=f448be85-... hostname=DESKTOP-A5E43KQ os=windows/amd64 agent_version=0.1.0`
+  - §6-STOP: CTRL_BREAK_EVENT(1,0) → agent graceful shutdown → hub `AGENT_STOPPED received: agent_id=f448be85-... reason=interrupt` 수신 실증 — 전체 종료 경로(signal 수신 → AGENT_STOPPED 발행 → audit-topic → hub markOffline) 동적 검증됨
+  - §6-T4-C: script-agent 기동/등록 확인 — script-agent `"agent started"` 로그 실증
   - §7 x-source 가드 회귀: `hub/AuditConsumer.java: EnvelopeHeaders.inspectSource() 호출 확인`
   - §8 R-B: `hub/KafkaConfig.Topics.AUDIT_EVENTS = "audit-topic"` / `script-agent/config.go: KAFKA_TOPIC_AUDIT_EVENTS default="audit-topic"` / `hub/AuditConsumerTest.java: TOPIC="audit-topic"` 확인
   - §8 R-A: `hub/AuditConsumer.java: Topics.AUDIT_EVENTS 상수 참조(단일 진실)` 확인
@@ -140,7 +141,6 @@ hub UI(/): agents 패널 state=OFFLINE 표시
 
 ## 9. 최종 검증 기준 (필수)
 
-- **기준 e2e 결과**: `e2e/results/20260610-152424.md` (PASS 58/0/0) — 형제 repo 코드가 실제 동작한 시점 증거. 동적 모드(`--dynamic --reuse-infra`) 활성, Docker 데몬 v29.4.3.
+- **기준 e2e 결과**: `e2e/results/20260611-095734.md` (PASS 60/0/0) — 형제 repo 코드가 실제 동작한 시점 증거. 동적 모드(`--dynamic --reuse-infra`) 활성, Docker 데몬 v29.4.3.
 - **spec 참조 시점**: §0 기준 meta commit `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` (통합본 v0.9 / `adr/0005-topic-naming.md` / `docs/kafka-payloads.md` / `docs/envelope.md`)
-- **Phase 0 회귀 기준(데모 spec v0.2.1 — 규범 아닌 회귀 근거)**: §6-AUDIT AGENT_STARTED 수신 실증; §4 단위 테스트 PASS(AuditConsumerTest 포함); §8 토픽 상수 신명 정합.
-- **주의**: AGENT_STOPPED 동적 수신(허브 OFFLINE 마킹)은 e2e §6에서 직접 실증되지 않음(e2e 종료 시 script-agent SIGTERM 전송되나 hub OFFLINE 확인 로그는 캡처 범위 외). AGENT_STARTED 수신과 코드 확인에 근거한 서술.
+- **Phase 0 회귀 기준(데모 spec v0.2.1 — 규범 아닌 회귀 근거)**: §6-AUDIT AGENT_STARTED 수신 실증; §6-STOP AGENT_STOPPED 수신 실증(reason=interrupt, hub markOffline 전체 경로); §4 단위 테스트 PASS(AuditConsumerTest 포함); §8 토픽 상수 신명 정합.
