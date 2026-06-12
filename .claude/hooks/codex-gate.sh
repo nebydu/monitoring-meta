@@ -293,14 +293,17 @@ fi
 REVIEW_INPUT=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1 || [ ! -e "$REPO_ROOT/$f" ]; then
+    # 추적 중인 파일과 "윈도우 내 삭제"(BASE에 있고 인덱스·디스크에 없음) 모두 diff가 정확히 표현한다.
+    # 삭제 파일을 미추적 분기로 보내면 cat 실패(exit 1)가 set -e로 hook 전체를 조용히 죽인다
+    # (2026-06-13 실사례 — stub 삭제 커밋이 윈도우에 들어오자 "non-blocking, no stderr" 실패).
     REVIEW_INPUT="${REVIEW_INPUT}
 $(git -c core.quotepath=false diff "$BASE" -- "$f")"
   else
-    # 미추적 파일은 diff에 안 잡히므로 내용을 직접 합류
+    # 미추적 신규 파일은 diff에 안 잡히므로 내용을 직접 합류
     REVIEW_INPUT="${REVIEW_INPUT}
 --- NEW FILE: ${f} ---
-$(cat "$REPO_ROOT/$f" 2>/dev/null)"
+$(cat "$REPO_ROOT/$f" 2>/dev/null || true)"
   fi
 done <<EOF
 $TRIGGERED
