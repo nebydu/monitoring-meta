@@ -34,10 +34,10 @@
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본(`docs/master-design.md`): `§5.1.2` LOG_JOB spec(log_path/pattern/encoding), `§5.2.2` LogResult, `§5.2.3` file_state 영속 노트(Agent local only), `§5.3.3` JOB_EXECUTED 감사
+- 통합본(`docs/master-design.md`): `§6.2` Job 실행 흐름 — LOG_JOB 명령·file_state는 Agent local(ADR #14), `§6.3` 로그 수집 흐름 — LOG_JOB occurred_at 추가(ADR #10), `§6.6` JOB_EXECUTED 감사 채널(ADR #3). ※ 종전 `§5.x` 포인터는 데모 spec 절 번호의 오기였음 — 데모 spec 포인터는 아래 행이 따로 담당
 - 데모 spec v0.2.1: `§5.1.2` LOG_JOB, `§5.2.2` LogResult — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
 - ADR: `adr/0005-topic-naming.md` — `command-topic` 최종 논리명 확정(T4-1 재명명 완료). `job-results`는 분리 전 **현행 물리명**이며 최종 논리명은 `result-topic-job`/`result-topic-log`(result-topic 분리(T4-2) 잔여 — 본 문서는 현재 코드 상태 기준으로 `job-results`를 서술)
-- 페이로드/봉투: `docs/kafka-payloads.md` `command-topic`·`job-results` 절; `docs/envelope.md` §2.2~§2.3
+- 페이로드/봉투: `docs/kafka-payloads.md` `command-topic` 절·`result-topic-log` 절(최종 논리명 — **현행 코드는 분리 전 물리 토픽 `job-results`로 발행·소비**하며 본 문서의 흐름 서술은 그 관찰 기록); `docs/envelope.md` §2.2~§2.3
 
 ## 4. 관여 repo·컴포넌트
 
