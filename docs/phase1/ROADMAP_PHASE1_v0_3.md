@@ -34,7 +34,7 @@
 
 > **성격**: 이 문서는 `monitoring-meta/docs/master-design.md`(통합본)를 최상위 기준으로 삼는 **Phase 1 기준 문서 후보 ROADMAP**이다. 입력 draft(`ROADMAP_PHASE1_draft_v0_2.md`)를 normalization 검증(`handoff/phase1-000/phase1-000-roadmap-normalization.md`) 결과로 정정·반영해 생성했다. draft를 그대로 기준 문서화한 것이 아니다.
 >
-> **문서 성격 우선순위**: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지, 기준 문서 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`) → 통합본 v0.9 + kafka-payloads + envelope(Phase 1+ 도달 목표). "통합본 우선"은 **사실 주장(범위·각 ADR 결정)** 에만 적용한다. tier 순서 / owner_repo / handoff 분리 같은 **계획 레이어**는 ROADMAP 고유 판단이므로 보존하되, 불확실하면 `DECISION_REQUIRED`로 둔다.
+> **문서 성격 우선순위**: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지, 기준 문서 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`) → 통합본(`docs/master-design.md`) + kafka-payloads + envelope(Phase 1+ 도달 목표). "통합본 우선"은 **사실 주장(범위·각 ADR 결정)** 에만 적용한다. tier 순서 / owner_repo / handoff 분리 같은 **계획 레이어**는 ROADMAP 고유 판단이므로 보존하되, 불확실하면 `DECISION_REQUIRED`로 둔다.
 >
 > **`[결정 필요]`는 멈춤 사유가 아니라 기록 대상**이다. §17 미해결 목록(D-목록)에 모은다. (§14는 Track 5다. 이전 v0.2에서 "§14에 모은다"고 한 자기참조 오류를 v0.3에서 §17로 정정.)
 >
@@ -162,7 +162,7 @@ Phase 1 완료는 다음을 모두 만족해야 한다.
 > - **Phase 1 *완료* 시점에는** TODO/DECISION_REQUIRED ADR이 모두 최종 판정(`DONE`/`NO-OP`/`DEFERRED`/`PARTIAL`)으로 닫혀 있어야 한다. 즉 "판정 추적 경로 연결"(TODO→Track 항목, DECISION_REQUIRED→§17 D-목록)은 *진행 관리*이고, Phase 1 완료의 필요조건은 그 추적이 최종 판정으로 *닫히는 것*이다. 두 단계를 분리해 본다.
 
 **Phase 걸치는 ADR 처리**: 한 ADR이 Phase를 걸치면 `PARTIAL`로 판정하고 **Phase 1 범위 / Phase 2 잔여**를 함께 명시한다(단일 status로 뭉개지 않는다).
-- ADR#4: group.id 정책 유지=Phase 1 기구현 / zone 단위 command-topic routing=후속(잔여, T4-3).
+- ADR#4: group.id 정책 유지=Phase 1 기구현 / zone 단위 command-topic routing=미래 트리거(다중 zone 진입 시 §A 해소 후 — T4-3 DEFERRED, Phase 1 잔여 아님).
 - ADR#12: PG/OS/Redis/MinIO=Phase 1 / VictoriaMetrics=Phase 2.
 - ADR#13: **heartbeat 수집 경로=기구현(Phase 1 잔여 없음) / metric routing·self 별도=Phase 2** ("heartbeat=기구현"은 라우팅 분리가 아니라 수집 경로 기구현을 뜻함).
 
@@ -180,7 +180,7 @@ Phase 1 완료는 다음을 모두 만족해야 한다.
 | #1 | 스키마 관리 | 1차 미도입, Phase 2/3 Apicurio | **NO-OP** | Phase 1 미도입 근거 기록. T5-1 |
 | #2 | Heartbeat 마샬링 | Phase 1 protobuf | **DONE** | heartbeat 마샬링 한정. 잔여 없음. e2e PASS 16/0/0(2026-06-02). **envelope 전 토픽 적용 ≠ ADR#2**(envelope 나머지 토픽은 Track 0) — T5-2 |
 | #3 | Audit 채널 | Kafka 직행 동일 유지 | **NO-OP** | T5-3 |
-| #4 | Consumer group | 동일 + 단일 command-topic에서 target_agent_id routing(zone 전개=다중 zone 진입 시) | **PARTIAL** | Phase 1: group.id 유지(기구현). 잔여: zone 단위 전개는 다중 zone 진입 시 미래 트리거(D-4(1)-future, §A 의존) → T4-3 |
+| #4 | Consumer group | 동일 + 단일 command-topic에서 target_agent_id routing(zone 전개=다중 zone 진입 시) | **PARTIAL** | Phase 1 범위(group.id 유지+단일 토픽 routing)는 기구현 완료. zone 단위 전개는 **Phase 1 잔여가 아니라 미래 트리거** — 다중 zone 진입 시 §A 해소 후 발동(D-4(1)-future), T4-3 **DEFERRED**(§13 비고 참조) |
 | #5 | 토픽 명명 | 의미 기반 규칙 B(단일 command-topic, zone suffix=다중 zone 진입 시) | **PARTIAL** | 토픽 *명명 규칙*(D-4(1) — 2026-06-06 RESOLVED, 후보 B, `adr/0005` Accepted) + 토픽 재구조 *실행 순서*(D-4(2) — 2026-06-04 RESOLVED, envelope 먼저). **토픽 재명명(T4-1) 완료(2026-06-07, 3토픽 물리=논리, e2e 58/0/0)**. 잔여=result-topic 분리(T4-2) + alert/notification 토픽 신설(Phase 1 확정, §6.9.3·§6.9.5) |
 | #6 | 메시지 키 | 토픽별 정의 | **PARTIAL** | 기존 토픽 키 기구현(command=target_agent_id). 잔여: 신규 토픽 key 정의(alert=`(rule_id,target_id)`/notification=`incident_id` — 통합본 §6.9.5 확정) → T4-4 |
 | #7 | 인증/인가 | JWT+OIDC+Knox (Phase 1) | **TODO** | Phase 1 전체. T1-2 |

@@ -34,7 +34,7 @@
 
 - 통합본(`docs/master-design.md`): `§5.1` 명령 발행(execution_id/valid_until/misfire), `§5.1.1` SCRIPT_JOB spec(timeout/output_cap), `§5.2.1` ScriptResult, `§5.3.3` JOB_EXECUTED 감사
 - 데모 spec v0.2.1: `§5.1` command 흐름, `§5.2.1` SCRIPT_JOB 결과 — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
-- ADR: `adr/0005-topic-naming.md` — `command-topic`/`job-results` 최종 논리명 확정
+- ADR: `adr/0005-topic-naming.md` — `command-topic` 최종 논리명 확정(T4-1 재명명 완료). `job-results`는 분리 전 **현행 물리명**이며 최종 논리명은 `result-topic-job`/`result-topic-log`(result-topic 분리(T4-2) 잔여 — 본 문서는 현재 코드 상태 기준으로 `job-results`를 서술)
 - 페이로드/봉투: `docs/kafka-payloads.md` `command-topic`·`job-results` 절; `docs/envelope.md` §2.2 헤더 4종, §2.3 x-source 가드(비규범 관찰 전용)
 
 ## 4. 관여 repo·컴포넌트
