@@ -17,7 +17,7 @@
 _META_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # 문맥 문서 — 결정 리뷰에 필요한 기준 문서들.
-# 통합본_v0_9.md(170KB)는 매 리뷰 주입 비용이 커서 제외한다(아래 POLICY에서 안내).
+# 통합본(master-design.md, 170KB)은 매 리뷰 주입 비용이 커서 제외한다(아래 POLICY에서 안내).
 # 통합본이 직접 쟁점인 제안은 proposal 본문에 관련 절을 발췌해 넣을 것.
 PROPOSAL_REVIEW_CONTEXT_DOCS=(
   "$_META_ROOT/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md"
@@ -28,4 +28,4 @@ PROPOSAL_REVIEW_CONTEXT_DOCS=(
   "$_META_ROOT/adr/0005-topic-naming.md"
 )
 
-PROPOSAL_REVIEW_POLICY="monitoring-meta는 코드를 만들지 않는 오케스트레이터다(spec·문서·핸드오프·종단 검증 산출물만). 리뷰 시 반드시 지킬 구분: 데모 spec v0.2.1은 'Phase 0 회귀 기준(ground truth)'이고 통합본 v0.9(이 입력에 미포함, 170KB라 제외 — docs/통합본_v0_9.md)는 'Phase 1+ 도달 목표 spec'이다. 이 둘을 같은 기준으로 다루는 제안은 결함이다. [Open]/[Open question] 표기 항목이나 미결정 ADR을 결정된 것으로 전제한 제안은 block 대상이다. 형제 repo(hub/script-agent/infra)는 읽기 전용 참조 대상이며 meta가 직접 수정하는 제안도 block 대상이다. 통합본이 직접 쟁점인데 발췌가 없으면 missing_context로 지적하라."
+PROPOSAL_REVIEW_POLICY="monitoring-meta는 코드를 만들지 않는 오케스트레이터다(spec·문서·핸드오프·종단 검증 산출물만). 리뷰 시 반드시 지킬 구분: 데모 spec v0.2.1은 'Phase 0 회귀 기준(ground truth)'이고 통합본(이 입력에 미포함, 170KB라 제외 — docs/master-design.md)은 'Phase 1+ 도달 목표 spec'이다. 이 둘을 같은 기준으로 다루는 제안은 결함이다. [Open]/[Open question] 표기 항목이나 미결정 ADR을 결정된 것으로 전제한 제안은 block 대상이다. 형제 repo(hub/script-agent/infra)는 읽기 전용 참조 대상이며 meta가 직접 수정하는 제안도 block 대상이다. 통합본이 직접 쟁점인데 발췌가 없으면 missing_context로 지적하라."

@@ -6,6 +6,6 @@
 > - **작업 상태(구 §5)** → `docs/phase1/ROADMAP_PHASE1_v0_3.md` **§9~§14 Track status** + **§5.1 ADR 판정 매트릭스**
 > - **미결정 사안(구 §7)** → ROADMAP **§17 D-목록**
 > - **데모 spec 기준 문서** → `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`
-> - **문서 성격/기준 문서 위치(구 §3)** → ROADMAP §1·§4 + `docs/통합본_v0_9.md`
+> - **문서 성격/기준 문서 위치(구 §3)** → ROADMAP §1·§4 + `docs/master-design.md`(통합본 — v0.11에서 구 `통합본_v0_9.md`를 rename)
 >
 > 셋업기 기록이 필요하면 → `archive/HANDOFF.md`

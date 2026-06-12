@@ -1,6 +1,6 @@
 # Kafka Payload 스키마 — 8 토픽
 
-이 파일은 **본 시스템 8 Kafka 토픽의 메시지 본문(payload) 구조**. envelope(헤더 메타데이터)는 별도 기준 문서 `docs/envelope.md`가 정의한다(상위 근거: `docs/통합본_v0_9.md` 6.8). 구현 분배(shared-libs/envelope)는 `docs/envelope.md` §7 참조.
+이 파일은 **본 시스템 8 Kafka 토픽의 메시지 본문(payload) 구조**. envelope(헤더 메타데이터)는 별도 기준 문서 `docs/envelope.md`가 정의한다(상위 근거: `docs/master-design.md`(통합본) 6.8). 구현 분배(shared-libs/envelope)는 `docs/envelope.md` §7 참조.
 
 JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 Protobuf로 전환 — 그때 이 파일이 IDL 입력 (ADR #1).
 

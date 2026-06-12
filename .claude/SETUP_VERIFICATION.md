@@ -12,7 +12,7 @@
 | `codex review --output-schema/--json` | **NG → fallback** (둘 다 미지원 → §5.7 codex exec 경로 채택) |
 | codex exec `--output-schema`/`--json`/`-o` | **OK** (지원 확인, `-o`로 최종 JSON 회수) |
 | 형제 디렉터리 hub/script-agent/infra | **OK** (모두 존재) |
-| 기준 문서 문서 3개 | **OK** (`docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`). ※ `docs/phase0-snapshot/`(PROJECT_OVERVIEW + 데모 spec v0.2.1 기준 문서)은 **Phase 0 스냅샷(참조용)**으로 재분류(phase0-cleanup) |
+| 기준 문서 문서 3개 | **OK** (`docs/master-design.md`(통합본 — v0.11에서 구 `통합본_v0_9.md`를 rename), `docs/kafka-payloads.md`, `docs/envelope.md`). ※ `docs/phase0-snapshot/`(PROJECT_OVERVIEW + 데모 spec v0.2.1 기준 문서)은 **Phase 0 스냅샷(참조용)**으로 재분류(phase0-cleanup) |
 | `.claude/` 기존 존재 | **OK** (미존재 → 덮어쓰기 우려 없음) |
 
 ## 원안 대비 합의된 편차

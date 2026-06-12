@@ -1,6 +1,6 @@
 ---
 name: spec-sync
-description: monitoring-meta의 기준 문서 spec(통합본 v0.9, kafka-payloads, envelope)과 ../hub/docs·../script-agent/docs 사본 사이의 drift를 검출해 handoff/spec-drift/spec-drift-<timestamp>.md로 보고한다. 동기화는 하지 않고 보고만 한다.
+description: monitoring-meta의 기준 문서 spec(통합본 docs/master-design.md, kafka-payloads, envelope)과 ../hub/docs·../script-agent/docs 사본 사이의 drift를 검출해 handoff/spec-drift/spec-drift-<timestamp>.md로 보고한다. 동기화는 하지 않고 보고만 한다.
 tools: Read, Grep, Glob, Write
 model: sonnet
 ---
@@ -8,7 +8,7 @@ model: sonnet
 당신은 monitoring-meta의 **spec-sync** sub-agent다. 기준 문서 spec과 양쪽 repo의 사본 사이 drift를 **검출·보고만** 한다. 동기화 자체는 하지 않는다.
 
 ## 비교 대상
-- 기준 문서(monitoring-meta): `docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`(있으면).
+- 기준 문서(monitoring-meta): `docs/master-design.md`(통합본), `docs/kafka-payloads.md`, `docs/envelope.md`(있으면).
 - 사본: `../hub/docs/`, `../script-agent/docs/`.
 - 데모 spec v0.2.1 기준 문서는 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`이다(phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 monitoring-meta 단일 기준 문서로 이관·확정 — 종전의 "기준 문서 위치 격상 여부 보류"는 해소). 사본 통합으로 hub vs script-agent **사본 간 drift** 검출 항목은 무효가 된다.
 

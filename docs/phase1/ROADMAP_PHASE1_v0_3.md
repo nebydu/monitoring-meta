@@ -32,7 +32,7 @@
 
 ---
 
-> **성격**: 이 문서는 `monitoring-meta/docs/통합본_v0_9.md`를 최상위 기준으로 삼는 **Phase 1 기준 문서 후보 ROADMAP**이다. 입력 draft(`ROADMAP_PHASE1_draft_v0_2.md`)를 normalization 검증(`handoff/phase1-000/phase1-000-roadmap-normalization.md`) 결과로 정정·반영해 생성했다. draft를 그대로 기준 문서화한 것이 아니다.
+> **성격**: 이 문서는 `monitoring-meta/docs/master-design.md`(통합본)를 최상위 기준으로 삼는 **Phase 1 기준 문서 후보 ROADMAP**이다. 입력 draft(`ROADMAP_PHASE1_draft_v0_2.md`)를 normalization 검증(`handoff/phase1-000/phase1-000-roadmap-normalization.md`) 결과로 정정·반영해 생성했다. draft를 그대로 기준 문서화한 것이 아니다.
 >
 > **문서 성격 우선순위**: 코드 → 데모 spec v0.2.1(Phase 0 회귀 방지, 기준 문서 `docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md`) → 통합본 v0.9 + kafka-payloads + envelope(Phase 1+ 도달 목표). "통합본 우선"은 **사실 주장(범위·각 ADR 결정)** 에만 적용한다. tier 순서 / owner_repo / handoff 분리 같은 **계획 레이어**는 ROADMAP 고유 판단이므로 보존하되, 불확실하면 `DECISION_REQUIRED`로 둔다.
 >
@@ -49,7 +49,7 @@
 | 문서 버전 | v0.3 (기준 문서 후보) |
 | 입력 draft | `docs/phase1/ROADMAP_PHASE1_draft_v0_2.md` |
 | normalization 검증 | `handoff/phase1-000/phase1-000-roadmap-normalization.md` |
-| 최상위 기준 문서 | `docs/통합본_v0_9.md` |
+| 최상위 기준 문서 | `docs/master-design.md` (통합본 — v0.11에서 rename, 구 `docs/통합본_v0_9.md`) |
 | 보조 입력 | `docs/kafka-payloads.md`, `docs/envelope.md` (※ 셋업기 `HANDOFF.md`는 `archive/`로 격하 — 작업 상태·미결정의 현행 기준 문서는 본 ROADMAP §9~§14/§17) |
 | 기준 monitoring-meta commit (full hash) | `4940e1a115b911e452f96f0083f1c4dc6ede879f` |
 | 작성 기준일 | 2026-06-03 |
@@ -70,7 +70,7 @@
 이 문서는 Phase 0 완료 이후 Phase 1 완료까지 필요한 작업을 한 곳에서 추적하기 위한 기준 ROADMAP이다. 실제 repo 작업 지시서가 아니다. 실제 구현은 이 ROADMAP을 기준으로 잘라낸 별도 HANDOFF 문서를 통해 수행한다.
 
 ```text
-통합본_v0_9.md
+master-design.md (통합본)
   ↓ derive
 docs/phase1/ROADMAP_PHASE1_draft_v0_2.md   (입력 draft)
   ↓ verify (analyzer normalization + codex-gate)

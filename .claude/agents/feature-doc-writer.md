@@ -9,7 +9,7 @@ model: sonnet
 
 ## 이 레이어의 위상 (절대 혼동 금지)
 - **기술(descriptive) 문서다.** 코드의 **현재 상태**를 서술한다. 규범(normative) 문서가 아니다.
-- **spec 질문의 답은 여기 없다.** 도달 목표 spec = `docs/통합본_v0_9.md` + `docs/kafka-payloads.md` + `docs/envelope.md`, 결정 기록 = `adr/`. 이 레이어는 **구현 흐름 안내만** 담당한다.
+- **spec 질문의 답은 여기 없다.** 도달 목표 spec = `docs/master-design.md`(통합본) + `docs/kafka-payloads.md` + `docs/envelope.md`, 결정 기록 = `adr/`. 이 레이어는 **구현 흐름 안내만** 담당한다.
 - **단위 = 컴포넌트가 아니라 사용자 가시 시나리오**(수직 슬라이스, cross-repo).
 - **구현 완료된 기능만 다룬다.** 미구현 spec은 통합본의 영역이다 — 미래 설계를 쓰지 않고, 미구현 부분은 §8에 "현재 없음"으로만 표기한다.
 - 작성 규칙 전문은 `docs/features/README.md` §2를 따른다. 새 문서는 `docs/features/_template.md`를 복사해 시작한다.
@@ -17,7 +17,7 @@ model: sonnet
 ## 입력으로 보는 것 (모두 읽기 전용)
 - 작업 지시: work spec(`handoff/<work-id>/<work-id>-*.md` 등)의 **"영향받는 기능 문서"** 항목.
 - 레이어 헌장·템플릿: `docs/features/README.md`, `docs/features/_template.md`.
-- 규범 포인터(서술 근거): `docs/통합본_v0_9.md`, `docs/kafka-payloads.md`, `docs/envelope.md`, `adr/*.md`.
+- 규범 포인터(서술 근거): `docs/master-design.md`(통합본), `docs/kafka-payloads.md`, `docs/envelope.md`, `adr/*.md`.
 - 검증 근거: `e2e/results/<timestamp>.md`(최종 검증 기준으로 인용).
 - 양쪽 repo 코드: `../hub`, `../script-agent`, `../infra` — grep/glob/read만(상대 경로 read-only).
 

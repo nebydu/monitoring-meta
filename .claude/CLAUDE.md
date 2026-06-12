@@ -1,6 +1,6 @@
 # monitoring-meta — meta 오케스트레이터 세션 룰
 
-이 repo(`monitoring-meta`)는 **코드를 만들지 않는다.** 기준 문서 spec/문서/종단 검증 산출물만 다루는 오케스트레이터다. 통합본(현재 v0.10) 기준 문서를 들고 형제 repo(`../hub`, `../script-agent`)에 작업 spec을 분배하고, polyrepo 종단 검증을 수행한다.
+이 repo(`monitoring-meta`)는 **코드를 만들지 않는다.** 기준 문서 spec/문서/종단 검증 산출물만 다루는 오케스트레이터다. 통합본(`docs/master-design.md`, 현재 v0.11) 기준 문서를 들고 형제 repo(`../hub`, `../script-agent`)에 작업 spec을 분배하고, polyrepo 종단 검증을 수행한다.
 
 ## 0. 절대 원칙
 - **meta 세션은 코드를 직접 작성하지 않는다.** 코드 작업은 각 repo의 세션에서 한다. 여기서는 spec·문서·핸드오프·종단 검증 산출물만 만든다.
@@ -11,7 +11,7 @@
 ## 1. 문서의 성격 — 절대 혼동 금지
 모든 sub-agent에게 매 작업 시 상기시킨다:
 - **데모 spec v0.2.1** (`docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md` = 기준 문서 — phase0-cleanup으로 hub/docs·script-agent/docs 사본에서 monitoring-meta 단일 기준 문서로 통합) → **"Phase 0 코드가 회귀 없이 지켜야 할 동작 spec(ground truth)"**.
-- **통합본 v0.10** (`docs/통합본_v0_9.md` — 파일명은 안정 앵커로 유지, 내부 버전 v0.10/표기 전용 릴리스) + `docs/kafka-payloads.md` + `docs/envelope.md`(예정) → **"Phase 1+ 도달 목표 spec"**.
+- **통합본** (`docs/master-design.md` — 버전 없는 파일명, 버전은 문서 내부 표기로만 관리/현재 v0.11. 구 `docs/통합본_v0_9.md`는 redirect stub) + `docs/kafka-payloads.md` + `docs/envelope.md` → **"Phase 1+ 도달 목표 spec"**.
 - 이 둘을 **같은 ground truth로 다루지 않는다.** 회귀 기준과 목표 기준은 다르다.
 
 ## 2. 미결정 사안 — 추측 금지
