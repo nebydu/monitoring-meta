@@ -262,3 +262,16 @@
 2. D2 채택 시 → `handoff/decisions/ams-assumption-decisions.md` 신설(누적 기록 틀).
 3. D4 후보 A 채택 시 → `통합본-update-proposal-ams-assumption-baseline.md` 별도 제안서(84·111·128행 재서술) + ROADMAP §17 D-1 next_action 갱신 제안.
 4. D1=pull이면 → Rule Engine(T2-1) 착수 시점에 J-04·J-05·J-14 항목별 잠정 확정 입력부터.
+
+---
+
+## 9. 결정 기록 (2026-06-13 사람 승인 — AskUserQuestion) + 적용
+
+| 결정 | 채택 |
+|---|---|
+| D1 | **pull 묶음별** — 첫 묶음 = Rule Engine(T2-1) 착수 전 3개(J-04·J-05·J-14) |
+| D2 | **태그 전환 형식 채택** — `[AMS 분석 가정 — 사용자 잠정 확정 YYYY-MM-DD, 팀 리뷰 재검증]` |
+| D3 | **게이트 채택** — 마이그레이션/ETL 설계 착수 전 + 늦어도 본개발 진입 전, 통합본 다음 단계 1번에 기록 |
+| D4 | **(A) 재서술** — 사람 승인이 AskUserQuestion으로 직접 떨어져 별도 update-proposal 단계는 생략(승인 갈음), 메인 세션이 직접 반영 |
+
+**적용 완료(2026-06-13, 통합본 v0.13)**: "5단계 피드백" 문구 7곳 재서술(다음 단계 1번·§01 결정 요약·§0.3 작성 원칙·§11.1·§11.3·§11.8·13장 §J 헤더 — 분석 시점 식별 3곳에서 적용 시 grep으로 4곳 추가 발견), 태그 전환 형식·게이트 명문화, `handoff/decisions/ams-assumption-decisions.md` 신설(14항목 현황 표 + 누적 기록 틀, 잠정 확정 0건), ROADMAP §17 D-1=IN_PROGRESS(pull) 전환+액티브 큐 갱신. **§J 14항목의 가정 내용·태그는 무변경(전부 미확정 유지) — 가정의 답은 하나도 정하지 않음.**
