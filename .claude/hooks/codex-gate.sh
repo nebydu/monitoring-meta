@@ -293,14 +293,16 @@ fi
 REVIEW_INPUT=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  if git ls-files --error-unmatch "$f" >/dev/null 2>&1 || [ ! -e "$REPO_ROOT/$f" ]; then
-    # 추적 중인 파일과 "윈도우 내 삭제"(BASE에 있고 인덱스·디스크에 없음) 모두 diff가 정확히 표현한다.
-    # 삭제 파일을 미추적 분기로 보내면 cat 실패(exit 1)가 set -e로 hook 전체를 조용히 죽인다
-    # (2026-06-13 실사례 — stub 삭제 커밋이 윈도우에 들어오자 "non-blocking, no stderr" 실패).
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1 || git cat-file -e "$BASE:$f" 2>/dev/null; then
+    # 추적 중인 파일과 "윈도우 내 삭제"(BASE에 존재 — cat-file로 확인) 모두 diff가 정확히 표현한다.
+    # 삭제 파일을 미추적 분기로 보내면 cat 실패(exit 1)가 set -e로 hook 전체를 조용히 죽이고
+    # (2026-06-13 stub 삭제 실사례 — "non-blocking, no stderr" 실패), [ ! -e ] 식별은 BASE에도
+    # 없는 유령 경로를 빈 diff로 흘려 리뷰 누락을 만든다(게이트 1라운드 지적) — BASE 존재 확인이 정답.
     REVIEW_INPUT="${REVIEW_INPUT}
 $(git -c core.quotepath=false diff "$BASE" -- "$f")"
   else
-    # 미추적 신규 파일은 diff에 안 잡히므로 내용을 직접 합류
+    # 미추적 신규 파일은 diff에 안 잡히므로 내용을 직접 합류. cat은 || true로 보호 — 부재 시
+    # 빈 내용으로 누락되는 대신 NEW FILE 라벨이 남아 리뷰어가 이상을 볼 수 있다.
     REVIEW_INPUT="${REVIEW_INPUT}
 --- NEW FILE: ${f} ---
 $(cat "$REPO_ROOT/$f" 2>/dev/null || true)"
