@@ -33,7 +33,7 @@ script-agent 프로세스의 기동·종료와 job 실행 이력은 `audit-topic
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본(`docs/master-design.md`): `§6.7` Agent 상태 판정 — AGENT_STARTED→ONLINE / AGENT_STOPPED→OFFLINE / heartbeat timeout 세 입력 조합·Agent 등록(ADR #11은 Phase 1 사전 토큰 — 미구현, §8 참조), `§6.6` 감사 흐름 — audit-topic 직행(ADR #3)·actor 확장. ※ 종전 `§3.2`/`§5.3` 포인터는 데모 spec 절 번호의 오기였음 — 데모 spec 포인터는 아래 행이 따로 담당
+- 통합본(`docs/master-design.md`): `§6.7` Agent 상태 판정 — AGENT_STARTED→ONLINE / AGENT_STOPPED→OFFLINE / heartbeat timeout 세 입력 조합·Agent 등록(ADR #11 Phase 1 사전 토큰은 미구현 — 현행 코드는 AGENT_STARTED 수신이 등록을 겸한다, §1·§2), `§6.6` 감사 흐름 — audit-topic 직행(ADR #3)·actor 확장. ※ 종전 `§3.2`/`§5.3` 포인터는 데모 spec 절 번호의 오기였음 — 데모 spec 포인터는 아래 행이 따로 담당
 - 데모 spec v0.2.1: `§5.3` audit 이벤트 — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
 - ADR: `adr/0005-topic-naming.md` — `audit-topic` 최종 논리명 확정
 - 페이로드/봉투: `docs/kafka-payloads.md` `audit-topic` 절; `docs/envelope.md` §2.2~§2.3
