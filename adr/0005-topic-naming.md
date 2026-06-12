@@ -113,14 +113,14 @@
 
 - **다중 zone 진입 시 zone suffix 전개** (미래 트리거): `command-topic-{zone}` 전개는 다중 zone 진입 시점에만 도입한다(통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건). 도입 시 별도 Track 4 재명명 + 통합본 §13_open §A(zone topology) 해소가 선행돼야 한다. **지금 고정/추측하지 않는다(forward note).**
 - **실제 zone 인스턴스명**: zone 인스턴스의 실제 개수·명명(`command-topic-zone-N` 등)은 통합본 §13_open §A 미결 Open — 추측 금지(ROADMAP D-8). 단일 토픽 채택으로 *현 단계*에는 불필요하나, 다중 zone 전개 시점에 §A 해소가 필요하다.
-- **result-topic 분리 ADR 소속(job-results→ADR#5 간접)**: ROADMAP D-5로 추적. 본 ADR은 명명 규칙만 다루며 분리 자체는 §6.9.2 항목1 Phase 1 확정. (명명 규칙은 D-4(1)로 닫힘; ADR 소속만 D-5 Open.)
+- ~~**result-topic 분리 ADR 소속(job-results→ADR#5 간접)**: ROADMAP D-5로 추적.~~ → **해소(2026-06-07, D-5 RESOLVED)**: job-results 분리 = **ADR#5 간접 소속**으로 확정(`handoff/decisions/d5-classification-packet.md`). 본 ADR은 명명 규칙만 다루며 분리 자체는 §6.9.2 항목1 Phase 1 확정 — 구현은 result-topic 분리(T4-2). (2026-06-12 spec-backfill에서 stale 정정 — 신규 결정 아님, 기존 결정의 반영.)
 
 ---
 
 ## 5. Consequences
 
 - **D-4(2) RESOLVED** 효과: Track 0(envelope 나머지 토픽 적용)을 D-4(1)과 무관하게 즉시 착수 가능 → `handoff/phase1-001/phase1-001-envelope-scope.md`로 분배(완료).
-- **D-4(1) RESOLVED (2026-06-06)** 효과: 본 ADR이 Accepted로 전환되어 **Track 4 T4-1(토픽 재명명)의 BLOCKED가 해제**된다. T4-1은 실행 순서(D-4(2) RESOLVED, envelope 먼저)에 따라 Track 0 완료 이후 착수하며, 별도 handoff(`handoff/phase1-040/phase1-040-topic-naming.md`)로 분배 대기다(실제 재명명은 본 ADR 밖 후속 작업).
+- **D-4(1) RESOLVED (2026-06-06)** 효과: 본 ADR이 Accepted로 전환되어 **Track 4 T4-1(토픽 재명명)의 BLOCKED가 해제**된다. T4-1은 실행 순서(D-4(2) RESOLVED, envelope 먼저)에 따라 Track 0 완료 이후 착수했고, **2026-06-07 완료**됐다(`handoff/phase1-040/phase1-040-topic-naming.md` — 3토픽 물리명=논리명, e2e 58/0/0. 2026-06-12 spec-backfill에서 stale 정정).
 - ROADMAP §7 매트릭스의 "(토픽명/zone suffix 명명 규칙 = ADR#5/D-4 의존, 현재 kafka-payloads 이름은 잠정)" 마커는 **확정 규칙(B)·최종 논리명**으로 갱신된다(이 승인 작업에서 ROADMAP §7 동시 갱신).
 - `docs/kafka-payloads.md`의 잠정 토픽명(`command-topic-{zone}` placeholder 등)은 **최종 논리명**으로 정정된다(`command-topic` 단일 + 다중 zone 진입 시 `-{zone}` 미래 주석).
 
