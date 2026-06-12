@@ -10,7 +10,7 @@
 |---|---|---|
 | 커밋 1/3 | `e0af2ef0826a52415dc4640f639f7b4f1db166de` | 통합본 v0.11 내용 backfill (구 파일명 시점) |
 | 커밋 2/3 | `246c4ffb1d7a1848849383084a3f1458e1ad0481` | `git mv` → `docs/master-design.md` + meta 내부 경로 재배선 + 구 경로 redirect stub |
-| 커밋 3/3 | (이 디렉터리 커밋 — 커밋 후 본 행 갱신) | handoff 발주 3건 + spec-drift 보고 |
+| 커밋 3/3 | `a1a693d6b3244463c9d2590f191fb85d02898baf` | handoff 발주(000-impact + 형제 repo 3건) + spec-drift 보고 + proposal-review 보완(adr/0005 D-5·T4-1 stale 정정) |
 
 ## 1. 사람 결정 기록 (2026-06-12 승인)
 
