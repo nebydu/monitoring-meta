@@ -7,7 +7,7 @@ JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 
 ## 토픽 명명 규칙 (ADR #5 / `adr/0005-topic-naming.md` — D-4(1) 2026-06-06 Accepted)
 
 - **규칙(후보 B 승인)**: `<domain>-topic[-{subtype}][-{zone}]` — 의미 기반 일반 규칙. 환경 prefix 없음(통합본 §8.3 ADR#5). 아래 8토픽은 모두 이 규칙의 사례이며, 신규 토픽(Phase 2 metric ingest·rule-engine 계열 등)도 이 규칙으로 강제한다.
-- **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 승인). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건 + §13_open §A(zone topology) 해소 후 도입한다 — 지금 고정/추측하지 않는다.
+- **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 승인). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8(zone 전개=다중 zone 진입 시 미래 트리거) 조건 + 13장 §A(zone topology) 해소 후 도입한다 — 지금 고정/추측하지 않는다.
 - **명시 예외**: `heartbeats-topic`의 복수형 domain은 baseline 호환을 위해 유지(규칙 예외로 기록).
 - **물리명 → 최종 논리명 매핑**: **토픽 재명명(T4-1)은 2026-06-07 완료** — 3토픽(`commands`/`audit-events`/`heartbeats`)은 물리명=논리명 일치(e2e 회귀 0, `e2e/results/20260607-080703.md`). 잔여는 `job-results` → `result-topic-job`/`result-topic-log` 분리(result-topic 분리, T4-2)뿐이다.
 

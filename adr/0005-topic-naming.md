@@ -111,7 +111,7 @@
 
 ## 4. Open / 본 ADR이 확정하지 않는 것
 
-- **다중 zone 진입 시 zone suffix 전개** (미래 트리거): `command-topic-{zone}` 전개는 다중 zone 진입 시점에만 도입한다(통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건). 도입 시 별도 Track 4 재명명 + 통합본 §13_open §A(zone topology) 해소가 선행돼야 한다. **지금 고정/추측하지 않는다(forward note).**
+- **다중 zone 진입 시 zone suffix 전개** (미래 트리거): `command-topic-{zone}` 전개는 다중 zone 진입 시점에만 도입한다(통합본 §6.8 — zone 전개=다중 zone 진입 시 미래 트리거 조건. 구 따옴표 인용 "Phase 1 (다중 zone 진입 시)"는 통합본 v0.11 재서술로 원문 소실 — 의미 동일, 2026-06-13 의미 인용으로 갱신). 도입 시 별도 Track 4 재명명 + 통합본 13장 §A(zone topology) 해소가 선행돼야 한다. **지금 고정/추측하지 않는다(forward note).**
 - **실제 zone 인스턴스명**: zone 인스턴스의 실제 개수·명명(`command-topic-zone-N` 등)은 통합본 §13_open §A 미결 Open — 추측 금지(ROADMAP D-8). 단일 토픽 채택으로 *현 단계*에는 불필요하나, 다중 zone 전개 시점에 §A 해소가 필요하다.
 - ~~**result-topic 분리 ADR 소속(job-results→ADR#5 간접)**: ROADMAP D-5로 추적.~~ → **해소(2026-06-07, D-5 RESOLVED)**: job-results 분리 = **ADR#5 간접 소속**으로 확정(`handoff/decisions/d5-classification-packet.md`). 본 ADR은 명명 규칙만 다루며 분리 자체는 §6.9.2 항목1 Phase 1 확정 — 구현은 result-topic 분리(T4-2). (2026-06-12 spec-backfill에서 stale 정정 — 신규 결정 아님, 기존 결정의 반영.)
 
