@@ -1,4 +1,4 @@
-> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본 v0.9 / `adr/`에 있다.**
+> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본(`docs/master-design.md`) / `adr/`에 있다.**
 
 # 기능: LOG_JOB 수집 흐름
 
@@ -34,7 +34,7 @@
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본 v0.9: `§5.1.2` LOG_JOB spec(log_path/pattern/encoding), `§5.2.2` LogResult, `§5.2.3` file_state 영속 노트(Agent local only), `§5.3.3` JOB_EXECUTED 감사
+- 통합본(`docs/master-design.md`): `§5.1.2` LOG_JOB spec(log_path/pattern/encoding), `§5.2.2` LogResult, `§5.2.3` file_state 영속 노트(Agent local only), `§5.3.3` JOB_EXECUTED 감사
 - 데모 spec v0.2.1: `§5.1.2` LOG_JOB, `§5.2.2` LogResult — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
 - ADR: `adr/0005-topic-naming.md` — `command-topic`/`job-results` 최종 논리명 확정
 - 페이로드/봉투: `docs/kafka-payloads.md` `command-topic`·`job-results` 절; `docs/envelope.md` §2.2~§2.3
@@ -107,7 +107,7 @@ hub: JobResultConsumer → JobResultRingBuffer → UI(/) job-results 패널
 
 ## 7. 검증 방법
 
-> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3).
+> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 / ADR — §3).
 
 - **e2e**: `e2e/results/20260611-095734.md` — PASS 60/0/0
   - §6-LOG: 임시 로그 파일 생성 → LOG_JOB 스케줄 등록(cron=0/5) → 첫 COMMAND 발행(파일 끝 offset 저장) → 매칭 라인 append → hub `JOB_RESULT received: execution_id=... agent_id=... job_type=LOG_JOB status=SUCCESS` 수신 실증 — LogRunner 동적 실행(log_path/pattern/offset 추적 사이클) 전체 경로 검증됨.

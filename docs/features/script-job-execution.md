@@ -1,4 +1,4 @@
-> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본 v0.9 / `adr/`에 있다.**
+> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본(`docs/master-design.md`) / `adr/`에 있다.**
 
 # 기능: SCRIPT_JOB 실행 흐름
 
@@ -32,7 +32,7 @@
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본 v0.9: `§5.1` 명령 발행(execution_id/valid_until/misfire), `§5.1.1` SCRIPT_JOB spec(timeout/output_cap), `§5.2.1` ScriptResult, `§5.3.3` JOB_EXECUTED 감사
+- 통합본(`docs/master-design.md`): `§5.1` 명령 발행(execution_id/valid_until/misfire), `§5.1.1` SCRIPT_JOB spec(timeout/output_cap), `§5.2.1` ScriptResult, `§5.3.3` JOB_EXECUTED 감사
 - 데모 spec v0.2.1: `§5.1` command 흐름, `§5.2.1` SCRIPT_JOB 결과 — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
 - ADR: `adr/0005-topic-naming.md` — `command-topic`/`job-results` 최종 논리명 확정
 - 페이로드/봉투: `docs/kafka-payloads.md` `command-topic`·`job-results` 절; `docs/envelope.md` §2.2 헤더 4종, §2.3 x-source 가드(비규범 관찰 전용)
@@ -108,7 +108,7 @@ hub UI(/): jobResults 패널 (reversed snapshot)
 
 ## 7. 검증 방법
 
-> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3).
+> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 / ADR — §3).
 
 - **e2e**: `e2e/results/20260610-152424.md` — PASS 58/0/0
   - §6-CMD: hub `/schedules` POST 성공 → `command-topic` 발행 확인(`INFO COMMAND sent:` 로그 실증)

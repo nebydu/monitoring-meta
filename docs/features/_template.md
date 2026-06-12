@@ -32,7 +32,7 @@
 ## 3. 관련 spec 참조 (규범 문서 포인터)
 
 <이 흐름의 규범적 근거. 이 레이어는 결정하지 않고 포인터만 단다.>
-- 통합본 v0.9: `§<n>` <항목>
+- 통합본(`docs/master-design.md`): `§<n>` <항목>
 - ADR: `adr/<n>-<slug>.md` <결정 요지>
 - 페이로드/봉투: `docs/kafka-payloads.md` / `docs/envelope.md` <해당 절>
 

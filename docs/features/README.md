@@ -1,4 +1,4 @@
-> **이 레이어는 기술(descriptive) 문서다 — 규범(normative)의 답은 통합본 v0.9 / `adr/`에 있다.**
+> **이 레이어는 기술(descriptive) 문서다 — 규범(normative)의 답은 통합본(`docs/master-design.md`) / `adr/`에 있다.**
 
 # docs/features — 기능 단위 문서 레이어
 
@@ -7,7 +7,7 @@
 ## 1. 이 레이어의 위상 (혼동 금지)
 
 - **기술(descriptive) 문서다.** 코드의 **현재 상태**를 서술한다. 규범(normative) 문서가 아니다.
-- **spec 질문의 답은 여기 없다.** 도달 목표 spec = `docs/통합본_v0_9.md` + `docs/kafka-payloads.md` + `docs/envelope.md`, 결정 기록 = `adr/`. 이 레이어는 **구현 흐름 안내만** 담당한다.
+- **spec 질문의 답은 여기 없다.** 도달 목표 spec = `docs/master-design.md`(통합본) + `docs/kafka-payloads.md` + `docs/envelope.md`, 결정 기록 = `adr/`. 이 레이어는 **구현 흐름 안내만** 담당한다.
 - **통합본·ADR과 충돌하는 서술을 발견하면 임의 수정하지 않는다.** 멈추고 사람에게 보고한다(이 레이어가 규범을 덮어쓰지 않는다).
 - **단위 = 컴포넌트가 아니라 사용자 가시 시나리오**(수직 슬라이스, cross-repo). "HeartbeatConsumer 문서"가 아니라 "heartbeat 수집·전송 흐름 문서".
 - **구현 완료된 기능만 다룬다.** 미구현 spec은 통합본의 영역이다(여기에 미래 설계를 쓰지 않는다).

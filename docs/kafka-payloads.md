@@ -9,14 +9,14 @@ JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 
 - **규칙(후보 B 승인)**: `<domain>-topic[-{subtype}][-{zone}]` — 의미 기반 일반 규칙. 환경 prefix 없음(통합본 §8.3 ADR#5). 아래 8토픽은 모두 이 규칙의 사례이며, 신규 토픽(Phase 2 metric ingest·rule-engine 계열 등)도 이 규칙으로 강제한다.
 - **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 승인). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8 "Phase 1 (다중 zone 진입 시)" 조건 + §13_open §A(zone topology) 해소 후 도입한다 — 지금 고정/추측하지 않는다.
 - **명시 예외**: `heartbeats-topic`의 복수형 domain은 baseline 호환을 위해 유지(규칙 예외로 기록).
-- **물리명 → 최종 논리명 매핑**: 아래 표의 물리명은 T4-1(토픽 재명명) 전 현행 Phase 0 이름이며, **논리명이 최종**이다. 실제 재명명은 Track 4 T4-1(별도 handoff).
+- **물리명 → 최종 논리명 매핑**: **토픽 재명명(T4-1)은 2026-06-07 완료** — 3토픽(`commands`/`audit-events`/`heartbeats`)은 물리명=논리명 일치(e2e 회귀 0, `e2e/results/20260607-080703.md`). 잔여는 `job-results` → `result-topic-job`/`result-topic-log` 분리(result-topic 분리, T4-2)뿐이다.
 
-| 현행 물리명 (Phase 0) | 최종 논리명 (규칙 B) | 비고 |
+| 현행 물리명 | 최종 논리명 (규칙 B) | 상태 |
 |---|---|---|
-| `commands` | `command-topic` | 단일(다중 zone 진입 시 `-{zone}`) |
-| `job-results` | `result-topic-job` / `result-topic-log` | Phase 1 분리(§6.9.2 항목1), ADR 소속=D-5 |
-| `audit-events` | `audit-topic` | — |
-| `heartbeats` | `heartbeats-topic` | 복수형 명시 예외 |
+| `command-topic` | `command-topic` | **일치 (T4-1 완료)** — 단일(다중 zone 진입 시 `-{zone}`) |
+| `job-results` | `result-topic-job` / `result-topic-log` | **T4-2 잔여** — Phase 1 분리(§6.9.2 항목1), ADR 소속=D-5(ADR#5 간접) |
+| `audit-topic` | `audit-topic` | **일치 (T4-1 완료)** |
+| `heartbeats-topic` | `heartbeats-topic` | **일치 (T4-1 완료)** — 복수형 명시 예외 |
 | (신규) | `alert-topic` / `notification-topic` | Phase 1 신설(§6.9.3·§6.9.5) |
 | (Phase 2) | `metrics-topic` | Phase 2 |
 

@@ -1,4 +1,4 @@
-> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본 v0.9 / `adr/`에 있다.**
+> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본(`docs/master-design.md`) / `adr/`에 있다.**
 
 # 기능: heartbeat 수집·전송 흐름
 
@@ -31,7 +31,7 @@ heartbeat 수신은 **`last_seen` 갱신까지만** 수행한다(코드 확인).
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본 v0.9: `§6.7` heartbeat 직렬화(otlp_proto 전환), `§8.2` 메시지 키 = OTel Collector 기본(ordering 불필요)
+- 통합본(`docs/master-design.md`): `§6.7` heartbeat 직렬화(otlp_proto 전환), `§8.2` 메시지 키 = OTel Collector 기본(ordering 불필요)
 - ADR: `adr/0002-heartbeat-otlp-proto.md` — A-1(wire=OTLP 표준 protobuf)/B-1(표준 라이브러리 의존)/C-1(빅뱅 컷오버) 결정; heartbeat 주기·timeout 운영 baseline은 Open(본 ADR 미확정)
 - ADR: `adr/0005-topic-naming.md` — `heartbeats-topic` 최종 논리명 확정(복수형 domain은 명시 예외 — baseline 호환)
 - 페이로드: `docs/kafka-payloads.md` `heartbeats-topic` 절 — OTLP MetricsData protobuf, metric name `agent.heartbeat`, attribute `agent_id`
@@ -88,7 +88,7 @@ hub UI(/): last_seen + heartbeatTimeoutSeconds 로 생존 표시
 
 ## 7. 검증 방법
 
-> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3). 아래 e2e 항목명의 `§5.4` 인용은 회귀 0 근거로서다.
+> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 / ADR — §3). 아래 e2e 항목명의 `§5.4` 인용은 회귀 0 근거로서다.
 
 - **e2e**: `e2e/results/20260610-152424.md` — PASS 58/0/0
   - §1 ADR-0002 C-1 빅뱅 컷오버 정합 (infra `otlp_proto` ↔ hub `ByteArrayDeserializer` + proto 디코더)

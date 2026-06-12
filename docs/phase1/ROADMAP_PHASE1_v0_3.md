@@ -1,6 +1,6 @@
 # Phase 1 ROADMAP — v0.3 (기준 문서 후보)
 
-> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-11 · 표기는 항상 **이름(ID)** 꼴, ID 읽는 법: `docs/phase1/ID-GLOSSARY.md`)
+> **📌 현재 액티브 큐** (§17 D-목록·§16/§9~§14의 **사본** — 갱신 2026-06-12 · 표기는 항상 **이름(ID)** 꼴, ID 읽는 법: `docs/phase1/ID-GLOSSARY.md`)
 >
 > **지금 바로 할 수 있는 작업** (우선순위 근거: `handoff/decisions/phase1-critical-path-analysis.md`)
 > - **result-topic 분리**(T4-2) — `job-results` 토픽을 job/log 둘로 나눈다. 막던 결정이 전부 풀려(ADR 소속 확정 포함, D-5) 잔여 결정 0 — 구현만 남음. → §13
@@ -16,6 +16,7 @@
 > - **모듈 분리 handoff**(§16 순서 5) · **owner_repo 확정 중 D-2 의존분**(D-6) — 모듈 분리 결정(D-2) 후.
 >
 > **최근 완료**
+> - **통합본 stale 결정 backfill + 파일명 rename**(spec-backfill, 2026-06-12, 거버넌스 · Track 무관) — 통합본 v0.11(내용 변경 릴리스, 신규 결정 0): heartbeat protobuf 전환(ADR#2)·토픽 명명(ADR#5)·토픽 재명명(T4-1) 완료 반영, 분가 문서 anchor 추가, 인덱스 현행화, kafka-payloads 매핑 표 "T4-1 완료/T4-2 잔여" 정정. 파일명 `통합본_v0_9.md` → **`docs/master-design.md`**(버전 없는 영어 파일명 — v0.10 때 예고한 후속 결정 발동, 이후 버전은 내부 표기로만). 형제 repo 호칭·경로 재배선은 `handoff/spec-backfill/` 3건 발주. §7.2/D-2(β/γ) 절은 동료 자료 검토 중이라 범위 제외.
 > - **식별자 체계 단순화 + 이름 우선 표기**(2026-06-11, 거버넌스 · Track 무관) — 운영 ID를 **작업(T)/결정(D)/결정 기록(ADR) 3종**으로 정리. 게이트(G)는 결정(D)에 흡수(G-1→D-1/G-2→D-2/G-3→D-8/G-4→D-7/G-5→§5 완료 조건 7), 완료 조건(DoD)은 "§5 완료 조건 N"으로 격하, 리뷰 잔재(N/C/S/drift/Pass 1)·일회성(P/X/M) 본문 제거. 본 액티브 큐는 **이름(ID) 표기**로 전환. 범례 신설 `docs/phase1/ID-GLOSSARY.md`(신구 매핑 부록). **Open 무결정·통합본 v0.9 무수정**(v0.10 표기 개선은 후속 분리). 형제 repo 변경 0(공지 `handoff/id-cleanup/`). 근거: `handoff/id-cleanup/id-cleanup-000-impact.md`.
 > - **e2e baseline v15 = 60/0/0 + 기능 문서 전수 검증**(2026-06-11, 거버넌스 · Track 무관) — 하네스 v9→v15: 동적 검사 2종 추가(**§6-LOG** LOG_JOB 전체 사이클 `JOB_RESULT SUCCESS` 수신 / **§6-STOP** agent graceful shutdown → hub `AGENT_STOPPED received reason=interrupt` 수신) + setup·teardown 잔존 프로세스 위생 검사. **전체 PASS 60/0/0**(`e2e/results/20260611-095734.md`) — **이후 회귀 기준은 이 baseline**(구 58/0/0 표기는 당시 기록). 신호 교훈: Windows에서 CTRL_C(0,0) 콘솔 브로드캐스트 미배달 → **CTRL_BREAK_EVENT(1,0)** 사용(v10~v14 FAIL 원인, 격리 실험으로 확정). `docs/features/` 3건 신규(`script-job-execution`/`log-job-collection`/`agent-lifecycle-audit`)로 구현 완료 시나리오 4건 전부 문서화·미실증 주의 0. 커밋 `a162c76`·`4102ed0`·`b6a35ee`·`d3e41fd`(push됨).
 > - **docs/features 기능 문서 레이어 신설 + 파이프라인**(2026-06-10, 거버넌스 · Track 무관) — 사용자 가시 시나리오의 cross-repo 흐름 안내(descriptive, 규범=통합본/adr와 분리). 산출: `docs/features/`(README 헌장+`_template.md`), `feature-doc-writer` sub-agent, analyzer `affected_feature_docs` 필수 필드, codex-gate descriptive 전용 프롬프트 분기(Step 4 결정 (c)). 파일럿 `docs/features/heartbeat-collection.md`(ADR#2 heartbeat 흐름, 검증기준 e2e `20260610-152424`). 커밋 `c967fad`·`b591f29`·`4fafa5b`. 후속 = script-agent 구 토픽명 주석 drift(`handoff/heartbeat-topic-comment-drift/heartbeat-topic-comment-drift-script-agent.md`).
@@ -179,8 +180,8 @@ Phase 1 완료는 다음을 모두 만족해야 한다.
 | #1 | 스키마 관리 | 1차 미도입, Phase 2/3 Apicurio | **NO-OP** | Phase 1 미도입 근거 기록. T5-1 |
 | #2 | Heartbeat 마샬링 | Phase 1 protobuf | **DONE** | heartbeat 마샬링 한정. 잔여 없음. e2e PASS 16/0/0(2026-06-02). **envelope 전 토픽 적용 ≠ ADR#2**(envelope 나머지 토픽은 Track 0) — T5-2 |
 | #3 | Audit 채널 | Kafka 직행 동일 유지 | **NO-OP** | T5-3 |
-| #4 | Consumer group | 동일 + zone 단위 토픽 routing | **PARTIAL** | Phase 1: group.id 유지(기구현). 잔여: zone 단위 command-topic routing → T4-3 |
-| #5 | 토픽 명명 | zone 단위 + 의미 기반 | **TODO** | Phase 1 전체. 토픽 *명명 규칙*(D-4(1) — 2026-06-06 RESOLVED, 후보 B, `adr/0005` Accepted) + 토픽 재구조 *실행 순서*(D-4(2) — 2026-06-04 RESOLVED, envelope 먼저). 잔여=재명명 구현(T4-1, BLOCKED 해제). alert/notification 토픽 신설 자체는 Phase 1 확정(§6.9.3·§6.9.5). T4-1 |
+| #4 | Consumer group | 동일 + 단일 command-topic에서 target_agent_id routing(zone 전개=다중 zone 진입 시) | **PARTIAL** | Phase 1: group.id 유지(기구현). 잔여: zone 단위 전개는 다중 zone 진입 시 미래 트리거(D-4(1)-future, §A 의존) → T4-3 |
+| #5 | 토픽 명명 | 의미 기반 규칙 B(단일 command-topic, zone suffix=다중 zone 진입 시) | **PARTIAL** | 토픽 *명명 규칙*(D-4(1) — 2026-06-06 RESOLVED, 후보 B, `adr/0005` Accepted) + 토픽 재구조 *실행 순서*(D-4(2) — 2026-06-04 RESOLVED, envelope 먼저). **토픽 재명명(T4-1) 완료(2026-06-07, 3토픽 물리=논리, e2e 58/0/0)**. 잔여=result-topic 분리(T4-2) + alert/notification 토픽 신설(Phase 1 확정, §6.9.3·§6.9.5) |
 | #6 | 메시지 키 | 토픽별 정의 | **PARTIAL** | 기존 토픽 키 기구현(command=target_agent_id). 잔여: 신규 토픽 key 정의(alert=`(rule_id,target_id)`/notification=`incident_id` — 통합본 §6.9.5 확정) → T4-4 |
 | #7 | 인증/인가 | JWT+OIDC+Knox (Phase 1) | **TODO** | Phase 1 전체. T1-2 |
 | #8 | 시각화 | LEGO + WebSocket | **TODO** | Phase 1 전체. T3-6 |

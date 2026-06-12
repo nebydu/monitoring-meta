@@ -1,4 +1,4 @@
-> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본 v0.9 / `adr/`에 있다.**
+> **이 문서는 기술(descriptive) 문서다 — 코드의 현재 상태를 서술한다. 규범의 답은 통합본(`docs/master-design.md`) / `adr/`에 있다.**
 
 # 기능: agent 생명주기 인지·감사 추적 흐름
 
@@ -33,7 +33,7 @@ script-agent 프로세스의 기동·종료와 job 실행 이력은 `audit-topic
 
 이 레이어는 결정하지 않고 포인터만 단다.
 
-- 통합본 v0.9: `§3.2` AgentRegistry(ONLINE/OFFLINE 전이 정책), `§5.3` 감사 이벤트 3종, `§5.3.1` AGENT_STARTED metadata, `§5.3.2` AGENT_STOPPED, `§5.3.3` JOB_EXECUTED
+- 통합본(`docs/master-design.md`): `§3.2` AgentRegistry(ONLINE/OFFLINE 전이 정책), `§5.3` 감사 이벤트 3종, `§5.3.1` AGENT_STARTED metadata, `§5.3.2` AGENT_STOPPED, `§5.3.3` JOB_EXECUTED
 - 데모 spec v0.2.1: `§5.3` audit 이벤트 — **Phase 0 회귀 기준**, 통합본과 동일 ground truth 아님
 - ADR: `adr/0005-topic-naming.md` — `audit-topic` 최종 논리명 확정
 - 페이로드/봉투: `docs/kafka-payloads.md` `audit-topic` 절; `docs/envelope.md` §2.2~§2.3
@@ -120,7 +120,7 @@ hub UI(/): agents 패널 state=OFFLINE 표시
 
 ## 7. 검증 방법
 
-> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 v0.9 / ADR — §3).
+> `데모 spec v0.2.1`은 **Phase 0 회귀 검증 기준**이며 도달 목표 규범이 아니다(규범 = 통합본 / ADR — §3).
 
 - **e2e**: `e2e/results/20260611-095734.md` — PASS 60/0/0
   - §6-AUDIT: hub 로그에서 AGENT_STARTED 수신 확인 — audit-topic 경로(agent→kafka→hub) 정상 실증; 로그 라인 `AGENT_STARTED received: agent_id=f448be85-... hostname=DESKTOP-A5E43KQ os=windows/amd64 agent_version=0.1.0`
