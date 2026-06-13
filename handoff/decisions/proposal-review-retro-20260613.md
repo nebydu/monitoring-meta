@@ -22,7 +22,19 @@
 - C2 격리 원칙·P2 1페이지 → **T2-1(Rule Engine) 착수 시점**에 구현 세션이 판단. 그때 J-04·J-05·J-14 잠정 확정과 함께 처리(decisions ⑥ 형식).
 - P4 취소선 제거 → 외부 앵커(envelope·adr/0002) 재배선 완료 또는 차기 대규모 정리 릴리스.
 
+## 2라운드 회고(같은 처리 재검토, verdict=revise medium) — 수렴 보완
+
+1라운드 처리 결과를 다시 돌린 회고의 지적 처리(이번이 마지막 — 추가 재호출은 권하지 않음, scope §5 자동 수렴 loop 금지):
+
+| 2라운드 지적 | 판단 | 처리 |
+|---|---|---|
+| C1 fallback ⑤가 "팀 리뷰 대체"로 단정 | **타당** | ⑤ 재서술 — "대체 아닌 임시 진행, 재검증 부채 유지, 기록된 항목 한정, 고위험은 DEFERRED 기본+위험 명시 수용 결정 필요" |
+| C1 발동 시점 "N일 전" 구체화 | **거름** | N일=근거 없는 임의 숫자(추측). "착수 임박+위험도·되돌림 비용·대체 옵션 기록 시" 조건으로만 정밀화 |
+| C2 T2-1 handoff 필수 선행 체크 | **타당** | ⑥에 "T2-1 handoff acceptance criteria 선행 조건 — 3건 표 미완 시 착수 불가" + 「격리/추상화 결정」컬럼 |
+| P2 1페이지를 고정 섹션으로 흡수 | **타당** | decisions에 「T2-1 착수 전 필수 게이트」고정 섹션(J-04/05/14 placeholder 3행, 6컬럼) 신설 |
+| P4 완료 기준 명시 | **타당** | §10에 트리거+완료 기준(6장 절 취소선 줄 삭제→§E 카드 단일화, 순수 미결 §6.3.2·§6.8.6 불가침, grep 재확인) |
+
 ## 적용 산출물
-- `handoff/decisions/ams-assumption-decisions.md` — 규칙 ④⑤⑥ 추가, 기록 표에 「되돌릴 설계 범위」컬럼.
-- `handoff/open-alignment/open-alignment-000-decision-packet.md` §10 — 취소선 제거 부채 TODO.
+- `handoff/decisions/ams-assumption-decisions.md` — 규칙 ④⑤⑥(⑤⑥ 2라운드 보완), 기록 표 「되돌릴 설계 범위」컬럼, **「T2-1 착수 전 필수 게이트」고정 섹션 신설**.
+- `handoff/open-alignment/open-alignment-000-decision-packet.md` §10 — 취소선 제거 부채 TODO(2라운드: 완료 기준 추가).
 - 통합본 본문 무변경(이번 처리는 추적·절차 보강뿐 — AMS 가정의 답·설계 결정 0).
