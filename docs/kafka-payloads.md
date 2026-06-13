@@ -33,7 +33,7 @@ JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 
 
 Job 실행 명령. hub-be Quartz → script-agent.
 
-> 최종 논리명 = `command-topic` (단일 물리 토픽, 규칙 B `<domain=command>-topic`). 현행 물리명 `commands`. **다중 zone 진입 시** `command-topic-{zone}` 전개(미래, 통합본 §13_open §A 해소 후 — ADR #5 §4 Open).
+> 최종 논리명 = `command-topic` (단일 물리 토픽, 규칙 B `<domain=command>-topic`). 현행 물리명 `commands`. **다중 zone 진입 시** `command-topic-{zone}` 전개(미래, 통합본 13장 §A 해소 후 — ADR #5 §4 Open).
 
 ```json
 {
@@ -215,4 +215,4 @@ OTel Collector → metric-ingest-service + rule-engine-metrics. OTLP MetricsData
 
 ## 데모 일관성
 
-데모 spec v0.2.1과의 일관성은 `v0_9/04_데이터흐름.md` 6.9 매트릭스 참조. Phase 0 → Phase 1 전환 시 정정 항목 11개.
+데모 spec v0.2.1과의 일관성은 `docs/master-design.md`(통합본) §6.9 데모 일관성 매트릭스 참조. Phase 0 → Phase 1 전환 시 정정 항목 11개.
