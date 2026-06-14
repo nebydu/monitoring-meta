@@ -9,7 +9,7 @@
 | 기능 ID | `script-job-execution` | 파일명과 일치 |
 | 시나리오 한 줄 | `스케줄 등록 → Quartz 트리거 → command-topic → script-agent SCRIPT_JOB 실행 → result-topic-job → hub 수신·표시` | 인덱스 표와 동일 |
 | 관여 repo | `hub`, `script-agent`, `infra` | |
-| 기준 meta commit | `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` | 이 문서가 참조한 통합본/`adr/` 등 **spec의 시점**을 고정한다. **형제 repo 코드 시점이 아니다** — 코드가 실제 동작한 시점 증거는 §9의 e2e 결과. 본문 코드 앵커로 쓰지 않는다 |
+| 기준 meta commit | `e7ca16c32b60da8886a0c9a1a8f6594390bcde4c` | 이 문서가 참조한 통합본/`adr/` 등 **spec의 시점**을 고정한다. **형제 repo 코드 시점이 아니다** — 코드가 실제 동작한 시점 증거는 §9의 e2e 결과. 본문 코드 앵커로 쓰지 않는다 |
 | 최종 갱신일 | `2026-06-14` | |
 | 검증 상태 | `검증됨` | §9 최종 검증 기준과 연동 |
 
@@ -132,5 +132,5 @@ hub UI(/): jobResults 패널 (reversed snapshot)
 ## 9. 최종 검증 기준 (필수)
 
 - **기준 e2e 결과**: `e2e/results/20260614-164044.md` (PASS 64/0/0) — 형제 repo 코드가 실제 동작한 시점 증거. 동적 모드(`--dynamic`) 활성, Docker 데몬 v29.4.3.
-- **spec 참조 시점**: §0 기준 meta commit `5c2ef6b4df338cf55b500bf3cd20ee2c381fc67e` (통합본 v0.9 / `adr/0005-topic-naming.md` / `docs/kafka-payloads.md` / `docs/envelope.md`)
+- **spec 참조 시점**: §0 기준 meta commit `e7ca16c32b60da8886a0c9a1a8f6594390bcde4c` (master-design(통합본, ADR#19·T4-2 반영) / `adr/0005-topic-naming.md` / `adr/0019-result-payload-staging.md` / `docs/kafka-payloads.md` / `docs/envelope.md`)
 - **Phase 0 회귀 기준(데모 spec v0.2.1 — 규범 아닌 회귀 근거)**: §6-CMD command 발행 성공 실증; §7 x-source 가드 회귀 0; §8 R-B 토픽 상수 신명 정합(result-topic-job/log, 구명 JOB_RESULTS 제거); §8 R-A 동작 등가.
