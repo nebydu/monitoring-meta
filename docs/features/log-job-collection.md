@@ -58,7 +58,7 @@ hop 1~5(스케줄 등록 → command-topic 발행 → script-agent fetch)와 hop
 | 7b | `script-agent:internal/job.LogRunner` | `decideReadFrom` | - | hasState=false → currentSize(파일 끝); file_id 변경 또는 truncate → 0; 그 외 → state.Offset |
 | 7c | `script-agent:internal/job.LogRunner` | `scanForPattern` | - | bufio.Scanner 라인 순회; regex 매칭 → matched++, sample(최대 10); ctx 취소 시 부분 결과 |
 | 7d | `script-agent:internal/job.LogRunner` | `saveFileState` | - | write-temp-then-rename atomic; `{offset, size, file_id}` JSON; 실패 시 결과는 유효, 다음 실행에서 첫 실행으로 재처리 |
-| 8 | `script-agent:internal/jobresult.Publisher` | `jobresult.Publisher.Publish` (job_type=LOG_JOB 분기) | `result-topic-log` | `JobResult.Log = &LogResult{matched_lines_count, sample_lines}`; envelope 3종 헤더; key=agentID; env `KAFKA_TOPIC_RESULT_LOG` |
+| 8 | `script-agent:internal/jobresult.Publisher` | `jobresult.Publisher.Publish` (job_type=LOG_JOB 분기) | `result-topic-log` | `JobResult.Log = &LogResult{matched_lines_count, sample_lines}`; envelope **4종 규약** 헤더(x-trace-id는 trace 부재 시 생략, command hop과 동일 패턴); key=agentID; env `KAFKA_TOPIC_RESULT_LOG` |
 | 9 | `script-agent:internal/audit.Publisher` | `audit.Publisher.JobExecuted` | `audit-topic` | JOB_EXECUTED(execution_id/schedule_id/job_id/job_type="LOG_JOB") |
 | 10~12 | (SCRIPT_JOB과 동일) | `script-job-execution.md` §5 참조 | `result-topic-log` | `JobResultConsumer`(멀티토픽 listener) → `JobResultRingBuffer`(공용) → UI 패널 |
 
