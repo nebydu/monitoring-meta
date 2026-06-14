@@ -2112,7 +2112,7 @@ walking skeleton. Spring Boot Hub BE + Go Script Agent + Kafka 4 토픽 (command
 
 | 전환 | 핵심 변경 | 비용 |
 |---|---|---|
-| **0 → 1** | 모놀리스 → 모듈러 + 영속 + 인증 + LEGO + 신규 도메인 다수 | **큼** — ADR 18개 결정 + 데모 재구조화 |
+| **0 → 1** | 모놀리스 → 모듈러 + 영속 + 인증 + LEGO + 신규 도메인 다수 | **큼** — ADR 19개 결정 + 데모 재구조화 |
 | **1 → 2** | 메트릭 영역 컴포넌트 추가 (기존 구조 유지) | 중간 |
 | **2 → 3** | HQ 시스템 신규 + Zone↔HQ 채널 | 중간 (운영 부담 +1) |
 
@@ -2223,7 +2223,7 @@ notification:
 - **Secret 관리**: External Secrets Operator + Vault/KMS
 - **x-message-id 중복 검사**: Phase 1 도입 (Redis TTL)
 
-ADR 18개와 v0.7 결정 1:1 매핑 — 8.3 참조.
+ADR #1~#18과 v0.7 결정 1:1 매핑(#19는 본개발 진행 중 파생 결정) — 8.3 참조.
 
 ---
 
@@ -2284,9 +2284,9 @@ ADR 18개와 v0.7 결정 1:1 매핑 — 8.3 참조.
 
 ---
 
-## 8.3 ADR 18개와 v0.7 매핑
+## 8.3 ADR 결정과 v0.7 매핑
 
-본개발 진입 시 ADR 문서가 v0.x 본문을 참조. 1:1 일치. **작성된 결정 기록은 `adr/`가 기준 문서다** — 현재 ADR #2(`adr/0002-heartbeat-otlp-proto.md`)·ADR #5(`adr/0005-topic-naming.md`)가 Accepted로 닫혔고, 이 표의 해당 행은 그 결정의 요약이다.
+본개발 진입 시 ADR 문서가 v0.x 본문을 참조. #1~#18은 v0.x 본문과 1:1 일치, **#19는 본개발 진행 중 파생 결정**(T4-2 payload 위상, v0.7 본문에 없음). **작성된 결정 기록은 `adr/`가 기준 문서다** — 현재 ADR #2(`adr/0002-heartbeat-otlp-proto.md`)·ADR #5(`adr/0005-topic-naming.md`)·ADR #19(`adr/0019-result-payload-staging.md`)가 Accepted로 닫혔고, 이 표의 해당 행은 그 결정의 요약이다.
 
 | ADR | 주제 | 데모 | v0.x 본개발 | 본문 |
 |---|---|---|---|---|
@@ -2308,6 +2308,7 @@ ADR 18개와 v0.7 결정 1:1 매핑 — 8.3 참조.
 | 16 | 명령 만료 (valid_until) | payload + 90% | 정책 유지 + 만료 audit | 04 §6.2 |
 | 17 | Quartz misfire | `DO_NOTHING` | 동일 유지 | 04 §6.2 |
 | 18 | 오프라인 Agent 발행 게이팅 | 없음 | heartbeat 게이팅 + Agent OFFLINE Alert | 04 §6.7 |
+| 19 | result payload 정렬 단계화 | 공통 `JobResult`(데모 §5.2) | **Accepted** (2026-06-14, `adr/0019`) — T4-2=토픽만 분리, payload는 현 단계 공통 `JobResult` 유지, 평면 목표 정렬은 후속 Track | 04 §6.9.2, kafka-payloads |
 
 ---
 

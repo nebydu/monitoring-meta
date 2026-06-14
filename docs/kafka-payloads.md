@@ -14,7 +14,7 @@ JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 
 | 현행 물리명 | 최종 논리명 (규칙 B) | 상태 |
 |---|---|---|
 | `command-topic` | `command-topic` | **일치 (T4-1 완료)** — 단일(다중 zone 진입 시 `-{zone}`) |
-| `job-results` | `result-topic-job` / `result-topic-log` | **T4-2 잔여** — Phase 1 분리(§6.9.2 항목1), ADR 소속=D-5(ADR#5 간접) |
+| `job-results` | `result-topic-job` / `result-topic-log` | **T4-2 잔여**(토픽명 분리 — §6.9.2 항목1, ADR 소속=D-5/ADR#5 간접). payload는 2단계(**ADR#19**): 현 단계 계약=공통 `JobResult`, 목표 계약=각 절 ② 평면 스키마(후속 Track). 토픽명 "일치" 전환은 infra/script-agent 컷오버+e2e 후 복귀 게이트 |
 | `audit-topic` | `audit-topic` | **일치 (T4-1 완료)** |
 | `heartbeats-topic` | `heartbeats-topic` | **일치 (T4-1 완료)** — 복수형 명시 예외 |
 | (신규) | `alert-topic` / `notification-topic` | Phase 1 신설(§6.9.3·§6.9.5) |
@@ -61,6 +61,32 @@ Job 실행 명령. hub-be Quartz → script-agent.
 Shell/SQL Job 실행 결과. script-agent → script-result-service / rule-engine-script.
 
 > 최종 논리명 = `result-topic-job` (규칙 B `<domain=result>-topic-<subtype=job>`). 현행 물리명 `job-results`(Phase 1 분리, §6.9.2 항목1).
+>
+> **payload 위상 = 2단계 (ADR#19, `adr/0019-result-payload-staging.md`)**: 토픽 분리(T4-2)와 payload 필드 정렬을 독립 단계로 둔다. 아래 **① 현 단계 계약**(공통 `JobResult`)이 Phase 1 현재 검증 기준이고, **② 목표 계약**(평면 스키마)은 후속 Track 도달 목표다. ②와 코드가 다른 것은 drift가 아니라 의도된 단계 차이.
+
+**① 현 단계 (Phase 1) 계약 — 공통 `JobResult`** (= 동결 데모 spec v0.2.1 §5.2 구조, ADR#19). `result-topic-job`/`result-topic-log`가 같은 구조를 공유하고 `job_type`에 따라 `script`/`log` 중 하나만 채운다. envelope 4종 적용, key=`agent_id`. **hub/script-agent 코드의 현 단계 검증 기준은 이 블록이다.** 현 단계 `job_type` 도메인 = `SCRIPT_JOB | LOG_JOB`(데모 §5.2)이고, result-topic-job은 `SCRIPT_JOB` 결과가 `script`를 채운다. **`SQL_JOB`은 현 단계에 미존재**하며 ADR#9/T2-7로 Phase 1 추가 예정 — 추가 시 result-topic-job에 실린다(목표 enum의 `SQL`에 대응).
+
+```json
+{
+  "execution_id": "uuid",
+  "schedule_id": "uuid",
+  "job_id": "uuid",
+  "agent_id": "uuid",              // = 메시지 키
+  "job_type": "SCRIPT_JOB | LOG_JOB",     // 현 단계 enum (목표는 SHELL|SQL|LOG)
+  "status": "SUCCESS | FAIL | TIMEOUT",   // 현 단계 enum (목표는 소문자)
+  "started_at": "RFC3339",
+  "finished_at": "RFC3339",
+  "script": {                      // SCRIPT_JOB일 때 채움, 아니면 null
+    "exit_code": 0,
+    "stdout_cap": "...",
+    "stderr_cap": "...",
+    "truncated": false
+  },
+  "log": null                      // LOG_JOB일 때 채움(result-topic-log 절 참조), 아니면 null
+}
+```
+
+**② 목표 (target) 계약 — 후속 Track 도달 목표** (ADR#19: 분리 후 별 Track에서 아래로 정렬). 정렬 항목별 Track/ADR 추적은 ROADMAP(`docs/phase1/ROADMAP_PHASE1_v0_3.md`)이 단일 출처 — 이 절에서 미결 ADR/Track을 선결정하지 않는다.
 
 ```json
 {
@@ -85,6 +111,12 @@ Shell/SQL Job 실행 결과. script-agent → script-result-service / rule-engin
 LOG Job raw 로그 라인. script-agent → script-result-service / rule-engine-log.
 
 > 최종 논리명 = `result-topic-log` (규칙 B `<domain=result>-topic-<subtype=log>`). 현행 물리명 `job-results`(Phase 1 분리, §6.9.2 항목1).
+>
+> **payload 위상 = 2단계 (ADR#19)**: result-topic-job 절과 동일 원칙.
+
+**① 현 단계 (Phase 1) 계약** — **result-topic-job 절 ①의 공통 `JobResult`와 동일 구조**(단일 앵커). LOG_JOB은 `log`(`{matched_lines_count, sample_lines: [string]}`)를 채우고 `script`=null. 현 단계 검증 기준은 그 공통 블록이다.
+
+**② 목표 (target) 계약 — 후속 Track 도달 목표** (ADR#19). 항목별 추적: `occurred_at`=ADR#10/T3-7(TODO), `file_state`=ADR#14(동일 유지·NO-OP, T5-4), 평면화 등 = 후속 Track(ROADMAP 단일 출처).
 
 ```json
 {
