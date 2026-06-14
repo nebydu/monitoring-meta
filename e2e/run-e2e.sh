@@ -678,28 +678,35 @@ exit 0
                             HB_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "heartbeats-topic" || true)
                             CMD_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "command-topic" || true)
                             AUDIT_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "audit-topic" || true)
-                            JR_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "job-results" || true)
+                            # T4-2: result-topic-job + result-topic-log 2개 분리 확인
+                            JR_JOB_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "result-topic-job" || true)
+                            JR_LOG_TOPIC_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "result-topic-log" || true)
                             if [ -n "${HB_TOPIC_LIVE}" ] && [ -n "${CMD_TOPIC_LIVE}" ] && \
-                               [ -n "${AUDIT_TOPIC_LIVE}" ] && [ -n "${JR_TOPIC_LIVE}" ]; then
-                                log_pass "§6-T4-A: 라이브 kafka 신명 토픽 4종 모두 존재 확인"
+                               [ -n "${AUDIT_TOPIC_LIVE}" ] && [ -n "${JR_JOB_TOPIC_LIVE}" ] && \
+                               [ -n "${JR_LOG_TOPIC_LIVE}" ]; then
+                                log_pass "§6-T4-A: 라이브 kafka 신명 토픽 5종 모두 존재 확인(T4-2 분리 포함)"
                             else
                                 MISSING=""
-                                [ -z "${HB_TOPIC_LIVE}" ]    && MISSING="${MISSING} heartbeats-topic"
-                                [ -z "${CMD_TOPIC_LIVE}" ]   && MISSING="${MISSING} command-topic"
-                                [ -z "${AUDIT_TOPIC_LIVE}" ] && MISSING="${MISSING} audit-topic"
-                                [ -z "${JR_TOPIC_LIVE}" ]    && MISSING="${MISSING} job-results"
+                                [ -z "${HB_TOPIC_LIVE}" ]      && MISSING="${MISSING} heartbeats-topic"
+                                [ -z "${CMD_TOPIC_LIVE}" ]     && MISSING="${MISSING} command-topic"
+                                [ -z "${AUDIT_TOPIC_LIVE}" ]   && MISSING="${MISSING} audit-topic"
+                                [ -z "${JR_JOB_TOPIC_LIVE}" ] && MISSING="${MISSING} result-topic-job"
+                                [ -z "${JR_LOG_TOPIC_LIVE}" ] && MISSING="${MISSING} result-topic-log"
                                 log_fail "§6-T4-A: 라이브 kafka 신명 토픽 미존재:${MISSING}"
                             fi
                             OLD_HB_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "heartbeats" || true)
                             OLD_CMD_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "commands" || true)
                             OLD_AUDIT_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "audit-events" || true)
-                            if [ -z "${OLD_HB_LIVE}" ] && [ -z "${OLD_CMD_LIVE}" ] && [ -z "${OLD_AUDIT_LIVE}" ]; then
-                                log_pass "§6-T4-A: 라이브 kafka 구명 토픽(heartbeats/commands/audit-events) 미생성 확인"
+                            # T4-2: 구명 job-results도 미생성 확인
+                            OLD_JR_LIVE=$(echo "${LIVE_TOPICS}" | grep -x "job-results" || true)
+                            if [ -z "${OLD_HB_LIVE}" ] && [ -z "${OLD_CMD_LIVE}" ] && [ -z "${OLD_AUDIT_LIVE}" ] && [ -z "${OLD_JR_LIVE}" ]; then
+                                log_pass "§6-T4-A: 라이브 kafka 구명 토픽(heartbeats/commands/audit-events/job-results) 미생성 확인"
                             else
                                 STALE=""
                                 [ -n "${OLD_HB_LIVE}" ]    && STALE="${STALE} heartbeats"
                                 [ -n "${OLD_CMD_LIVE}" ]   && STALE="${STALE} commands"
                                 [ -n "${OLD_AUDIT_LIVE}" ] && STALE="${STALE} audit-events"
+                                [ -n "${OLD_JR_LIVE}" ]    && STALE="${STALE} job-results"
                                 log_fail "§6-T4-A: 라이브 kafka 구명 토픽 존재 감지:${STALE}"
                             fi
                         fi
@@ -1211,10 +1218,24 @@ else
     log_fail "§8 R-B: hub/KafkaConfig.Topics.HEARTBEATS 값이 \"heartbeats-topic\"이 아님"
 fi
 
-if file_contains "${HUB_KAFKA_CFG}" 'JOB_RESULTS\s*=\s*"job-results"'; then
-    log_pass "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS = \"job-results\" 유지 확인"
+# T4-2: JOB_RESULTS 폐기 → RESULT_JOB/RESULT_LOG 신설 확인
+if file_contains "${HUB_KAFKA_CFG}" 'RESULT_JOB\s*=\s*"result-topic-job"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.RESULT_JOB = \"result-topic-job\" 신설 확인"
 else
-    log_fail "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS 값이 \"job-results\"가 아님"
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.RESULT_JOB = \"result-topic-job\" 없음"
+fi
+
+if file_contains "${HUB_KAFKA_CFG}" 'RESULT_LOG\s*=\s*"result-topic-log"'; then
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.RESULT_LOG = \"result-topic-log\" 신설 확인"
+else
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.RESULT_LOG = \"result-topic-log\" 없음"
+fi
+
+# T4-2: 구명 JOB_RESULTS 부재 확인
+if file_contains "${HUB_KAFKA_CFG}" 'JOB_RESULTS\s*=\s*"job-results"'; then
+    log_fail "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS 구명 상수 잔존 — 분리 미완"
+else
+    log_pass "§8 R-B: hub/KafkaConfig.Topics.JOB_RESULTS 구명 상수 제거됨 확인"
 fi
 
 OLD_TOPIC_MAIN=$(grep -rn '"commands"\|"audit-events"\|"heartbeats"' \
@@ -1263,17 +1284,19 @@ else
     log_fail "§8 R-B: script-agent/config.go: 구명 getenv default 잔존 감지: ${OLD_AGENT_DEFAULT}"
 fi
 
-if file_contains "${INFRA_COMPOSE}" 'command-topic.*job-results.*audit-topic.*heartbeats-topic'; then
-    log_pass "§8 R-B: infra/docker-compose.yml kafka-init 루프: 신명 4종 확인"
+# T4-2: command-topic·result-topic-job·result-topic-log·audit-topic·heartbeats-topic 5종 확인
+if file_contains "${INFRA_COMPOSE}" 'command-topic.*result-topic-job.*result-topic-log.*audit-topic.*heartbeats-topic'; then
+    log_pass "§8 R-B: infra/docker-compose.yml kafka-init 루프: 신명 5종 확인(T4-2 분리 포함)"
 elif file_contains "${INFRA_COMPOSE}" 'command-topic' && \
+     file_contains "${INFRA_COMPOSE}" 'result-topic-job' && \
+     file_contains "${INFRA_COMPOSE}" 'result-topic-log' && \
      file_contains "${INFRA_COMPOSE}" 'audit-topic' && \
-     file_contains "${INFRA_COMPOSE}" 'heartbeats-topic' && \
-     file_contains "${INFRA_COMPOSE}" 'job-results'; then
-    log_pass "§8 R-B: infra/docker-compose.yml kafka-init: 4개 토픽명 모두 존재 확인"
+     file_contains "${INFRA_COMPOSE}" 'heartbeats-topic'; then
+    log_pass "§8 R-B: infra/docker-compose.yml kafka-init: 5개 토픽명 모두 존재 확인"
 else
-    COMPOSE_TOPIC_LINE=$(grep -n "for t in\|command-topic\|audit-topic\|heartbeats-topic\|commands\|audit-events\|heartbeats" \
+    COMPOSE_TOPIC_LINE=$(grep -n "for t in\|command-topic\|result-topic-job\|result-topic-log\|audit-topic\|heartbeats-topic\|commands\|audit-events\|heartbeats" \
         "${INFRA_COMPOSE}" 2>/dev/null | head -10 || true)
-    log_fail "§8 R-B: infra/docker-compose.yml kafka-init 루프에서 신명 4종 미확인: ${COMPOSE_TOPIC_LINE}"
+    log_fail "§8 R-B: infra/docker-compose.yml kafka-init 루프에서 신명 5종 미확인: ${COMPOSE_TOPIC_LINE}"
 fi
 
 OLD_COMPOSE_TOPICS=$(grep -n '"commands"\|"audit-events"\|"heartbeats"\b' "${INFRA_COMPOSE}" 2>/dev/null \
@@ -1282,6 +1305,14 @@ if [ -z "${OLD_COMPOSE_TOPICS}" ]; then
     log_pass "§8 R-B: infra/docker-compose.yml: 구명(commands/audit-events/heartbeats) 토픽 생성 잔존 없음"
 else
     log_fail "§8 R-B: infra/docker-compose.yml: 구명 토픽 생성 라인 잔존 감지: ${OLD_COMPOSE_TOPICS}"
+fi
+
+# T4-2: 구명 job-results 잔존 검사
+OLD_JR_COMPOSE=$(grep -n 'job-results' "${INFRA_COMPOSE}" 2>/dev/null || true)
+if [ -z "${OLD_JR_COMPOSE}" ]; then
+    log_pass "§8 R-B: infra/docker-compose.yml: 구명 job-results 잔존 없음"
+else
+    log_fail "§8 R-B: infra/docker-compose.yml: 구명 job-results 잔존 감지: ${OLD_JR_COMPOSE}"
 fi
 
 if file_contains "${INFRA_OTEL_CFG}" 'topic:\s*heartbeats-topic'; then
@@ -1322,11 +1353,24 @@ else
     log_fail "§8 R-A: script-agent ↔ hub 토픽명 불일치 위험"
 fi
 
-AGENT_JR_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_JOB_RESULTS' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"job-results"' | head -1 || true)
-if [ "${AGENT_JR_DEFAULT}" = '"job-results"' ]; then
-    log_pass "§8 R-A: script-agent/config.go: KAFKA_TOPIC_JOB_RESULTS default=\"job-results\" 유지"
+# T4-2: KAFKA_TOPIC_JOB_RESULTS 폐기 → KAFKA_TOPIC_RESULT_JOB/KAFKA_TOPIC_RESULT_LOG 2키 확인
+AGENT_RJ_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_RESULT_JOB' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"result-topic-job"' | head -1 || true)
+AGENT_RL_DEFAULT=$(grep 'getenv.*KAFKA_TOPIC_RESULT_LOG' "${AGENT_CONFIG_GO}" 2>/dev/null | grep -oE '"result-topic-log"' | head -1 || true)
+if [ "${AGENT_RJ_DEFAULT}" = '"result-topic-job"' ] && [ "${AGENT_RL_DEFAULT}" = '"result-topic-log"' ]; then
+    log_pass "§8 R-A: script-agent/config.go: KAFKA_TOPIC_RESULT_JOB/LOG default 신명 확인(T4-2)"
 else
-    log_fail "§8 R-A: script-agent/config.go: KAFKA_TOPIC_JOB_RESULTS default가 \"job-results\"가 아님"
+    MISSING_KEYS=""
+    [ "${AGENT_RJ_DEFAULT}" != '"result-topic-job"' ] && MISSING_KEYS="${MISSING_KEYS} KAFKA_TOPIC_RESULT_JOB"
+    [ "${AGENT_RL_DEFAULT}" != '"result-topic-log"' ] && MISSING_KEYS="${MISSING_KEYS} KAFKA_TOPIC_RESULT_LOG"
+    log_fail "§8 R-A: script-agent/config.go: 분리 키 default 미확인:${MISSING_KEYS}"
+fi
+
+# T4-2: 구명 KAFKA_TOPIC_JOB_RESULTS 부재 확인
+AGENT_JR_OLD=$(grep 'getenv.*KAFKA_TOPIC_JOB_RESULTS' "${AGENT_CONFIG_GO}" 2>/dev/null || true)
+if [ -z "${AGENT_JR_OLD}" ]; then
+    log_pass "§8 R-A: script-agent/config.go: 구명 KAFKA_TOPIC_JOB_RESULTS 제거됨 확인"
+else
+    log_fail "§8 R-A: script-agent/config.go: 구명 KAFKA_TOPIC_JOB_RESULTS 잔존 감지: ${AGENT_JR_OLD}"
 fi
 
 if file_contains "${ENVELOPE_HEADERS}" '"x-message-id"' && \

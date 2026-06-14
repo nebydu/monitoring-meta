@@ -62,15 +62,16 @@ T4-2 구현 중 발견: hub가 옵션 A로 공통 `JobResult`를 구현(2토픽 
 
 **후속 확인 사안 (file_state — codex-gate 3차 지적)**: kafka-payloads 목표 스키마 ②가 `result-topic-log`에 `file_state`를 payload 필드로 포함하나, ADR#14·데모 §5.2.3은 `file_state`를 Agent local·BE 미전송으로 둔다 — **기존 spec의 잠재 모순**(본 작업이 표면화). ADR#14 해석이 걸려 추측 금지 → 목표 스키마 정렬 Track(후속)에서 별도 확정. 이번엔 현 단계 계약 ①의 file_state 단정 서술만 제거해 표면 충돌을 없앴고, **목표 스키마는 무변경**으로 둔다.
 
-**경계**: 이 슬라이스는 *payload 위상 정식화(ADR#19)*까지. §4의 나머지(매핑표 토픽명 일치 전환·통합본 §6.9.5/§6.9.2/§4.4.1 상태·ROADMAP T4-2 DONE·spec-sync·features 2문서)는 여전히 컷오버+e2e 60/0/0 후 복귀 게이트 몫이다.
+**경계**: 이 슬라이스는 *payload 위상 정식화(ADR#19)*까지였다. §4의 나머지(매핑표 토픽명 일치 전환·통합본 §6.9.5/§6.9.2/§4.4.1 상태·ROADMAP T4-2 DONE·spec-sync·features 2문서)는 **2026-06-14 컷오버+동적 e2e 64/0/0 후 복귀 게이트에서 완료**(§4).
 
-## 4. 2차 갱신 대기 (T4-2 분리 구현 후 — meta 복귀 게이트)
+## 4. 2차 갱신 — **완료 (2026-06-14)**
 
-T4-2(`job-results`→`result-topic-job`/`log` 분리)가 hub·script-agent·infra에서 구현+e2e 60/0/0 완료되면 **monitoring-meta 세션으로 복귀**해 아래를 갱신하고 T4-5를 **DONE** 전환한다(계약 문서 소유=meta, 형제 repo가 갱신하지 않음):
+**완료**: T4-2(`job-results`→`result-topic-job`/`log` 분리)가 hub·script-agent·infra 구현 + 동적 e2e **64/0/0**(`e2e/results/20260614-164044.md`) 후 monitoring-meta 복귀해 아래를 갱신하고 T4-5를 **DONE** 전환했다(계약 문서 소유=meta):
 
-- `docs/kafka-payloads.md` 토픽 매핑표(`job-results` 현행 물리명 → 분리 반영)·result-topic-job/log 각 절 "현행 물리명".
-- 통합본 §6.9.5 토픽 일관성 표(`job-results` 행 "T4-2 잔여"→완료).
-- ROADMAP §13 T4-2 status=DONE·T4-5 status=DONE + acceptance_evidence, 액티브 큐.
-- 후속 spec-sync drift 재검사.
+- [x] `docs/kafka-payloads.md` 매핑표(`job-results`→분리, "일치" 전환)·result-topic-job/log 각 절 물리명 + envelope 참조형화(F-2).
+- [x] 통합본 §6.9.5·§6.9.2 항목1·§4.4.1 상태(`job-results` "T4-2 잔여"→완료).
+- [x] ROADMAP §13 T4-2=DONE·T4-5=DONE + §5.1 #5/#19(F-3 미배정 정렬 명시) + 액티브 큐(최근 완료 이동).
+- [x] spec-sync: 형제 repo docs 사본은 phase0-cleanup으로 제거 → 대조 대상 없음(drift 0).
+- [x] features 2문서(`script-job-execution.md`·`log-job-collection.md`) descriptive 보완(feature-doc-writer) + README 인덱스.
 
-이 게이트는 T4-2 발주 handoff(`handoff/phase1-041/`)의 acceptance에 명시한다.
+잔여: **F-4 file_state 모순**(§3.5 후속 확인 사안)은 목표 스키마 정렬 Track으로 분리(추측 금지).

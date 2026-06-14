@@ -9,12 +9,12 @@ JSON 직렬화 baseline. Phase 2/3에서 Schema Registry 도입 시 Avro 또는 
 - **규칙(후보 B 승인)**: `<domain>-topic[-{subtype}][-{zone}]` — 의미 기반 일반 규칙. 환경 prefix 없음(통합본 §8.3 ADR#5). 아래 8토픽은 모두 이 규칙의 사례이며, 신규 토픽(Phase 2 metric ingest·rule-engine 계열 등)도 이 규칙으로 강제한다.
 - **`command-topic`은 suffix 없는 단일 물리 토픽**으로 확정(D-4(1) (2) 승인). 현 단계 zone=1(단일 폐쇄망). **다중 zone 진입 시** `command-topic-{zone}` 전개는 미래 트리거이며, 통합본 §6.8(zone 전개=다중 zone 진입 시 미래 트리거) 조건 + 13장 §A(zone topology) 해소 후 도입한다 — 지금 고정/추측하지 않는다.
 - **명시 예외**: `heartbeats-topic`의 복수형 domain은 baseline 호환을 위해 유지(규칙 예외로 기록).
-- **물리명 → 최종 논리명 매핑**: **토픽 재명명(T4-1)은 2026-06-07 완료** — 3토픽(`commands`/`audit-events`/`heartbeats`)은 물리명=논리명 일치(e2e 회귀 0, `e2e/results/20260607-080703.md`). 잔여는 `job-results` → `result-topic-job`/`result-topic-log` 분리(result-topic 분리, T4-2)뿐이다.
+- **물리명 → 최종 논리명 매핑**: **토픽 재명명(T4-1)은 2026-06-07 완료** — 3토픽(`commands`/`audit-events`/`heartbeats`)은 물리명=논리명 일치(e2e 회귀 0, `e2e/results/20260607-080703.md`). **토픽 분리(T4-2)도 2026-06-14 완료** — `job-results` → `result-topic-job`/`result-topic-log` 분리·동시 컷오버·e2e 64/0/0(`e2e/results/20260614-164044.md`). 8토픽 전부 물리명=논리명 일치.
 
 | 현행 물리명 | 최종 논리명 (규칙 B) | 상태 |
 |---|---|---|
 | `command-topic` | `command-topic` | **일치 (T4-1 완료)** — 단일(다중 zone 진입 시 `-{zone}`) |
-| `job-results` | `result-topic-job` / `result-topic-log` | **T4-2 잔여**(토픽명 분리 — §6.9.2 항목1, ADR 소속=D-5/ADR#5 간접). payload는 2단계(**ADR#19**): 현 단계 계약=공통 `JobResult`, 목표 계약=각 절 ② 평면 스키마(후속 Track). 토픽명 "일치" 전환은 infra/script-agent 컷오버+e2e 후 복귀 게이트 |
+| `result-topic-job` / `result-topic-log` | `result-topic-job` / `result-topic-log` | **일치 (T4-2 완료 2026-06-14, e2e 64/0/0)** — `job-results` 분리·동시 컷오버(hub/script-agent/infra)·구 토픽 제거(§6.9.2 항목1, ADR 소속=D-5/ADR#5 간접). payload는 2단계(**ADR#19**): 현 단계 계약=공통 `JobResult` / 목표 계약=각 절 ② 평면 스키마(후속 Track) |
 | `audit-topic` | `audit-topic` | **일치 (T4-1 완료)** |
 | `heartbeats-topic` | `heartbeats-topic` | **일치 (T4-1 완료)** — 복수형 명시 예외 |
 | (신규) | `alert-topic` / `notification-topic` | Phase 1 신설(§6.9.3·§6.9.5) |
@@ -60,11 +60,11 @@ Job 실행 명령. hub-be Quartz → script-agent.
 
 Shell/SQL Job 실행 결과. script-agent → script-result-service / rule-engine-script.
 
-> 최종 논리명 = `result-topic-job` (규칙 B `<domain=result>-topic-<subtype=job>`). 현행 물리명 `job-results`(Phase 1 분리, §6.9.2 항목1).
+> 최종 논리명 = `result-topic-job` (규칙 B `<domain=result>-topic-<subtype=job>`). 물리명 `result-topic-job`(T4-2 분리 완료 2026-06-14, §6.9.2 항목1).
 >
 > **payload 위상 = 2단계 (ADR#19, `adr/0019-result-payload-staging.md`)**: 토픽 분리(T4-2)와 payload 필드 정렬을 독립 단계로 둔다. 아래 **① 현 단계 계약**(공통 `JobResult`)이 Phase 1 현재 검증 기준이고, **② 목표 계약**(평면 스키마)은 후속 Track 도달 목표다. ②와 코드가 다른 것은 drift가 아니라 의도된 단계 차이.
 
-**① 현 단계 (Phase 1) 계약 — 공통 `JobResult`** (= 동결 데모 spec v0.2.1 §5.2 구조, ADR#19). `result-topic-job`/`result-topic-log`가 같은 구조를 공유하고 `job_type`에 따라 `script`/`log` 중 하나만 채운다. envelope 4종 적용, key=`agent_id`. **hub/script-agent 코드의 현 단계 검증 기준은 이 블록이다.** 현 단계 `job_type` 도메인 = `SCRIPT_JOB | LOG_JOB`(데모 §5.2)이고, result-topic-job은 `SCRIPT_JOB` 결과가 `script`를 채운다. **`SQL_JOB`은 현 단계에 미존재**하며 ADR#9/T2-7로 Phase 1 추가 예정 — 추가 시 result-topic-job에 실린다(목표 enum의 `SQL`에 대응).
+**① 현 단계 (Phase 1) 계약 — 공통 `JobResult`** (= 동결 데모 spec v0.2.1 §5.2 구조, ADR#19). `result-topic-job`/`result-topic-log`가 같은 구조를 공유하고 `job_type`에 따라 `script`/`log` 중 하나만 채운다. envelope·메시지 키는 `docs/envelope.md`/ADR#6 단일 출처를 따른다(result key=`agent_id`). **hub/script-agent 코드의 현 단계 검증 기준은 이 블록이다.** 현 단계 `job_type` 도메인 = `SCRIPT_JOB | LOG_JOB`(데모 §5.2)이고, result-topic-job은 `SCRIPT_JOB` 결과가 `script`를 채운다. **`SQL_JOB`은 현 단계에 미존재**하며 ADR#9/T2-7로 Phase 1 추가 예정 — 추가 시 result-topic-job에 실린다(목표 enum의 `SQL`에 대응).
 
 ```json
 {
@@ -110,7 +110,7 @@ Shell/SQL Job 실행 결과. script-agent → script-result-service / rule-engin
 
 LOG Job raw 로그 라인. script-agent → script-result-service / rule-engine-log.
 
-> 최종 논리명 = `result-topic-log` (규칙 B `<domain=result>-topic-<subtype=log>`). 현행 물리명 `job-results`(Phase 1 분리, §6.9.2 항목1).
+> 최종 논리명 = `result-topic-log` (규칙 B `<domain=result>-topic-<subtype=log>`). 물리명 `result-topic-log`(T4-2 분리 완료 2026-06-14, §6.9.2 항목1).
 >
 > **payload 위상 = 2단계 (ADR#19)**: result-topic-job 절과 동일 원칙.
 
