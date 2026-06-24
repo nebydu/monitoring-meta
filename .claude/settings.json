@@ -17,8 +17,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/git-bash.cmd",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/codex-gate.sh"]
+            "command": "cmd.exe",
+            "args": [
+              "/c",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/git-bash.cmd",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/codex-gate.sh"
+            ]
           }
         ]
       }
