@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-06-25T05:39:14.730921+09:00",
+  "degraded": false,
+  "context": "profile: C:/workspace/monitoring/monitoring-meta/.claude/proposal-review.profile",
+  "context_docs": [
+    "C:/workspace/monitoring/monitoring-meta/docs/phase0-snapshot/monitoring-demo-message-spec-v0.2.1.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/kafka-payloads.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/envelope.md",
+    "/c/workspace/monitoring/monitoring-meta/docs/phase1/ROADMAP_PHASE1_v0_3.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0002-heartbeat-otlp-proto.md",
+    "/c/workspace/monitoring/monitoring-meta/adr/0005-topic-naming.md"
+  ],
+  "proposal": "context: |\n  monitoring-meta 오케스트레이터가 Phase 1 ROADMAP의 T2-4(alert-topic/notification-topic 신규 추가)와\n  T4-4(신규 토픽 메시지 키 토픽별 정의)를 하나의 작업 단위로 묶어 합본 handoff를 작성했다.\n  두 작업은 동일한 신규 토픽 2종(alert/notification)을 대상으로 하고 hub·monitoring-meta를 공유한다.\n  analyzer가 통합본(master-design.md §4.4.1/§6.8.2/§6.9.3/§6.9.5/§8.3 ADR#5·ADR#6), kafka-payloads,\n  envelope, ROADMAP, critical-path 분석, hub/script-agent/infra 코드(읽기 전용)를 종합 분석해 작성.\n  산출물: handoff/topics-and-keys/ 아래 -000-impact.md + -hub.md + -infra.md (3파일, 기준 commit 81a5990).\n\nproposal: |\n  T2-4 ∪ T4-4 합본 handoff (work-id=topics-and-keys)를 다음 내용으로 각 repo 세션에 발주한다.\n  (1) infra: docker-compose kafka-init 사전생성 토픽 목록 5종 → 7종 (alert-topic, notification-topic 추가).\n      baseline partition/replication(단일 broker, replication=1) 동일 적용.\n  (2) hub: KafkaConfig.Topics 상수 2개 추가(ALERT=\"alert-topic\", NOTIFICATION=\"notification-topic\")\n      + 두 토픽 producer 골격(AlertPublisher/NotificationPublisher 류) 추가.\n      골격은 envelope 4종 헤더(기존 messaging.EnvelopeHeaders 재사용) + 메시지 키 규약 적용까지만 책임,\n      도메인 데이터 채움은 호출 측(미구현 서비스)에 위임.\n  (3) 메시지 키(확정 계약): alert-topic=(rule_id, target_id) 조합, rule_id null이면 (\"agent-offline\", target_id);\n      notification-topic=incident_id. (통합본 §6.8.2 키 표·§6.9.5·ADR#6에서 확정)\n  (4) script-agent spec은 생성하지 않음 — alert/notification producer·consumer가 전부 hub/BE 측(통합본 §4.4.1),\n      script-agent 코드 영향 0. 근거를 impact §5.3에 명기.\n  (5) hub 작업 깊이는 (b) producer 골격까지로 확정(2026-06-25 사람 결정). (a) 계약-only는 기각.\n\nalternatives: |\n  - hub 작업 깊이 (a) 계약-only(토픽 상수+키 규약 문서화만, producer는 서비스 Track T2-2/T2-3/T3-1에 위임):\n    기각. 키·envelope 적용을 실제 코드로 검증할 수 없어 계약이 코드와 분리된 채 남음.\n  - T2-4와 T4-4를 별도 handoff로 분리(원래 ROADMAP 계획: phase1-023, phase1-043):\n    기각. 동일 신규 토픽 2종을 대상으로 하고 hub·meta를 공유 → 분리 시 같은 코드를 두 번 건드리고\n    토픽 추가와 키 적용의 정합을 두 세션이 따로 맞춰야 함. 합본이 cross-repo 정합 비용을 줄임.\n  - alert 조합 키 직렬화 표현 고정(rule_id|target_id 등): 미고정. 통합본은 ordering 단위(\"Rule×대상\")만 규정,\n    구분자·표현은 구현 세부로 코드 세션 합의에 위임(baseline rule_id+\"|\"+target_id 제안만).\n\nassumptions: |\n  - 토픽 신설(T2-4)은 Phase 1 확정이다(D-9 RESOLVED 2026-06-03, 통합본 §6.9.3/§6.9.5).\n  - 토픽 최종 논리명은 ADR#5(adr/0005, Accepted, 후보 B) 확정이다.\n  - 신규 키 2종은 확정 계약이다(§6.8.2 키 표/§6.9.5/ADR#6) — 추측 아님.\n  - T2-4의 blocked_by=\"T1-1 등 선행 인프라\"는 생산/소비 서비스(Alert Processor 등 T2-1~T3-1)의 의존이지\n    토픽/키 계약의 의존이 아니다 → 토픽 신설+키 규약은 서비스 구현 전에 선제 확정 가능.\n  - alert/notification producer·consumer는 전부 hub/BE 측 컴포넌트다(통합본 §4.4.1 생산자/소비자 열).\n  - hub는 현재 5토픽 상수(KafkaConfig.Topics)·키 명시 지정(command=target_agent_id) 기구현,\n    infra kafka-init는 5토픽 사전생성+auto-create 안전망 ON 상태다.\n\nrisks: |\n  - alert-topic 조합 키 hot partition 위험(통합본 §6.8.6 O3 Open): partition 수 튜닝 사안일 뿐\n    토픽 신설을 막지 않음. baseline partition으로 생성 후 별도 추적. (되돌리기: partition 재조정)\n  - producer 골격이 placeholder x-source로 발행 → 향후 실제 서비스 식별자로 교체 필요(주석으로 명시).\n    envelope §2.3 알려진 값 목록은 비규범이라 새 식별자 추가에 spec bump 불필요.\n  - 골격 단계 코드가 도메인 로직 없이 들어가므로 \"미완성 producer\"가 코드베이스에 존재.\n    되돌리기: 골격은 기존 토픽 흐름과 격리(추가일 뿐)되어 제거/대체 비용 낮음.\n  - 회귀 리스크: 기존 5토픽 상수·키·envelope 발행 동작 불변 보장 필요.\n    완료 기준에 Phase 0 e2e 회귀 0 + 기존 토픽 키 불변을 명시했다.\n\ndecision_needed: |\n  이 합본 handoff(작업 범위·키 계약·script-agent 생략·hub 작업 깊이 (b) 확정)를 그대로\n  각 repo 세션에 발주해도 되는가? 분석/경계 설정에 빠진 위험이나 잘못된 가정은 없는가?\n  특히 (1) T2-4 의존(blocked_by)을 \"서비스 의존이지 계약 의존 아님\"으로 분리한 판단,\n  (2) script-agent 영향 0 결론, (3) hub 작업 깊이 (b)의 적절성을 검증해달라.",
+  "verdict": "revise",
+  "critical_issues": [
+    "`alert-topic` 조합 키를 Kafka 실제 key로 직렬화하는 canonical 표현을 handoff에서 확정하지 않았다. 통합본의 `(rule_id, target_id)`는 의미 계약이지만 Kafka key는 단일 byte/string 값이므로, `agent-offline` 대체값 포함해 정확한 문자열/바이트 포맷과 충돌 회피 규칙을 정해야 producer·향후 consumer·테스트가 같은 계약을 검증할 수 있다.",
+    "`x-source`를 placeholder로 발행할 수 있다는 리스크 처리가 부족하다. envelope에서 `x-source`는 필수 헤더이므로 골격 producer가 실제 발행 가능 코드라면 placeholder 값이 런타임으로 나가지 않도록 생성자/호출 인자로 명시 주입하거나, 미확정이면 발행 메서드를 비활성/테스트 전용으로 제한해야 한다."
+  ],
+  "missing_context": [
+    "hub의 현재 `EnvelopeHeaders`/publisher 패턴이 `x-source`를 고정 상수로 갖는지, 호출 측에서 주입 가능한지에 대한 구체 코드 문맥.",
+    "infra kafka-init의 baseline partition 수와 향후 alert 조합 키 hot partition을 완화할 운영 기준이 이미 별도 문서에 있는지 여부."
+  ],
+  "recommended_changes": [
+    "handoff에 신규 토픽 key encoding을 명시하라. 예: `alert-topic` key는 `alert-key:v1:{rule_id_or_agent-offline}:{target_id}`처럼 버전/escaping/구분자 충돌 규칙까지 포함하거나, 최소한 delimiter escape 규칙과 null 대체값을 확정한다. `notification-topic`은 `incident_id` 원문 UUID string으로 명시한다.",
+    "hub producer 골격 범위를 `토픽 상수 + key builder + envelope 적용 helper + 단위 테스트`로 구체화하고, `x-source`는 placeholder가 아니라 실제 발행 모듈명 규칙에 맞는 값으로 주입되게 하라. 실제 서비스명이 D-2 이후 바뀔 수 있으면 publisher 생성 시 source를 필수 파라미터로 받도록 지시한다.",
+    "rollback 설명을 보강하라. Kafka partition 수는 단순 되돌리기가 아니므로, baseline partition으로 시작한다면 hot partition은 O3 Open으로 별도 추적하고 증설/재생성/마이그레이션 중 어떤 경로를 쓸지 최소 운영 메모를 남긴다.",
+    "script-agent 영향 0 결론은 타당해 보이지만, handoff impact에 `script-agent는 alert/notification producer·consumer가 아니며 기존 result/command/audit/heartbeat 경로 불변`이라는 회귀 확인 항목을 명시하라."
+  ],
+  "confidence": "medium",
+  "summary": "합본 handoff 방향 자체는 타당하다. T2-4와 T4-4는 같은 신규 토픽 2종을 다루며, 토픽 신설·최종명·키 의미 계약도 입력 문맥상 이미 확정되어 있어 분리보다 합본이 정합성 측면에서 낫다. 다만 실제 Kafka key 표현과 필수 `x-source` 처리 방식이 적용 전 계약으로 닫혀 있지 않아, 그 두 지점을 보완한 뒤 발주하는 것이 맞다."
+}
