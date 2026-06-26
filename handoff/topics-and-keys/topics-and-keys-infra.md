@@ -6,7 +6,7 @@
 |---|---|---|
 | 작업 ID (work-id) | `topics-and-keys` | T2-4 ∪ T4-4 합본 (신규 토픽 추가 + 신규 토픽 키 정의) |
 | 대상 repo | `infra` | |
-| **기준 monitoring-meta commit** | `81a5990eb456f0c6dadd6ab5feaa5969bf2dd47d` | 통합본/kafka-payloads 고정 시점 |
+| **기준 monitoring-meta commit** | `666a16e9a60d0df328e463417eed0a77a4e5e2e3` | 통합본/kafka-payloads 고정 시점 (alert key wire 인코딩 반영분 포함) |
 | 작성일 | 2026-06-24 | |
 | 근거 ADR | `adr/0005-topic-naming.md`(Accepted) | |
 
@@ -26,6 +26,8 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 `alert-topic`/`notification-topic` 두 신규 토픽을 Kafka 브로커에 **사전 프로비저닝**한다. infra의 `kafka-init`은 운영 표준으로 토픽을 명시 사전 생성하는데(auto-create는 안전망), 현재 5토픽만 생성하므로 신규 2토픽을 추가한다.
 
 끝났을 때 도달 상태: 브로커 기동 시 `alert-topic`/`notification-topic`이 기존 5토픽과 동일 baseline 옵션으로 사전 생성된다.
+
+> **8토픽 계약 vs kafka-init 7종 (수 불일치 아님)**: §7 8토픽 논리 계약(envelope `적용 범위` = 공통 6 + OTLP 위임 2)과 kafka-init 사전생성 7종은 *범위가 다르다*. kafka-init 7 = 8토픽 중 **Phase 1 런타임 활성분**이다. 제외 1종 = `metrics-topic`(Phase 2 신규, Phase 1 미사용 — kafka-payloads/통합본 §6.9.5). 즉 8(전체 논리 계약) − 1(metrics, Phase 2 미생성) = 7(Phase 1 사전생성). 8과 7은 서로 다른 축이며 불일치가 아니다.
 
 ## 5. 작업 범위
 

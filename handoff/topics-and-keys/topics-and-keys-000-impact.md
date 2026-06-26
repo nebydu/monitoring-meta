@@ -8,7 +8,7 @@
 |---|---|
 | work-id | `topics-and-keys` |
 | 합본 대상 | `alert/notification 토픽 추가(T2-4)` ∪ `메시지 키 토픽별 정의(T4-4)` |
-| 기준 monitoring-meta commit | `81a5990eb456f0c6dadd6ab5feaa5969bf2dd47d` |
+| 기준 monitoring-meta commit | `666a16e9a60d0df328e463417eed0a77a4e5e2e3` (alert key wire 인코딩 spec 반영분 포함) |
 | 작성일 | 2026-06-24 |
 | 근거 ADR | `adr/0005-topic-naming.md`(Accepted), ADR#6(통합본 §8.3 결정표 — 별도 ADR 파일 없음, 결정 확정) |
 | 합본 근거 | 두 작업이 **동일 신규 토픽(alert/notification)**을 대상으로 하고, hub·monitoring-meta를 공유함 |
@@ -84,13 +84,13 @@
 ### 5.1 hub (영향 있음 — spec 작성)
 - `KafkaConfig.Topics`: `alert-topic`/`notification-topic` 상수 2개 추가.
 - producer 골격(AlertPublisher/NotificationPublisher) 추가(작업 깊이 (b) 확정): envelope 4종 헤더(`messaging.EnvelopeHeaders` 재사용) + canonical 키 적용.
-  - alert key = **`alert-key:v1:{rule_id}:{target_id}`**, rule_id null이면 **`alert-key:v1:agent-offline:{target_id}`** (meta 결정 2026-06-25, hub spec §5.1.1 확정). 의미 계약 `(rule_id, target_id)`를 wire 표현으로 못 박아 producer·향후 consumer·테스트가 같은 계약을 검증한다. key builder 함수 + 두 분기 단위 테스트.
+  - alert key wire 인코딩 = **`alert-key:v1:{rule_id}:{target_id}`**, rule_id null이면 **`alert-key:v1:agent-offline:{target_id}`** — **규범 출처=spec**(`docs/kafka-payloads.md` `alert-topic` 키 절 + 통합본 §6.8.2에 반영, meta 결정 2026-06-25). 의미 계약 `(rule_id, target_id)`의 wire 표현으로 producer·향후 consumer·테스트가 같은 계약을 검증. key builder 함수 + 두 분기 단위 테스트.
   - notification key = `incident_id` 원문 문자열.
-  - **`x-source`(envelope 필수)**: placeholder 발행 금지 — publisher가 `source`를 필수 주입 파라미터로 받게 한다(호출 측이 실제 발행 모듈명 주입, D-2 이후 모듈명 변동 대비).
+  - **`x-source`**: envelope §2.4상 **이미 필수 헤더**(신규 spec 제약 아님). 그 필수 요건을 placeholder로 채우지 않도록 publisher가 `source`를 필수 주입 파라미터로 받게 한다(호출 측이 실제 발행 모듈명 주입, D-2 이후 모듈명 변동 대비).
 - 회귀: 기존 토픽 상수·CommandPublisher 키(`target_agent_id`) 동작 불변. envelope 발행 로직 재사용 시 기존 헤더 회귀 0.
 
 ### 5.2 infra (영향 있음 — spec 작성)
-- `docker-compose.yml` `kafka-init` 사전 생성 목록에 `alert-topic notification-topic` 2개 추가(현재 5개 → 7개).
+- `docker-compose.yml` `kafka-init` 사전 생성 목록에 `alert-topic notification-topic` 2개 추가(현재 5개 → 7개). **7 = §7 8토픽 논리 계약 중 Phase 1 런타임 활성분**(8 − `metrics-topic`[Phase 2 미생성] = 7; 8과 7은 다른 축, 불일치 아님).
 - partition/replication: 현재 init이 토픽별로 동일 옵션을 주는 구조(루프). 신규 2토픽도 동일 baseline(단일 broker, replication=1). alert-topic은 조합 키 hot partition 위험이 통합본 §6.8.6 Open(O3)으로 보존돼 있으나, **이는 partition 수 튜닝 사안이며 토픽 신설 자체를 막지 않음** — baseline partition 수로 생성하고 튜닝은 별도 Open.
 - **rollback/운영 메모(O3)**: Kafka partition 수는 단순 되돌리기가 아니다(증설은 키→partition 매핑을 바꿔 ordering 보장이 깨짐). baseline으로 시작하되 hot partition 완화가 필요해지면 **신규 토픽 재생성(다른 partition 수) 또는 마이그레이션** 경로를 택해야 하며, 어느 경로든 O3 Open 해소 시 별도 운영 결정으로 추적한다(본 합본 범위 밖).
 - 회귀: 기존 5토픽 init·auto-create 안전망 불변.
@@ -111,14 +111,14 @@
 > 통합본 `[Open question]`·미결정 ADR·AMS 가정 충돌은 **토픽 추가·키 정의 자체에 걸리는 것이 없다**(오케스트레이터 선검증대로 확인). 아래는 **계획 레이어 선택**이며 통합본 Open이 아니다 — analyzer가 단정하지 않고 사람 확정에 넘긴다.
 
 1. **hub 작업 깊이** — **확정: (b)** (2026-06-25, 사람 결정): 토픽 상수 + producer 골격(`AlertPublisher`/`NotificationPublisher` 류, 키·envelope 적용 검증 가능한 수준, 도메인 로직 제외)까지. (a) 계약-only는 기각. hub spec §5.3에 확정 표기.
-2. **alert-topic 키 wire 인코딩** — **확정: `alert-key:v1:{rule_id}:{target_id}`** (null이면 `agent-offline`), 구분자 `:` 고정·버전 `v1` (meta 결정 2026-06-25, hub spec §5.1.1). 의미 계약을 wire 표현으로 닫아 producer·consumer·테스트가 동일 계약을 검증. 복귀 게이트에서 kafka-payloads에 반영. (전제: 식별자에 `:` 없음 — 코드 세션 착수 시 확인, 위반 시 멈춤.)
+2. **alert-topic 키 wire 인코딩** — **확정+spec 반영: `alert-key:v1:{rule_id}:{target_id}`** (null이면 `agent-offline`), 구분자 `:` 고정·버전 `v1` (meta 결정 2026-06-25). **규범 출처=spec**: `docs/kafka-payloads.md` `alert-topic` 키 절 + 통합본 §6.8.2에 **이미 반영**(ROADMAP/handoff가 spec보다 먼저 규범화하지 않음 — 위상 정상). (전제: 식별자에 `:` 없음 — 코드 세션 착수 시 확인, 위반 시 멈춤.)
 3. **alert-topic hot partition 튜닝**(통합본 §6.8.6 O3 Open): partition 수·키 정책 변경은 **토픽 신설을 막지 않으며** baseline partition으로 생성 후 별도 추적. blocker 아님(보존 항목, rollback 메모 §5.2).
 
 > 위 항목 중 통합본 미결 Open(§6.8.6 O3)은 토픽 신설 범위 밖(튜닝)이라 **본 합본을 막지 않는다.** 1번(작업 깊이)·2번(키 인코딩) 모두 확정됐다. **본 합본을 차단하는 미결정은 없다.**
 
 ## 7. meta 후속 (계약 문서 — 별도 repo spec 없음)
 
-- 통합본/kafka-payloads/envelope 3종에 alert/notification 토픽·키 **의미** 계약은 이미 반영됨. **단 alert key의 wire 인코딩(`alert-key:v1:...`)은 본 작업 신규 확정(§6-2)** → 복귀 게이트에서 `kafka-payloads.md` `alert-topic` 키 절에 canonical 인코딩을 추가 반영(현재는 의미 계약 `(rule_id, target_id)`만 기재). **이 반영은 T4-4 DONE 처리의 필수 선결 조건**(결정 출처=2026-06-25 사용자 승인, 기록 `proposal-review-topics-and-keys-r2.json`).
+- 통합본/kafka-payloads/envelope 3종에 alert/notification 토픽·키 **의미** 계약 반영 완료. alert key의 **wire 인코딩(`alert-key:v1:...`)도 본 합본과 동일 커밋에 `kafka-payloads.md` `alert-topic` 키 절 + 통합본 §6.8.2에 반영 완료**(meta 결정 2026-06-25, 결정 기록 `proposal-review-topics-and-keys-r2.json`) — 규범 출처는 spec, handoff는 참조. 잔여 계약 후속(features 등 서술 문서)은 복귀 게이트에서 정리.
 - hub/infra 작업 완료 후, meta는 `e2e-tester`로 polyrepo 종단 검증(신규 토픽 회귀 가드)을 별도 수행. 신규 토픽에 대한 e2e 케이스 추가 여부는 e2e 산출물 영역(본 합본 밖).
 - spec drift 검사(`spec-sync`)는 작업 완료 후 기준 문서↔코드 토픽 상수/키 일치를 검출.
 

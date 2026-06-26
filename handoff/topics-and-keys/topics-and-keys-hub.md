@@ -6,12 +6,12 @@
 |---|---|---|
 | 작업 ID (work-id) | `topics-and-keys` | T2-4 ∪ T4-4 합본 (신규 토픽 추가 + 신규 토픽 키 정의) |
 | 대상 repo | `hub` | |
-| **기준 monitoring-meta commit** | `81a5990eb456f0c6dadd6ab5feaa5969bf2dd47d` | 통합본/kafka-payloads/envelope 고정 시점 |
+| **기준 monitoring-meta commit** | `666a16e9a60d0df328e463417eed0a77a4e5e2e3` | 통합본/kafka-payloads/envelope 고정 시점 (alert key wire 인코딩 반영분 포함) |
 | 작성일 | 2026-06-24 | |
 | 근거 ADR | `adr/0005-topic-naming.md`(Accepted), ADR#6(통합본 §8.3 메시지 키 결정) | |
 
 ### 1.1 기준 commit 이유
-hub 세션은 기준 문서 spec을 상대 경로(`../monitoring-meta/docs/...`)로 참조만 한다. 작성↔실행 시점 drift를 막기 위해 기준 commit을 못 박는다. 필요 시 `git -C ../monitoring-meta log 81a5990..HEAD -- docs/`로 그 사이 spec 변경을 점검한다.
+hub 세션은 기준 문서 spec을 상대 경로(`../monitoring-meta/docs/...`)로 참조만 한다. 작성↔실행 시점 drift를 막기 위해 기준 commit을 못 박는다. 필요 시 `git -C ../monitoring-meta log 666a16e..HEAD -- docs/`로 그 사이 spec 변경을 점검한다.
 
 ## 2. 문서 성격 상기
 
@@ -42,12 +42,11 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 - 출처: 통합본 §4.4.1·§6.8.2 키 표·§6.9.5, kafka-payloads `alert-topic`/`notification-topic` 절, envelope §4.1, ADR#5 §2.2.1.
 - payload 필드 구조는 `kafka-payloads.md` 두 절을 그대로 따른다(producer를 만들 경우의 도메인 객체 매핑 기준).
 
-#### 5.1.1 신규 확정 계약 — alert-topic key wire 인코딩 (meta 결정 2026-06-25, kafka-payloads 반영 예정)
+#### 5.1.1 alert-topic key wire 인코딩 — **규범 출처=spec** (kafka-payloads `alert-topic` 키 절 + 통합본 §6.8.2)
 
-통합본의 `(rule_id, target_id)`는 **ordering 의미** 계약이다. Kafka key는 단일 문자열이므로 그 의미를 **canonical wire 표현**으로 못 박는다(producer·향후 consumer·테스트가 같은 계약을 검증하도록). 이 인코딩은 기준 문서에서 *도출*된 것이 아니라 본 작업에서 meta가 신규 확정한 계약이다.
+통합본의 `(rule_id, target_id)`는 **ordering 의미** 계약이다. Kafka key는 단일 문자열이므로 그 의미를 **canonical wire 표현**으로 직렬화한다. 이 wire 인코딩은 meta가 2026-06-25 결정해 **`docs/kafka-payloads.md` `alert-topic` 키 절 + 통합본 §6.8.2에 반영**했다 — 즉 **규범 출처는 spec이며 본 절은 그 참조 요약**이다(handoff가 spec보다 먼저 규범화하는 것이 아님). 아래 표·전제는 kafka-payloads와 동일 내용이고, 충돌 시 kafka-payloads가 우선한다.
 
-- **결정 출처**: 2026-06-25 meta 오케스트레이션 세션에서 사용자 승인(버전 접두 포맷 선택). 결정 근거 기록 = `handoff/topics-and-keys/proposal-review-topics-and-keys-r2.json`(proposal-review approve) + 메모리 `phase1-roadmap-status`.
-- **복귀 게이트 완료 조건(필수)**: 형제 repo 구현 후 meta가 `docs/kafka-payloads.md`의 `alert-topic` key rule을 의미 규칙 `(rule_id, target_id)`뿐 아니라 **wire 포맷 `alert-key:v1:{rule_id}:{target_id}`까지** 기재하도록 반영한다(이 반영 전에는 T4-4 DONE 처리 금지).
+- **결정 출처**: 2026-06-25 meta 오케스트레이션 세션 사용자 승인(버전 접두 포맷). 근거 기록 = `proposal-review-topics-and-keys-r2.json`(approve). spec 반영 커밋 = 기준 commit §1(`666a16e`, kafka-payloads·통합본 §6.8.2 포함).
 
 | 토픽 | canonical key (string) | rule_id null(예: Agent OFFLINE) |
 |---|---|---|
@@ -64,8 +63,8 @@ ground truth 우선순위: **코드 → 데모 spec v0.2.1(Phase 0 회귀 방지
 - producer 메시지 키 적용 (§5.1.1 canonical 인코딩 **그대로** — baseline/임의 변형 금지):
   - alert: key = `alert-key:v1:{rule_id}:{target_id}`, `rule_id` null이면 `alert-key:v1:agent-offline:{target_id}`. 이 직렬화를 **key builder 함수**로 분리하고 단위 테스트로 두 분기(정상/agent-offline)를 고정한다.
   - notification: key = `incident_id`(원문 문자열 그대로).
-- `x-source` 처리 (**필수 헤더 — placeholder 발행 금지**):
-  - envelope에서 `x-source`는 필수다. 골격 producer가 실제 발행 가능한 코드이므로 placeholder 식별자가 런타임으로 나가면 안 된다. **`AlertPublisher`/`NotificationPublisher` 생성자(또는 발행 메서드)가 `source`를 필수 파라미터로 받게** 하라 — 호출 측(미구현 서비스)이 실제 발행 모듈명을 주입한다.
+- `x-source` 처리 (envelope 기존 필수 요건의 구현 규칙 — **신규 spec 제약 아님**):
+  - **`x-source`는 envelope §2.4상 이미 "● 필수" 헤더**다(본 합본이 새로 제약을 만드는 게 아니라 기존 요건을 구현으로 지키는 것). 골격 producer가 실제 발행 가능한 코드이므로 그 필수 헤더를 placeholder 값으로 채워 런타임으로 내보내면 안 된다. **`AlertPublisher`/`NotificationPublisher` 생성자(또는 발행 메서드)가 `source`를 필수 파라미터로 받게** 하라 — 호출 측(미구현 서비스)이 실제 발행 모듈명을 주입한다.
   - 실제 서비스 식별자는 D-2(모놀리스 vs MSA) 이후 모듈명이 바뀔 수 있으므로 publisher가 상수로 박지 않고 주입받는 구조가 맞다. (참고 매핑: alert는 Rule Engine/Agent State, notification은 Incident Service — 호출 측 책임.)
   - 골격 단계 단위 테스트는 명시적 테스트용 source 값을 주입해 키·헤더를 검증한다. envelope §2.3 알려진 값 목록은 비규범이므로 새 발행자 식별자 추가는 spec bump 불필요.
 
