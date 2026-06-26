@@ -1673,7 +1673,7 @@ Kafka partition 키는 **데이터 ordering 보장 단위**를 결정. v0.7 8개
 | `alert-topic` | `(rule_id, target_id)` 조합 | Rule × 대상 단위 — Dedup 키와 일치 |
 | `notification-topic` | `incident_id` | Incident 단위 |
 
-`alert-topic` 조합 키가 v0.7 신규 결정. 6.4 Dedup 키 `(rule_id, target_id, severity)`와 거의 일치 — partition 분배에 severity 제외, 같은 Rule×대상의 모든 severity 메시지가 한 partition으로 모임 (severity 전이 처리 유리).
+`alert-topic` 조합 키가 v0.7 신규 결정. 6.4 Dedup 키 `(rule_id, target_id, severity)`와 거의 일치 — partition 분배에 severity 제외, 같은 Rule×대상의 모든 severity 메시지가 한 partition으로 모임 (severity 전이 처리 유리). `(rule_id, target_id)` 조합의 **Kafka key wire 직렬화(canonical)는 `docs/kafka-payloads.md` `alert-topic` 키 절 참조**(`alert-key:v1:{rule_id}:{target_id}`, T4-4 / meta 결정 2026-06-25) — 본 표는 ordering 의미 단위, 직렬화 표현은 kafka-payloads가 규범.
 
 #### 6.8.3 ID 컨벤션
 

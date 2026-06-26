@@ -202,6 +202,8 @@ Rule Engine 평가 결과 + Agent State OFFLINE Alert.
 
 키는 `(rule_id, target_id)` 조합 (rule_id 없으면 `("agent-offline", target_id)`).
 
+**Kafka key wire 인코딩 (canonical, T4-4 / meta 결정 2026-06-25)**: 의미 키 `(rule_id, target_id)`를 단일 문자열로 직렬화한다 — `alert-key:v1:{rule_id}:{target_id}`, rule_id null이면 `alert-key:v1:agent-offline:{target_id}`. 구분자 `:` 고정, 버전 토큰 `v1`(포맷 진화 여지). 식별자(rule_id/target_id)에 `:`가 없음을 전제하며, `:`가 들어올 수 있으면 escaping 규칙을 별도 결정한다(추측 금지). ordering 단위는 `(rule_id, target_id)` — 같은 Rule×대상의 모든 severity가 한 partition으로 모인다(severity 제외, 통합본 §6.8.2).
+
 ## `notification-topic`
 
 Incident 상태 변경 → 통보 트리거. event-service → notification-service.
